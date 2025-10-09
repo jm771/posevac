@@ -124,8 +124,8 @@ body {
 }
 
 .compound-preview .terminal {
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     background-color: var(--accent-green);
     position: absolute;
@@ -133,17 +133,17 @@ body {
 }
 
 .compound-preview .input-terminal:nth-child(1) {
-    left: -6px;
+    left: -7px;
     top: 15px;
 }
 
 .compound-preview .input-terminal:nth-child(2) {
-    left: -6px;
+    left: -7px;
     bottom: 15px;
 }
 
 .compound-preview .output-terminal {
-    right: -6px;
+    right: -7px;
     top: 50%;
     transform: translateY(-50%);
     background-color: var(--accent-orange);

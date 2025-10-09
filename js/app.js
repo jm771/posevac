@@ -45,6 +45,7 @@ function initCytoscape() {
                     'text-halign': 'center',
                     'font-size': 11,
                     'padding': 15,
+                    'shape': 'roundrectangle',
                     'box-shadow': '0 0 10px rgba(186, 104, 200, 0.3)'
                 }
             },
@@ -53,8 +54,8 @@ function initCytoscape() {
                 selector: 'node[type="input-terminal"]',
                 style: {
                     'background-color': '#81c784',
-                    'width': 15,
-                    'height': 15,
+                    'width': 12,
+                    'height': 12,
                     'border-width': 2,
                     'border-color': '#81c784',
                     'label': '',
@@ -66,8 +67,8 @@ function initCytoscape() {
                 selector: 'node[type="output-terminal"]',
                 style: {
                     'background-color': '#ffb74d',
-                    'width': 15,
-                    'height': 15,
+                    'width': 12,
+                    'height': 12,
                     'border-width': 2,
                     'border-color': '#ffb74d',
                     'label': '',
@@ -228,18 +229,22 @@ function setupSidebarDragDrop() {
 
         if (!componentType) return;
 
-        // Get drop position relative to canvas
+        // Get drop position relative to canvas container
         const cyBounds = cyContainer.getBoundingClientRect();
-        const x = e.clientX - cyBounds.left;
-        const y = e.clientY - cyBounds.top;
+        const renderedX = e.clientX - cyBounds.left;
+        const renderedY = e.clientY - cyBounds.top;
 
-        // Convert screen coordinates to graph coordinates
-        const pos = cy.renderer().projectIntoViewport(x, y);
+        // Convert rendered (screen) coordinates to model (graph) coordinates
+        // Account for pan and zoom
+        const pan = cy.pan();
+        const zoom = cy.zoom();
+        const modelX = (renderedX - pan.x) / zoom;
+        const modelY = (renderedY - pan.y) / zoom;
 
         if (componentType === 'regular-node') {
-            createRegularNode(pos[0], pos[1]);
+            createRegularNode(modelX, modelY);
         } else if (componentType === 'compound-object') {
-            createCompoundObject(pos[0], pos[1]);
+            createCompoundObject(modelX, modelY);
         }
     });
 }
@@ -248,6 +253,7 @@ function setupSidebarDragDrop() {
 function setupNodeDeletion() {
     const sidebar = document.getElementById('sidebar');
     const deleteZone = document.getElementById('deleteZone');
+    const cyContainer = document.getElementById('cy');
     let draggedNode = null;
 
     cy.on('grab', 'node', function(evt) {
@@ -258,9 +264,13 @@ function setupNodeDeletion() {
         const node = evt.target;
         const renderedPos = node.renderedPosition();
         const sidebarBounds = sidebar.getBoundingClientRect();
+        const cyBounds = cyContainer.getBoundingClientRect();
 
-        // Check if node is over sidebar
-        if (renderedPos.x < sidebarBounds.width) {
+        // Convert node position to viewport coordinates
+        const nodeScreenX = cyBounds.left + renderedPos.x;
+
+        // Check if node is over sidebar (sidebar is on the left)
+        if (nodeScreenX < sidebarBounds.right) {
             deleteZone.classList.add('active');
         } else {
             deleteZone.classList.remove('active');
@@ -271,9 +281,13 @@ function setupNodeDeletion() {
         const node = evt.target;
         const renderedPos = node.renderedPosition();
         const sidebarBounds = sidebar.getBoundingClientRect();
+        const cyBounds = cyContainer.getBoundingClientRect();
+
+        // Convert node position to viewport coordinates
+        const nodeScreenX = cyBounds.left + renderedPos.x;
 
         // Delete node if dropped in sidebar
-        if (renderedPos.x < sidebarBounds.width) {
+        if (nodeScreenX < sidebarBounds.right) {
             // If it's a compound node, remove all children first
             if (node.data('type') === 'compound') {
                 node.children().remove();
