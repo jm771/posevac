@@ -162,7 +162,7 @@ function createStartNode(x, y) {
         position: { x, y }
     });
 
-    // Add output terminal (right edge)
+    // Add output terminal (right edge, slightly extending beyond)
     cy.add({
         group: 'nodes',
         data: {
@@ -171,7 +171,7 @@ function createStartNode(x, y) {
             type: 'output-terminal',
             terminalType: 'output'
         },
-        position: { x: x + 35, y: y }
+        position: { x: x + 42, y: y }
     });
 
     cy.$(`#${outputId}`).ungrabify();
@@ -193,7 +193,7 @@ function createStopNode(x, y) {
         position: { x, y }
     });
 
-    // Add input terminal (left edge)
+    // Add input terminal (left edge, slightly extending beyond)
     cy.add({
         group: 'nodes',
         data: {
@@ -202,7 +202,7 @@ function createStopNode(x, y) {
             type: 'input-terminal',
             terminalType: 'input'
         },
-        position: { x: x - 35, y: y }
+        position: { x: x - 42, y: y }
     });
 
     cy.$(`#${inputId}`).ungrabify();
