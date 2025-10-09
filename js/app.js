@@ -311,57 +311,50 @@ function setupNodeDeletion() {
 function setupEdgeCreation() {
     let isRightDragging = false;
     let sourceNode = null;
-    let hoveredNode = null;
+    let mousePos = { x: 0, y: 0 };
 
-    // Track right mouse button state
-    cy.on('cxttapstart', 'node', function(evt) {
-        const node = evt.target;
+    // Track right mouse button down on node
+    cy.on('mousedown', 'node', function(evt) {
+        if (evt.originalEvent.button === 2) { // Right click
+            const node = evt.target;
 
-        // Only allow connections from terminals or regular nodes
-        if (node.data('type') === 'compound') {
-            return; // Can't connect to/from compound parent
-        }
+            // Only allow connections from terminals or regular nodes
+            if (node.data('type') === 'compound') {
+                return; // Can't connect to/from compound parent
+            }
 
-        isRightDragging = true;
-        sourceNode = node;
+            evt.originalEvent.preventDefault();
+            evt.originalEvent.stopPropagation();
 
-        // Disable normal node dragging during right-click drag
-        cy.autoungrabify(true);
-    });
+            isRightDragging = true;
+            sourceNode = node;
 
-    // Track which node we're hovering over
-    cy.on('mouseover', 'node', function(evt) {
-        if (isRightDragging) {
-            hoveredNode = evt.target;
-        }
-    });
-
-    cy.on('mouseout', 'node', function(evt) {
-        if (isRightDragging && hoveredNode && hoveredNode.id() === evt.target.id()) {
-            hoveredNode = null;
+            // Disable normal node dragging during right-click drag
+            cy.autoungrabify(true);
         }
     });
 
     cy.on('mousemove', function(evt) {
         if (isRightDragging && sourceNode) {
+            // Store mouse position
+            mousePos = evt.position || evt.cyPosition;
+
             // Remove previous temp edge
             if (tempEdge) {
                 cy.remove(tempEdge);
             }
 
-            // Create temporary edge to show connection
-            const pos = evt.position || evt.cyPosition;
             const tempTargetId = 'temp-target';
 
             // Remove old temp target if exists
             cy.$(`#${tempTargetId}`).remove();
 
-            // Create invisible temp target node
+            // Create invisible temp target node at cursor position
             cy.add({
                 group: 'nodes',
                 data: { id: tempTargetId },
-                position: pos,
-                style: { 'opacity': 0 }
+                position: mousePos,
+                style: { 'opacity': 0, 'width': 1, 'height': 1 }
             });
 
             tempEdge = cy.add({
@@ -376,9 +369,9 @@ function setupEdgeCreation() {
         }
     });
 
-    // Use DOM mouseup event to catch right-click release reliably
-    document.getElementById('cy').addEventListener('mouseup', function(e) {
-        if (e.button === 2 && isRightDragging) { // Right button
+    // Handle mouse up on canvas
+    cy.on('mouseup', function(evt) {
+        if (evt.originalEvent.button === 2 && isRightDragging) { // Right button
             // Clean up temp edge
             if (tempEdge) {
                 cy.remove(tempEdge);
@@ -386,12 +379,36 @@ function setupEdgeCreation() {
             }
             cy.$('#temp-target').remove();
 
-            // Check if we're releasing over a valid target node
-            if (sourceNode && hoveredNode && sourceNode.id() !== hoveredNode.id()) {
+            // Find what node is at the current mouse position
+            const elements = cy.elements().filter(function(ele) {
+                if (ele.isNode()) {
+                    const bb = ele.boundingBox();
+                    return mousePos.x >= bb.x1 && mousePos.x <= bb.x2 &&
+                           mousePos.y >= bb.y1 && mousePos.y <= bb.y2;
+                }
+                return false;
+            });
+
+            // Get the top-most node (smallest one, likely a terminal or regular node)
+            let targetNode = null;
+            if (elements.length > 0) {
+                // Sort by size (area) and pick the smallest
+                const sorted = elements.sort(function(a, b) {
+                    const aBox = a.boundingBox();
+                    const bBox = b.boundingBox();
+                    const aArea = (aBox.x2 - aBox.x1) * (aBox.y2 - aBox.y1);
+                    const bArea = (bBox.x2 - bBox.x1) * (bBox.y2 - bBox.y1);
+                    return aArea - bArea;
+                });
+                targetNode = sorted[0];
+            }
+
+            // Create or delete edge if we have a valid target
+            if (sourceNode && targetNode && sourceNode.id() !== targetNode.id()) {
                 // Can't connect to compound parent
-                if (hoveredNode.data('type') !== 'compound') {
+                if (targetNode.data('type') !== 'compound') {
                     // Check if edge already exists
-                    const existingEdge = cy.edges(`[source="${sourceNode.id()}"][target="${hoveredNode.id()}"]`);
+                    const existingEdge = cy.edges(`[source="${sourceNode.id()}"][target="${targetNode.id()}"]`);
 
                     if (existingEdge.length > 0) {
                         // Delete existing edge
@@ -403,7 +420,7 @@ function setupEdgeCreation() {
                             data: {
                                 id: `edge-${edgeIdCounter++}`,
                                 source: sourceNode.id(),
-                                target: hoveredNode.id()
+                                target: targetNode.id()
                             }
                         });
                     }
@@ -412,7 +429,6 @@ function setupEdgeCreation() {
 
             // Reset state
             sourceNode = null;
-            hoveredNode = null;
             isRightDragging = false;
             cy.autoungrabify(false);
         }
