@@ -311,6 +311,7 @@ function setupNodeDeletion() {
 function setupEdgeCreation() {
     let isRightDragging = false;
     let sourceNode = null;
+    let hoveredNode = null;
 
     // Track right mouse button state
     cy.on('cxttapstart', 'node', function(evt) {
@@ -326,6 +327,19 @@ function setupEdgeCreation() {
 
         // Disable normal node dragging during right-click drag
         cy.autoungrabify(true);
+    });
+
+    // Track which node we're hovering over
+    cy.on('mouseover', 'node', function(evt) {
+        if (isRightDragging) {
+            hoveredNode = evt.target;
+        }
+    });
+
+    cy.on('mouseout', 'node', function(evt) {
+        if (isRightDragging && hoveredNode && hoveredNode.id() === evt.target.id()) {
+            hoveredNode = null;
+        }
     });
 
     cy.on('mousemove', function(evt) {
@@ -362,11 +376,9 @@ function setupEdgeCreation() {
         }
     });
 
-    // Listen for cxttapend (right-click release) on nodes
-    cy.on('cxttapend', 'node', function(evt) {
-        if (isRightDragging) {
-            const targetNode = evt.target;
-
+    // Use DOM mouseup event to catch right-click release reliably
+    document.getElementById('cy').addEventListener('mouseup', function(e) {
+        if (e.button === 2 && isRightDragging) { // Right button
             // Clean up temp edge
             if (tempEdge) {
                 cy.remove(tempEdge);
@@ -374,52 +386,33 @@ function setupEdgeCreation() {
             }
             cy.$('#temp-target').remove();
 
-            // Validate connection
-            if (sourceNode && targetNode && sourceNode.id() !== targetNode.id()) {
+            // Check if we're releasing over a valid target node
+            if (sourceNode && hoveredNode && sourceNode.id() !== hoveredNode.id()) {
                 // Can't connect to compound parent
-                if (targetNode.data('type') === 'compound') {
-                    sourceNode = null;
-                    isRightDragging = false;
-                    cy.autoungrabify(false);
-                    return;
-                }
+                if (hoveredNode.data('type') !== 'compound') {
+                    // Check if edge already exists
+                    const existingEdge = cy.edges(`[source="${sourceNode.id()}"][target="${hoveredNode.id()}"]`);
 
-                // Check if edge already exists
-                const existingEdge = cy.edges(`[source="${sourceNode.id()}"][target="${targetNode.id()}"]`);
-
-                if (existingEdge.length > 0) {
-                    // Delete existing edge
-                    existingEdge.remove();
-                } else {
-                    // Create new edge
-                    cy.add({
-                        group: 'edges',
-                        data: {
-                            id: `edge-${edgeIdCounter++}`,
-                            source: sourceNode.id(),
-                            target: targetNode.id()
-                        }
-                    });
+                    if (existingEdge.length > 0) {
+                        // Delete existing edge
+                        existingEdge.remove();
+                    } else {
+                        // Create new edge
+                        cy.add({
+                            group: 'edges',
+                            data: {
+                                id: `edge-${edgeIdCounter++}`,
+                                source: sourceNode.id(),
+                                target: hoveredNode.id()
+                            }
+                        });
+                    }
                 }
             }
 
+            // Reset state
             sourceNode = null;
-            isRightDragging = false;
-            cy.autoungrabify(false);
-        }
-    });
-
-    // Handle right-click release outside of nodes
-    cy.on('cxttapend', function(evt) {
-        if (isRightDragging && evt.target === cy) {
-            // Clean up temp edge
-            if (tempEdge) {
-                cy.remove(tempEdge);
-                tempEdge = null;
-            }
-            cy.$('#temp-target').remove();
-
-            sourceNode = null;
+            hoveredNode = null;
             isRightDragging = false;
             cy.autoungrabify(false);
         }
