@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Graph Tool</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar with component palette -->
+        <aside class="sidebar" id="sidebar">
+            <h2>Components</h2>
+            <div class="components-list">
+                <!-- Regular Node Template -->
+                <div class="component-template" data-component-type="regular-node" draggable="true">
+                    <div class="component-preview regular-node-preview">
+                        <div class="node-circle"></div>
+                    </div>
+                    <span class="component-label">Regular Node</span>
+                </div>
+
+                <!-- Compound Object Template -->
+                <div class="component-template" data-component-type="compound-object" draggable="true">
+                    <div class="component-preview compound-preview">
+                        <div class="compound-box">
+                            <div class="input-terminal terminal"></div>
+                            <div class="input-terminal terminal"></div>
+                            <div class="output-terminal terminal"></div>
+                        </div>
+                    </div>
+                    <span class="component-label">Compound Object</span>
+                </div>
+            </div>
+
+            <!-- Delete zone indicator -->
+            <div class="delete-zone" id="deleteZone">
+                <span>Drop here to delete</span>
+            </div>
+        </aside>
+
+        <!-- Main canvas area -->
+        <main class="canvas-container">
+            <div id="cy"></div>
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
