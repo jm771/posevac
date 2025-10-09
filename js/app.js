@@ -57,7 +57,8 @@ function initCytoscape() {
                     'height': 15,
                     'border-width': 2,
                     'border-color': '#81c784',
-                    'label': ''
+                    'label': '',
+                    'events': 'yes'
                 }
             },
             // Output terminal styles (children of compound)
@@ -69,7 +70,8 @@ function initCytoscape() {
                     'height': 15,
                     'border-width': 2,
                     'border-color': '#ffb74d',
-                    'label': ''
+                    'label': '',
+                    'events': 'yes'
                 }
             },
             // Edge styles
@@ -194,8 +196,8 @@ function createCompoundObject(x, y) {
         position: { x: x + 45, y: y }
     });
 
-    // Lock child nodes relative to parent
-    cy.$(`#${input1Id}, #${input2Id}, #${outputId}`).lock();
+    // Make child nodes non-grabbable (they move with parent, but can't be grabbed individually)
+    cy.$(`#${input1Id}, #${input2Id}, #${outputId}`).ungrabify();
 }
 
 // Setup sidebar drag and drop
@@ -296,24 +298,20 @@ function setupEdgeCreation() {
     let isRightDragging = false;
     let sourceNode = null;
 
-    cy.on('mousedown', 'node', function(evt) {
-        if (evt.originalEvent.button === 2) { // Right click
-            evt.preventDefault();
-            evt.stopPropagation();
+    // Track right mouse button state
+    cy.on('cxttapstart', 'node', function(evt) {
+        const node = evt.target;
 
-            const node = evt.target;
-
-            // Only allow connections from terminals or regular nodes
-            if (node.data('type') === 'compound') {
-                return; // Can't connect to/from compound parent
-            }
-
-            isRightDragging = true;
-            sourceNode = node;
-
-            // Disable normal node dragging during right-click drag
-            cy.autoungrabify(true);
+        // Only allow connections from terminals or regular nodes
+        if (node.data('type') === 'compound') {
+            return; // Can't connect to/from compound parent
         }
+
+        isRightDragging = true;
+        sourceNode = node;
+
+        // Disable normal node dragging during right-click drag
+        cy.autoungrabify(true);
     });
 
     cy.on('mousemove', function(evt) {
@@ -350,8 +348,9 @@ function setupEdgeCreation() {
         }
     });
 
-    cy.on('mouseup', 'node', function(evt) {
-        if (evt.originalEvent.button === 2 && isRightDragging) {
+    // Listen for cxttapend (right-click release) on nodes
+    cy.on('cxttapend', 'node', function(evt) {
+        if (isRightDragging) {
             const targetNode = evt.target;
 
             // Clean up temp edge
@@ -365,14 +364,6 @@ function setupEdgeCreation() {
             if (sourceNode && targetNode && sourceNode.id() !== targetNode.id()) {
                 // Can't connect to compound parent
                 if (targetNode.data('type') === 'compound') {
-                    sourceNode = null;
-                    isRightDragging = false;
-                    cy.autoungrabify(false);
-                    return;
-                }
-
-                // Can't connect terminal to itself
-                if (sourceNode.id() === targetNode.id()) {
                     sourceNode = null;
                     isRightDragging = false;
                     cy.autoungrabify(false);
@@ -404,8 +395,8 @@ function setupEdgeCreation() {
         }
     });
 
-    // Handle mouseup outside of nodes
-    cy.on('mouseup', function(evt) {
+    // Handle right-click release outside of nodes
+    cy.on('cxttapend', function(evt) {
         if (isRightDragging && evt.target === cy) {
             // Clean up temp edge
             if (tempEdge) {
