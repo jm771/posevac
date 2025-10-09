@@ -62,7 +62,7 @@ function initCytoscape() {
                     'border-color': '#ba68c8',
                     'label': 'data(label)',
                     'color': '#d4d4d4',
-                    'text-valign': 'top',
+                    'text-valign': 'center',
                     'text-halign': 'center',
                     'font-size': 11,
                     'padding': 15,
@@ -162,7 +162,7 @@ function createStartNode(x, y) {
         position: { x, y }
     });
 
-    // Add output terminal (right side)
+    // Add output terminal (right edge)
     cy.add({
         group: 'nodes',
         data: {
@@ -171,7 +171,7 @@ function createStartNode(x, y) {
             type: 'output-terminal',
             terminalType: 'output'
         },
-        position: { x: x + 40, y: y }
+        position: { x: x + 35, y: y }
     });
 
     cy.$(`#${outputId}`).ungrabify();
@@ -193,7 +193,7 @@ function createStopNode(x, y) {
         position: { x, y }
     });
 
-    // Add input terminal (left side)
+    // Add input terminal (left edge)
     cy.add({
         group: 'nodes',
         data: {
@@ -202,7 +202,7 @@ function createStopNode(x, y) {
             type: 'input-terminal',
             terminalType: 'input'
         },
-        position: { x: x - 40, y: y }
+        position: { x: x - 35, y: y }
     });
 
     cy.$(`#${inputId}`).ungrabify();
