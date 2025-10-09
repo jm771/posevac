@@ -123,10 +123,6 @@ function initCytoscape() {
         boxSelectionEnabled: false
     });
 
-    // Prevent context menu on canvas
-    document.getElementById('cy').addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-    });
 }
 
 // Create a regular node
@@ -313,31 +309,77 @@ function setupEdgeCreation() {
     let sourceNode = null;
     let mousePos = { x: 0, y: 0 };
 
-    // Track right mouse button down on node
-    cy.on('mousedown', 'node', function(evt) {
-        if (evt.originalEvent.button === 2) { // Right click
-            const node = evt.target;
+    // Prevent context menu on cytoscape canvas
+    const cyContainer = document.getElementById('cy');
+    cyContainer.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+    });
 
-            // Only allow connections from terminals or regular nodes
-            if (node.data('type') === 'compound') {
-                return; // Can't connect to/from compound parent
+    // Track right mouse button down on node using DOM event
+    cyContainer.addEventListener('mousedown', function(e) {
+        if (e.button === 2) { // Right click
+            // Get mouse position and check if we're on a node
+            const cyBounds = cyContainer.getBoundingClientRect();
+            const renderedX = e.clientX - cyBounds.left;
+            const renderedY = e.clientY - cyBounds.top;
+
+            const pan = cy.pan();
+            const zoom = cy.zoom();
+            const modelX = (renderedX - pan.x) / zoom;
+            const modelY = (renderedY - pan.y) / zoom;
+
+            // Find node at this position
+            const elements = cy.elements().filter(function(ele) {
+                if (ele.isNode()) {
+                    const bb = ele.boundingBox();
+                    return modelX >= bb.x1 && modelX <= bb.x2 &&
+                           modelY >= bb.y1 && modelY <= bb.y2;
+                }
+                return false;
+            });
+
+            if (elements.length > 0) {
+                // Sort by size and pick smallest
+                const sorted = elements.sort(function(a, b) {
+                    const aBox = a.boundingBox();
+                    const bBox = b.boundingBox();
+                    const aArea = (aBox.x2 - aBox.x1) * (aBox.y2 - aBox.y1);
+                    const bArea = (bBox.x2 - bBox.x1) * (bBox.y2 - bBox.y1);
+                    return aArea - bArea;
+                });
+                const node = sorted[0];
+
+                // Only allow connections from terminals or regular nodes
+                if (node.data('type') !== 'compound') {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    isRightDragging = true;
+                    sourceNode = node;
+                    mousePos = { x: modelX, y: modelY };
+
+                    // Disable normal node dragging during right-click drag
+                    cy.autoungrabify(true);
+                }
             }
-
-            evt.originalEvent.preventDefault();
-            evt.originalEvent.stopPropagation();
-
-            isRightDragging = true;
-            sourceNode = node;
-
-            // Disable normal node dragging during right-click drag
-            cy.autoungrabify(true);
         }
     });
 
-    cy.on('mousemove', function(evt) {
+    // Track mouse movement with DOM event
+    cyContainer.addEventListener('mousemove', function(e) {
         if (isRightDragging && sourceNode) {
+            // Convert screen position to model position
+            const cyBounds = cyContainer.getBoundingClientRect();
+            const renderedX = e.clientX - cyBounds.left;
+            const renderedY = e.clientY - cyBounds.top;
+
+            const pan = cy.pan();
+            const zoom = cy.zoom();
+            const modelX = (renderedX - pan.x) / zoom;
+            const modelY = (renderedY - pan.y) / zoom;
+
             // Store mouse position
-            mousePos = evt.position || evt.cyPosition;
+            mousePos = { x: modelX, y: modelY };
 
             // Remove previous temp edge
             if (tempEdge) {
@@ -369,9 +411,9 @@ function setupEdgeCreation() {
         }
     });
 
-    // Handle mouse up on canvas
-    cy.on('mouseup', function(evt) {
-        if (evt.originalEvent.button === 2 && isRightDragging) { // Right button
+    // Handle mouse up with DOM event
+    cyContainer.addEventListener('mouseup', function(e) {
+        if (e.button === 2 && isRightDragging) { // Right button
             // Clean up temp edge
             if (tempEdge) {
                 cy.remove(tempEdge);
