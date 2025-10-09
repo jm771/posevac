@@ -15,21 +15,42 @@ function initCytoscape() {
         container: document.getElementById('cy'),
 
         style: [
-            // Regular node styles
+            // Start node styles
             {
-                selector: 'node[type="regular"]',
+                selector: 'node[type="start"]',
                 style: {
-                    'background-color': '#4fc3f7',
-                    'width': 40,
+                    'background-color': '#81c784',
+                    'width': 70,
                     'height': 40,
+                    'shape': 'roundrectangle',
                     'label': 'data(label)',
-                    'color': '#d4d4d4',
+                    'color': 'white',
                     'text-valign': 'center',
                     'text-halign': 'center',
                     'font-size': 12,
+                    'font-weight': 'bold',
                     'border-width': 3,
-                    'border-color': '#4fc3f7',
-                    'box-shadow': '0 0 10px rgba(79, 195, 247, 0.3)'
+                    'border-color': '#81c784',
+                    'box-shadow': '0 0 10px rgba(129, 199, 132, 0.3)'
+                }
+            },
+            // Stop node styles
+            {
+                selector: 'node[type="stop"]',
+                style: {
+                    'background-color': '#e57373',
+                    'width': 70,
+                    'height': 40,
+                    'shape': 'roundrectangle',
+                    'label': 'data(label)',
+                    'color': 'white',
+                    'text-valign': 'center',
+                    'text-halign': 'center',
+                    'font-size': 12,
+                    'font-weight': 'bold',
+                    'border-width': 3,
+                    'border-color': '#e57373',
+                    'box-shadow': '0 0 10px rgba(229, 115, 115, 0.3)'
                 }
             },
             // Compound parent node styles
@@ -125,76 +146,266 @@ function initCytoscape() {
 
 }
 
-// Create a regular node
-function createRegularNode(x, y) {
+// Create a start node (has 1 output terminal)
+function createStartNode(x, y) {
     const nodeId = `node-${nodeIdCounter++}`;
+    const outputId = `${nodeId}-out`;
+
+    // Add start node
     cy.add({
         group: 'nodes',
         data: {
             id: nodeId,
-            label: `N${nodeIdCounter}`,
-            type: 'regular'
+            label: 'start',
+            type: 'start'
         },
         position: { x, y }
     });
-}
 
-// Create a compound object with input/output terminals
-function createCompoundObject(x, y) {
-    const compoundId = `compound-${nodeIdCounter++}`;
-    const input1Id = `${compoundId}-in1`;
-    const input2Id = `${compoundId}-in2`;
-    const outputId = `${compoundId}-out`;
-
-    // Add compound parent node
+    // Add output terminal (right side)
     cy.add({
         group: 'nodes',
         data: {
-            id: compoundId,
-            label: `C${nodeIdCounter}`,
+            id: outputId,
+            parent: nodeId,
+            type: 'output-terminal',
+            terminalType: 'output'
+        },
+        position: { x: x + 40, y: y }
+    });
+
+    cy.$(`#${outputId}`).ungrabify();
+}
+
+// Create a stop node (has 1 input terminal)
+function createStopNode(x, y) {
+    const nodeId = `node-${nodeIdCounter++}`;
+    const inputId = `${nodeId}-in`;
+
+    // Add stop node
+    cy.add({
+        group: 'nodes',
+        data: {
+            id: nodeId,
+            label: 'stop',
+            type: 'stop'
+        },
+        position: { x, y }
+    });
+
+    // Add input terminal (left side)
+    cy.add({
+        group: 'nodes',
+        data: {
+            id: inputId,
+            parent: nodeId,
+            type: 'input-terminal',
+            terminalType: 'input'
+        },
+        position: { x: x - 40, y: y }
+    });
+
+    cy.$(`#${inputId}`).ungrabify();
+}
+
+// Create a plus node (2 inputs, 1 output)
+function createPlusNode(x, y) {
+    const nodeId = `node-${nodeIdCounter++}`;
+    const input1Id = `${nodeId}-in1`;
+    const input2Id = `${nodeId}-in2`;
+    const outputId = `${nodeId}-out`;
+
+    cy.add({
+        group: 'nodes',
+        data: {
+            id: nodeId,
+            label: '+',
             type: 'compound'
         },
         position: { x, y }
     });
 
-    // Add input terminal 1 (left side, top)
     cy.add({
         group: 'nodes',
         data: {
             id: input1Id,
-            parent: compoundId,
+            parent: nodeId,
             type: 'input-terminal',
             terminalType: 'input'
         },
         position: { x: x - 45, y: y - 20 }
     });
 
-    // Add input terminal 2 (left side, bottom)
     cy.add({
         group: 'nodes',
         data: {
             id: input2Id,
-            parent: compoundId,
+            parent: nodeId,
             type: 'input-terminal',
             terminalType: 'input'
         },
         position: { x: x - 45, y: y + 20 }
     });
 
-    // Add output terminal (right side, center)
     cy.add({
         group: 'nodes',
         data: {
             id: outputId,
-            parent: compoundId,
+            parent: nodeId,
             type: 'output-terminal',
             terminalType: 'output'
         },
         position: { x: x + 45, y: y }
     });
 
-    // Make child nodes non-grabbable (they move with parent, but can't be grabbed individually)
     cy.$(`#${input1Id}, #${input2Id}, #${outputId}`).ungrabify();
+}
+
+// Create a combine node (2 inputs, 1 output)
+function createCombineNode(x, y) {
+    const nodeId = `node-${nodeIdCounter++}`;
+    const input1Id = `${nodeId}-in1`;
+    const input2Id = `${nodeId}-in2`;
+    const outputId = `${nodeId}-out`;
+
+    cy.add({
+        group: 'nodes',
+        data: {
+            id: nodeId,
+            label: 'combine',
+            type: 'compound'
+        },
+        position: { x, y }
+    });
+
+    cy.add({
+        group: 'nodes',
+        data: {
+            id: input1Id,
+            parent: nodeId,
+            type: 'input-terminal',
+            terminalType: 'input'
+        },
+        position: { x: x - 45, y: y - 20 }
+    });
+
+    cy.add({
+        group: 'nodes',
+        data: {
+            id: input2Id,
+            parent: nodeId,
+            type: 'input-terminal',
+            terminalType: 'input'
+        },
+        position: { x: x - 45, y: y + 20 }
+    });
+
+    cy.add({
+        group: 'nodes',
+        data: {
+            id: outputId,
+            parent: nodeId,
+            type: 'output-terminal',
+            terminalType: 'output'
+        },
+        position: { x: x + 45, y: y }
+    });
+
+    cy.$(`#${input1Id}, #${input2Id}, #${outputId}`).ungrabify();
+}
+
+// Create a split node (1 input, 2 outputs)
+function createSplitNode(x, y) {
+    const nodeId = `node-${nodeIdCounter++}`;
+    const inputId = `${nodeId}-in`;
+    const output1Id = `${nodeId}-out1`;
+    const output2Id = `${nodeId}-out2`;
+
+    cy.add({
+        group: 'nodes',
+        data: {
+            id: nodeId,
+            label: 'split',
+            type: 'compound'
+        },
+        position: { x, y }
+    });
+
+    cy.add({
+        group: 'nodes',
+        data: {
+            id: inputId,
+            parent: nodeId,
+            type: 'input-terminal',
+            terminalType: 'input'
+        },
+        position: { x: x - 45, y: y }
+    });
+
+    cy.add({
+        group: 'nodes',
+        data: {
+            id: output1Id,
+            parent: nodeId,
+            type: 'output-terminal',
+            terminalType: 'output'
+        },
+        position: { x: x + 45, y: y - 20 }
+    });
+
+    cy.add({
+        group: 'nodes',
+        data: {
+            id: output2Id,
+            parent: nodeId,
+            type: 'output-terminal',
+            terminalType: 'output'
+        },
+        position: { x: x + 45, y: y + 20 }
+    });
+
+    cy.$(`#${inputId}, #${output1Id}, #${output2Id}`).ungrabify();
+}
+
+// Create a nop node (1 input, 1 output)
+function createNopNode(x, y) {
+    const nodeId = `node-${nodeIdCounter++}`;
+    const inputId = `${nodeId}-in`;
+    const outputId = `${nodeId}-out`;
+
+    cy.add({
+        group: 'nodes',
+        data: {
+            id: nodeId,
+            label: 'nop',
+            type: 'compound'
+        },
+        position: { x, y }
+    });
+
+    cy.add({
+        group: 'nodes',
+        data: {
+            id: inputId,
+            parent: nodeId,
+            type: 'input-terminal',
+            terminalType: 'input'
+        },
+        position: { x: x - 45, y: y }
+    });
+
+    cy.add({
+        group: 'nodes',
+        data: {
+            id: outputId,
+            parent: nodeId,
+            type: 'output-terminal',
+            terminalType: 'output'
+        },
+        position: { x: x + 45, y: y }
+    });
+
+    cy.$(`#${inputId}, #${outputId}`).ungrabify();
 }
 
 // Setup sidebar drag and drop
@@ -237,10 +448,26 @@ function setupSidebarDragDrop() {
         const modelX = (renderedX - pan.x) / zoom;
         const modelY = (renderedY - pan.y) / zoom;
 
-        if (componentType === 'regular-node') {
-            createRegularNode(modelX, modelY);
-        } else if (componentType === 'compound-object') {
-            createCompoundObject(modelX, modelY);
+        // Route to appropriate creation function based on component type
+        switch (componentType) {
+            case 'start':
+                createStartNode(modelX, modelY);
+                break;
+            case 'stop':
+                createStopNode(modelX, modelY);
+                break;
+            case 'plus':
+                createPlusNode(modelX, modelY);
+                break;
+            case 'combine':
+                createCombineNode(modelX, modelY);
+                break;
+            case 'split':
+                createSplitNode(modelX, modelY);
+                break;
+            case 'nop':
+                createNopNode(modelX, modelY);
+                break;
         }
     });
 }
@@ -284,12 +511,13 @@ function setupNodeDeletion() {
 
         // Delete node if dropped in sidebar
         if (nodeScreenX < sidebarBounds.right) {
-            // If it's a compound node, remove all children first
-            if (node.data('type') === 'compound') {
+            // If it's a compound node or start/stop node, remove all children first
+            if (node.data('type') === 'compound' || node.data('type') === 'start' || node.data('type') === 'stop') {
                 node.children().remove();
+                node.remove();
             }
-            // If it's a child node, remove parent too
-            if (node.parent().length > 0) {
+            // If it's a child node (terminal), remove parent too
+            else if (node.parent().length > 0) {
                 const parent = node.parent();
                 parent.children().remove();
                 parent.remove();
@@ -349,8 +577,8 @@ function setupEdgeCreation() {
                 });
                 const node = sorted[0];
 
-                // Only allow connections from terminals or regular nodes
-                if (node.data('type') !== 'compound') {
+                // Only allow connections to start from output terminals
+                if (node.data('terminalType') === 'output') {
                     e.preventDefault();
                     e.stopPropagation();
 
@@ -447,8 +675,16 @@ function setupEdgeCreation() {
 
             // Create or delete edge if we have a valid target
             if (sourceNode && targetNode && sourceNode.id() !== targetNode.id()) {
-                // Can't connect to compound parent
-                if (targetNode.data('type') !== 'compound') {
+                // Validate edge rules:
+                // 1. Source must be an output terminal
+                // 2. Target must be an input terminal
+                // 3. Can't connect to compound parent (start/stop)
+
+                const sourceType = sourceNode.data('terminalType');
+                const targetType = targetNode.data('terminalType');
+
+                // Check if source is output and target is input
+                if (sourceType === 'output' && targetType === 'input') {
                     // Check if edge already exists
                     const existingEdge = cy.edges(`[source="${sourceNode.id()}"][target="${targetNode.id()}"]`);
 
@@ -456,16 +692,28 @@ function setupEdgeCreation() {
                         // Delete existing edge
                         existingEdge.remove();
                     } else {
-                        // Create new edge
-                        cy.add({
-                            group: 'edges',
-                            data: {
-                                id: `edge-${edgeIdCounter++}`,
-                                source: sourceNode.id(),
-                                target: targetNode.id()
-                            }
-                        });
+                        // Check if target input already has an incoming edge
+                        const targetIncomingEdges = cy.edges(`[target="${targetNode.id()}"]`);
+
+                        if (targetIncomingEdges.length > 0) {
+                            // Target already has an incoming edge - reject with visual feedback
+                            console.log('Input terminal already has a connection');
+                            // Could add visual feedback here (flash red, etc.)
+                        } else {
+                            // Create new edge
+                            cy.add({
+                                group: 'edges',
+                                data: {
+                                    id: `edge-${edgeIdCounter++}`,
+                                    source: sourceNode.id(),
+                                    target: targetNode.id()
+                                }
+                            });
+                        }
                     }
+                } else {
+                    // Invalid connection direction
+                    console.log('Edges can only go from output terminals to input terminals');
                 }
             }
 

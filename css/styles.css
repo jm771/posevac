@@ -102,14 +102,70 @@ body {
     font-weight: 500;
 }
 
-/* Regular Node Preview */
-.regular-node-preview .node-circle {
-    width: 40px;
+/* Start Node Preview */
+.start-preview .start-node {
+    width: 70px;
     height: 40px;
+    border-radius: 20px;
+    background-color: var(--accent-green);
+    border: 3px solid var(--accent-green);
+    box-shadow: 0 0 10px rgba(129, 199, 132, 0.3);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.start-preview .node-text {
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 8px;
+}
+
+.start-preview .output-terminal {
+    position: absolute;
+    right: -7px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
-    background-color: var(--accent-blue);
-    border: 3px solid var(--accent-blue);
-    box-shadow: 0 0 10px rgba(79, 195, 247, 0.3);
+    background-color: var(--accent-orange);
+    border: 2px solid var(--accent-orange);
+}
+
+/* Stop Node Preview */
+.stop-preview .stop-node {
+    width: 70px;
+    height: 40px;
+    border-radius: 20px;
+    background-color: var(--accent-red);
+    border: 3px solid var(--accent-red);
+    box-shadow: 0 0 10px rgba(229, 115, 115, 0.3);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stop-preview .node-text {
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.stop-preview .input-terminal {
+    position: absolute;
+    left: -7px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--accent-green);
+    border: 2px solid var(--accent-green);
 }
 
 /* Compound Object Preview */
@@ -121,33 +177,32 @@ body {
     border-radius: 6px;
     position: relative;
     box-shadow: 0 0 10px rgba(186, 104, 200, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.compound-preview .compound-text {
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .compound-preview .terminal {
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background-color: var(--accent-green);
     position: absolute;
+}
+
+.compound-preview .input-terminal {
+    background-color: var(--accent-green);
     border: 2px solid var(--accent-green);
 }
 
-.compound-preview .input-terminal:nth-child(1) {
-    left: -7px;
-    top: 15px;
-}
-
-.compound-preview .input-terminal:nth-child(2) {
-    left: -7px;
-    bottom: 15px;
-}
-
 .compound-preview .output-terminal {
-    right: -7px;
-    top: 50%;
-    transform: translateY(-50%);
     background-color: var(--accent-orange);
-    border-color: var(--accent-orange);
+    border: 2px solid var(--accent-orange);
 }
 
 /* Delete Zone */
