@@ -1,12 +1,10 @@
 // Interactive Graph Tool with Cytoscape.js
 // Main application logic
 
-import cytoscape, { Core, NodeSingular, EdgeSingular, Stylesheet } from 'cytoscape';
+import cytoscape, { Core, NodeSingular, EdgeSingular, StylesheetJson } from 'cytoscape';
 
 // Type definitions
 type ComponentType = 'start' | 'stop' | 'plus' | 'combine' | 'split' | 'nop';
-type NodeType = ComponentType | 'compound' | 'input-terminal' | 'output-terminal';
-type TerminalType = 'input' | 'output';
 
 interface Position {
     x: number;
@@ -37,15 +35,15 @@ let edgeIdCounter = 0;
 let tempEdge: EdgeSingular | null = null;
 
 // Get shared Cytoscape styles (used for main canvas and previews)
-function getCytoscapeStyles(): Stylesheet[] {
+function getCytoscapeStyles(): StylesheetJson {
     return [
         // Start node styles
         {
             selector: 'node[type="start"]',
             style: {
                 'background-color': '#81c784',
-                'min-width': 80,
-                'min-height': 50,
+                'min-width': "80",
+                'min-height': "50",
                 'shape': 'diamond',
                 'label': 'data(label)',
                 'color': 'white',
@@ -55,8 +53,8 @@ function getCytoscapeStyles(): Stylesheet[] {
                 'font-weight': 'bold',
                 'border-width': 3,
                 'border-color': '#81c784',
-                'box-shadow': '0 0 10px rgba(129, 199, 132, 0.3)',
-                'padding': 0,  // Allow terminals at the edges
+                // 'box-shadow': '0 0 10px rgba(129, 199, 132, 0.3)',
+                'padding': "0",  // Allow terminals at the edges
                 'compound-sizing-wrt-labels': 'include'  // Include label in size calculation
             }
         },
@@ -65,8 +63,8 @@ function getCytoscapeStyles(): Stylesheet[] {
             selector: 'node[type="stop"]',
             style: {
                 'background-color': '#e57373',
-                'min-width': 80,
-                'min-height': 50,
+                'min-width': "80",
+                'min-height': "50",
                 'shape': 'diamond',
                 'label': 'data(label)',
                 'color': 'white',
@@ -76,8 +74,8 @@ function getCytoscapeStyles(): Stylesheet[] {
                 'font-weight': 'bold',
                 'border-width': 3,
                 'border-color': '#e57373',
-                'box-shadow': '0 0 10px rgba(229, 115, 115, 0.3)',
-                'padding': 0,  // Allow terminals at the edges
+                // 'box-shadow': '0 0 10px rgba(229, 115, 115, 0.3)',
+                'padding': '0',  // Allow terminals at the edges
                 'compound-sizing-wrt-labels': 'include'  // Include label in size calculation
             }
         },
@@ -92,10 +90,10 @@ function getCytoscapeStyles(): Stylesheet[] {
                 'color': '#d4d4d4',
                 'text-valign': 'center',
                 'text-halign': 'center',
-                'font-size': 11,
-                'padding': 5,
+                'font-size': '11',
+                'padding': '5',
                 'shape': 'round-rectangle',
-                'box-shadow': '0 0 10px rgba(186, 104, 200, 0.3)'
+                // 'box-shadow': '0 0 10px rgba(186, 104, 200, 0.3)'
             }
         },
         // Input terminal styles (children of compound)
@@ -886,7 +884,7 @@ function getOutputTerminals(node: NodeSingular): NodeSingular[] {
     const nodeType = node.data('type');
     if (nodeType === 'start' || nodeType === 'compound') {
         const children = node.children();
-        return children.filter(child => child.data('terminalType') === 'output').toArray();
+        return children.filter(child => child.data('terminalType') === 'output').toArray() as NodeSingular[];
     }
 
     return [];
@@ -899,7 +897,7 @@ function getOutgoingEdges(node: NodeSingular): EdgeSingular[] {
 
     outputTerminals.forEach(terminal => {
         const terminalEdges = cy.edges(`[source="${terminal.id()}"]`);
-        edges = edges.concat(terminalEdges.toArray());
+        edges = edges.concat(terminalEdges.toArray() as EdgeSingular[]);
     });
 
     return edges;
@@ -1023,7 +1021,7 @@ async function stepForward(): Promise<void> {
     const edge = outgoingEdges[0];
     const sourceTerminal = cy.getElementById(edge.data('source')) as NodeSingular;
     const targetTerminal = cy.getElementById(edge.data('target')) as NodeSingular;
-    const targetNode = targetTerminal.parent();
+    const targetNode = targetTerminal.parent().first();
 
     console.log('Animating from', currentNode.id(), 'to', targetNode.id());
 
@@ -1119,7 +1117,6 @@ function resetAnimation(): void {
 function updateButtonStates(): void {
     const forwardBtn = document.getElementById('forwardBtn') as HTMLButtonElement | null;
     const backBtn = document.getElementById('backBtn') as HTMLButtonElement | null;
-    const resetBtn = document.getElementById('resetBtn') as HTMLButtonElement | null;
 
     if (!forwardBtn || !backBtn) return;
 
@@ -1239,7 +1236,7 @@ function initializePreviews(): void {
         }
 
         // Fit the preview to show the entire node
-        previewCy.fit(null, 10);
+        previewCy.fit(undefined, 10);
     });
 }
 
