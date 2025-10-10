@@ -1,5 +1,3 @@
-// Interactive Graph Tool with Cytoscape.js
-// Main application logic
 import cytoscape from 'cytoscape';
 // Global state
 let cy;
@@ -14,8 +12,8 @@ function getCytoscapeStyles() {
             selector: 'node[type="start"]',
             style: {
                 'background-color': '#81c784',
-                'min-width': 80,
-                'min-height': 50,
+                'min-width': "80",
+                'min-height': "50",
                 'shape': 'diamond',
                 'label': 'data(label)',
                 'color': 'white',
@@ -25,8 +23,8 @@ function getCytoscapeStyles() {
                 'font-weight': 'bold',
                 'border-width': 3,
                 'border-color': '#81c784',
-                'box-shadow': '0 0 10px rgba(129, 199, 132, 0.3)',
-                'padding': 0, // Allow terminals at the edges
+                // 'box-shadow': '0 0 10px rgba(129, 199, 132, 0.3)',
+                'padding': "0", // Allow terminals at the edges
                 'compound-sizing-wrt-labels': 'include' // Include label in size calculation
             }
         },
@@ -35,8 +33,8 @@ function getCytoscapeStyles() {
             selector: 'node[type="stop"]',
             style: {
                 'background-color': '#e57373',
-                'min-width': 80,
-                'min-height': 50,
+                'min-width': "80",
+                'min-height': "50",
                 'shape': 'diamond',
                 'label': 'data(label)',
                 'color': 'white',
@@ -46,8 +44,8 @@ function getCytoscapeStyles() {
                 'font-weight': 'bold',
                 'border-width': 3,
                 'border-color': '#e57373',
-                'box-shadow': '0 0 10px rgba(229, 115, 115, 0.3)',
-                'padding': 0, // Allow terminals at the edges
+                // 'box-shadow': '0 0 10px rgba(229, 115, 115, 0.3)',
+                'padding': '0', // Allow terminals at the edges
                 'compound-sizing-wrt-labels': 'include' // Include label in size calculation
             }
         },
@@ -62,10 +60,10 @@ function getCytoscapeStyles() {
                 'color': '#d4d4d4',
                 'text-valign': 'center',
                 'text-halign': 'center',
-                'font-size': 11,
-                'padding': 5,
+                'font-size': '11',
+                'padding': '5',
                 'shape': 'round-rectangle',
-                'box-shadow': '0 0 10px rgba(186, 104, 200, 0.3)'
+                // 'box-shadow': '0 0 10px rgba(186, 104, 200, 0.3)'
             }
         },
         // Input terminal styles (children of compound)
@@ -876,7 +874,7 @@ async function stepForward() {
     const edge = outgoingEdges[0];
     const sourceTerminal = cy.getElementById(edge.data('source'));
     const targetTerminal = cy.getElementById(edge.data('target'));
-    const targetNode = targetTerminal.parent();
+    const targetNode = targetTerminal.parent().first();
     console.log('Animating from', currentNode.id(), 'to', targetNode.id());
     // Build waypoints: current center → output terminal → target terminal → target center
     const waypoints = [];
@@ -954,7 +952,6 @@ function resetAnimation() {
 function updateButtonStates() {
     const forwardBtn = document.getElementById('forwardBtn');
     const backBtn = document.getElementById('backBtn');
-    const resetBtn = document.getElementById('resetBtn');
     if (!forwardBtn || !backBtn)
         return;
     if (!animationState.currentNode) {
@@ -1059,7 +1056,7 @@ function initializePreviews() {
                 break;
         }
         // Fit the preview to show the entire node
-        previewCy.fit(null, 10);
+        previewCy.fit(undefined, 10);
     });
 }
 // Initialize the application
