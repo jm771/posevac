@@ -291,3 +291,91 @@ body {
 .sidebar::-webkit-scrollbar-thumb:hover {
     background: var(--border-color);
 }
+
+/* Controls Panel (Right Side) */
+.controls-panel {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 180px;
+    background-color: var(--bg-secondary);
+    border-left: 1px solid var(--border-color);
+    border-radius: 8px 0 0 8px;
+    padding: 20px;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+}
+
+.controls-panel h3 {
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.control-btn {
+    background-color: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.control-btn:hover:not(:disabled) {
+    background-color: var(--bg-hover);
+    border-color: var(--accent-blue);
+    transform: translateY(-1px);
+}
+
+.control-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.control-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* PC Marker */
+.pc-marker {
+    position: absolute;
+    pointer-events: none;
+    z-index: 1000;
+    display: none; /* Hidden until initialized */
+}
+
+.pc-arrow {
+    position: absolute;
+    top: -50px;
+    left: -50px;
+    pointer-events: none;
+}
+
+.pc-box {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background-color: var(--accent-orange);
+    border: 2px solid var(--text-primary);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}

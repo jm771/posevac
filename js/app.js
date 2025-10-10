@@ -725,12 +725,366 @@ function setupEdgeCreation() {
     });
 }
 
+// Animation state management
+let animationState = {
+    currentNode: null,        // Current node the marker is at
+    stepHistory: [],          // Array of nodes for backward navigation
+    isAnimating: false,       // Prevent multiple animations
+    arrowTipX: 0,             // Current arrow tip position
+    arrowTipY: 0,
+    marker: null,             // DOM element reference
+    arrow: null,              // SVG arrow element
+    pcBox: null               // PC box element
+};
+
+// Helper: Calculate PC marker position (30° above and to the right of arrow tip)
+function updatePCMarkerPosition(arrowTipX, arrowTipY, arrowAngle) {
+    const marker = animationState.marker;
+    const arrow = animationState.arrow;
+    const pcBox = animationState.pcBox;
+
+    if (!marker || !arrow || !pcBox) return;
+
+    // PC box should be 30 degrees above and to the right of arrow tip
+    // Constant offset distance from arrow tip to PC center
+    const offsetDistance = 50; // pixels
+    const offsetAngle = arrowAngle - 30; // 30 degrees above the arrow direction
+
+    const pcCenterX = arrowTipX + offsetDistance * Math.cos(offsetAngle * Math.PI / 180);
+    const pcCenterY = arrowTipY + offsetDistance * Math.sin(offsetAngle * Math.PI / 180);
+
+    // Position the PC box (centered on the calculated point)
+    pcBox.style.left = (pcCenterX - 15) + 'px'; // 15 = half of 30px box
+    pcBox.style.top = (pcCenterY - 15) + 'px';
+
+    // Draw arrow from PC center to arrow tip
+    const svgLine = arrow.querySelector('line');
+    const svgArrowhead = arrow.querySelector('polygon');
+
+    // Arrow starts at PC center, points to arrow tip
+    svgLine.setAttribute('x1', pcCenterX);
+    svgLine.setAttribute('y1', pcCenterY);
+    svgLine.setAttribute('x2', arrowTipX);
+    svgLine.setAttribute('y2', arrowTipY);
+
+    // Arrowhead at the tip
+    const arrowheadSize = 8;
+    const angle = Math.atan2(arrowTipY - pcCenterY, arrowTipX - pcCenterX);
+    const x1 = arrowTipX;
+    const y1 = arrowTipY;
+    const x2 = arrowTipX - arrowheadSize * Math.cos(angle - Math.PI / 6);
+    const y2 = arrowTipY - arrowheadSize * Math.sin(angle - Math.PI / 6);
+    const x3 = arrowTipX - arrowheadSize * Math.cos(angle + Math.PI / 6);
+    const y3 = arrowTipY - arrowheadSize * Math.sin(angle + Math.PI / 6);
+
+    svgArrowhead.setAttribute('points', `${x1},${y1} ${x2},${y2} ${x3},${y3}`);
+
+    // Store current arrow tip position
+    animationState.arrowTipX = arrowTipX;
+    animationState.arrowTipY = arrowTipY;
+}
+
+// Helper: Convert model coordinates to screen coordinates
+function modelToScreen(modelX, modelY) {
+    const pan = cy.pan();
+    const zoom = cy.zoom();
+    const cyBounds = document.getElementById('cy').getBoundingClientRect();
+
+    const renderedX = modelX * zoom + pan.x;
+    const renderedY = modelY * zoom + pan.y;
+
+    return {
+        x: cyBounds.left + renderedX,
+        y: cyBounds.top + renderedY
+    };
+}
+
+// Initialize animation - find start node and position marker
+function initializeAnimation() {
+    // Find start node
+    const startNodes = cy.nodes('[type="start"]');
+
+    if (startNodes.length === 0) {
+        console.error('No start node found in graph');
+        return false;
+    }
+
+    if (startNodes.length > 1) {
+        console.warn('Multiple start nodes found, using first one');
+    }
+
+    const startNode = startNodes[0];
+    const startPos = startNode.position();
+
+    // Convert start node center to screen coordinates
+    const screenPos = modelToScreen(startPos.x, startPos.y);
+
+    // Initialize marker elements
+    animationState.marker = document.getElementById('pcMarker');
+    animationState.arrow = animationState.marker.querySelector('.pc-arrow');
+    animationState.pcBox = animationState.marker.querySelector('.pc-box');
+    animationState.currentNode = startNode;
+    animationState.stepHistory = [startNode];
+
+    // Show the marker
+    animationState.marker.style.display = 'block';
+
+    // Position arrow tip at start node center, pointing right (0 degrees)
+    updatePCMarkerPosition(screenPos.x, screenPos.y, 0);
+
+    // Update button states
+    updateButtonStates();
+
+    return true;
+}
+
+// Get output terminals from a node
+function getOutputTerminals(node) {
+    if (!node) return [];
+
+    // For start nodes, find the output terminal child
+    if (node.data('type') === 'start' || node.data('type') === 'compound') {
+        const children = node.children();
+        return children.filter(child => child.data('terminalType') === 'output');
+    }
+
+    return [];
+}
+
+// Get outgoing edges from output terminals
+function getOutgoingEdges(node) {
+    const outputTerminals = getOutputTerminals(node);
+    let edges = [];
+
+    outputTerminals.forEach(terminal => {
+        const terminalEdges = cy.edges(`[source="${terminal.id()}"]`);
+        edges = edges.concat(terminalEdges.toArray());
+    });
+
+    return edges;
+}
+
+// Animate along a path with multiple waypoints
+function animateAlongPath(waypoints, duration) {
+    return new Promise((resolve) => {
+        if (!waypoints || waypoints.length === 0) {
+            console.error('No waypoints provided for animation');
+            resolve();
+            return;
+        }
+
+        const startTime = performance.now();
+
+        function animate(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+
+            // Find which segment we're on
+            const segmentCount = waypoints.length - 1;
+
+            if (segmentCount === 0) {
+                // Only one waypoint, just position there
+                updatePCMarkerPosition(waypoints[0].x, waypoints[0].y, waypoints[0].angle);
+                resolve();
+                return;
+            }
+
+            const segmentProgress = progress * segmentCount;
+            const segmentIndex = Math.floor(segmentProgress);
+            const localProgress = segmentProgress - segmentIndex;
+
+            if (segmentIndex >= segmentCount) {
+                // Animation complete - position at final waypoint
+                const final = waypoints[waypoints.length - 1];
+                updatePCMarkerPosition(final.x, final.y, final.angle);
+                resolve();
+                return;
+            }
+
+            // Interpolate between current and next waypoint
+            const current = waypoints[segmentIndex];
+            const next = waypoints[segmentIndex + 1];
+
+            if (!current || !next) {
+                console.error('Invalid waypoint at index', segmentIndex, 'of', waypoints.length);
+                resolve();
+                return;
+            }
+
+            const x = current.x + (next.x - current.x) * localProgress;
+            const y = current.y + (next.y - current.y) * localProgress;
+            const angle = current.angle + (next.angle - current.angle) * localProgress;
+
+            updatePCMarkerPosition(x, y, angle);
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                resolve();
+            }
+        }
+
+        requestAnimationFrame(animate);
+    });
+}
+
+// Step forward in animation
+async function stepForward() {
+    console.log('stepForward called');
+
+    if (animationState.isAnimating) return;
+    if (!animationState.currentNode) {
+        console.log('No current node, initializing...');
+        if (!initializeAnimation()) {
+            console.log('Initialization failed');
+            return;
+        }
+        console.log('Initialization succeeded');
+    }
+
+    animationState.isAnimating = true;
+
+    const currentNode = animationState.currentNode;
+    console.log('Current node:', currentNode.id());
+
+    // Get outgoing edges
+    const outgoingEdges = getOutgoingEdges(currentNode);
+    console.log('Outgoing edges:', outgoingEdges.length);
+
+    if (outgoingEdges.length === 0) {
+        console.log('No outgoing edges - end of path');
+        animationState.isAnimating = false;
+        updateButtonStates();
+        return;
+    }
+
+    if (outgoingEdges.length > 1) {
+        console.error('Multiple output edges detected - not supported yet');
+        animationState.isAnimating = false;
+        updateButtonStates();
+        return;
+    }
+
+    const edge = outgoingEdges[0];
+    const sourceTerminal = cy.getElementById(edge.data('source'));
+    const targetTerminal = cy.getElementById(edge.data('target'));
+    const targetNode = targetTerminal.parent();
+
+    console.log('Animating from', currentNode.id(), 'to', targetNode.id());
+
+    // Build waypoints: current center → output terminal → target terminal → target center
+    const waypoints = [];
+
+    // Current node center
+    const currentPos = currentNode.position();
+    const currentScreen = modelToScreen(currentPos.x, currentPos.y);
+    waypoints.push({ x: currentScreen.x, y: currentScreen.y, angle: 0 });
+
+    // Output terminal position
+    const outputPos = sourceTerminal.position();
+    const outputScreen = modelToScreen(outputPos.x, outputPos.y);
+    const angleToOutput = Math.atan2(outputScreen.y - currentScreen.y, outputScreen.x - currentScreen.x) * 180 / Math.PI;
+    waypoints.push({ x: outputScreen.x, y: outputScreen.y, angle: angleToOutput });
+
+    // Target input terminal position
+    const inputPos = targetTerminal.position();
+    const inputScreen = modelToScreen(inputPos.x, inputPos.y);
+    const angleAlongEdge = Math.atan2(inputScreen.y - outputScreen.y, inputScreen.x - outputScreen.x) * 180 / Math.PI;
+    waypoints.push({ x: inputScreen.x, y: inputScreen.y, angle: angleAlongEdge });
+
+    // Target node center
+    const targetPos = targetNode.position();
+    const targetScreen = modelToScreen(targetPos.x, targetPos.y);
+    const angleToCenter = Math.atan2(targetScreen.y - inputScreen.y, targetScreen.x - inputScreen.x) * 180 / Math.PI;
+    waypoints.push({ x: targetScreen.x, y: targetScreen.y, angle: angleToCenter });
+
+    console.log('Waypoints:', waypoints);
+
+    // Animate along path
+    await animateAlongPath(waypoints, 500);
+
+    // Update state
+    animationState.currentNode = targetNode;
+    animationState.stepHistory.push(targetNode);
+    animationState.isAnimating = false;
+
+    updateButtonStates();
+}
+
+// Step backward in animation
+async function stepBackward() {
+    if (animationState.isAnimating) return;
+    if (animationState.stepHistory.length <= 1) return; // Can't go before start
+
+    animationState.isAnimating = true;
+
+    // Remove current node from history
+    animationState.stepHistory.pop();
+    const previousNode = animationState.stepHistory[animationState.stepHistory.length - 1];
+
+    // Animate back to previous node
+    const targetPos = previousNode.position();
+    const targetScreen = modelToScreen(targetPos.x, targetPos.y);
+
+    await animateAlongPath([
+        { x: animationState.arrowTipX, y: animationState.arrowTipY, angle: 0 },
+        { x: targetScreen.x, y: targetScreen.y, angle: 0 }
+    ], 500);
+
+    animationState.currentNode = previousNode;
+    animationState.isAnimating = false;
+
+    updateButtonStates();
+}
+
+// Reset animation to start
+function resetAnimation() {
+    if (animationState.isAnimating) return;
+
+    initializeAnimation();
+}
+
+// Update button states based on current position
+function updateButtonStates() {
+    const forwardBtn = document.getElementById('forwardBtn');
+    const backBtn = document.getElementById('backBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    if (!animationState.currentNode) {
+        forwardBtn.disabled = true;
+        backBtn.disabled = true;
+        return;
+    }
+
+    // Forward: disabled if no outgoing edges
+    const outgoingEdges = getOutgoingEdges(animationState.currentNode);
+    forwardBtn.disabled = outgoingEdges.length === 0;
+
+    // Back: disabled if at start
+    backBtn.disabled = animationState.stepHistory.length <= 1;
+}
+
+// Setup animation controls
+function setupAnimationControls() {
+    const forwardBtn = document.getElementById('forwardBtn');
+    const backBtn = document.getElementById('backBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    forwardBtn.addEventListener('click', stepForward);
+    backBtn.addEventListener('click', stepBackward);
+    resetBtn.addEventListener('click', resetAnimation);
+
+    // Don't initialize until user clicks - they need to add nodes first
+    // Initialize will happen automatically on first forward click
+}
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     initCytoscape();
     setupSidebarDragDrop();
     setupNodeDeletion();
     setupEdgeCreation();
+    setupAnimationControls();
 
     console.log('Interactive Graph Tool initialized');
 });
