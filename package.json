@@ -17,10 +17,10 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@types/cytoscape": "^3.21.0",
+    "@types/cytoscape": "^3.21.9",
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "cytoscape": "^3.28.1"
+    "cytoscape": "^3.33.1"
   }
 }

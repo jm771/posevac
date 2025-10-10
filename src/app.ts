@@ -8,14 +8,6 @@ type ComponentType = 'start' | 'stop' | 'plus' | 'combine' | 'split' | 'nop';
 type NodeType = ComponentType | 'compound' | 'input-terminal' | 'output-terminal';
 type TerminalType = 'input' | 'output';
 
-interface NodeData {
-    id: string;
-    label?: string;
-    type: NodeType;
-    parent?: string;
-    terminalType?: TerminalType;
-}
-
 interface Position {
     x: number;
     y: number;
@@ -42,8 +34,6 @@ interface AnimationState {
 let cy: Core;
 let nodeIdCounter = 0;
 let edgeIdCounter = 0;
-let draggedElement: HTMLElement | null = null;
-let rightClickSource: NodeSingular | null = null;
 let tempEdge: EdgeSingular | null = null;
 
 // Get shared Cytoscape styles (used for main canvas and previews)
@@ -456,8 +446,6 @@ function createNopNode(x: number, y: number): void {
 
 // Setup sidebar drag and drop
 function setupSidebarDragDrop(): void {
-    const sidebar = document.getElementById('sidebar');
-    const deleteZone = document.getElementById('deleteZone');
     const componentTemplates = document.querySelectorAll<HTMLElement>('.component-template');
 
     componentTemplates.forEach(template => {
@@ -531,12 +519,6 @@ function setupNodeDeletion(): void {
     const cyContainer = document.getElementById('cy');
     if (!sidebar || !deleteZone || !cyContainer) return;
 
-    let draggedNode: NodeSingular | null = null;
-
-    cy.on('grab', 'node', function(evt) {
-        draggedNode = evt.target;
-    });
-
     cy.on('drag', 'node', function(evt) {
         const node = evt.target;
         const renderedPos = node.renderedPosition();
@@ -582,7 +564,6 @@ function setupNodeDeletion(): void {
         }
 
         deleteZone.classList.remove('active');
-        draggedNode = null;
     });
 }
 
@@ -936,7 +917,6 @@ function animateAlongPath(waypoints: Waypoint[], duration: number): Promise<void
         console.log('Starting animation with', waypoints.length, 'waypoints over', duration, 'ms');
 
         const startTime = performance.now();
-        let animationFrameId: number | null = null;
 
         function animate(currentTime: number): void {
             const elapsed = currentTime - startTime;
@@ -985,14 +965,14 @@ function animateAlongPath(waypoints: Waypoint[], duration: number): Promise<void
             updatePCMarkerPosition(x, y, angle);
 
             if (progress < 1) {
-                animationFrameId = requestAnimationFrame(animate);
+                requestAnimationFrame(animate);
             } else {
                 console.log('Animation progress complete');
                 resolve();
             }
         }
 
-        animationFrameId = requestAnimationFrame(animate);
+        requestAnimationFrame(animate);
     });
 }
 
