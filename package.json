@@ -1,0 +1,26 @@
+{
+  "name": "interactive-graph-tool",
+  "version": "1.0.0",
+  "description": "Interactive graph visualization tool with animation support",
+  "main": "js/app.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "graph",
+    "visualization",
+    "cytoscape",
+    "animation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/cytoscape": "^3.21.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "cytoscape": "^3.28.1"
+  }
+}

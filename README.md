@@ -1,12 +1,23 @@
 # Interactive Graph Tool
 
-An interactive graph editor built with Cytoscape.js featuring drag-and-drop components, node manipulation, and edge creation/deletion.
+An interactive graph editor built with Cytoscape.js and TypeScript, featuring drag-and-drop components, node manipulation, edge creation/deletion, and animated program counter simulation.
 
 ## Features
 
 ### Component Palette
-- **Regular Node**: Simple circular graph node
-- **Compound Object**: Logic gate-style component with 2 input terminals and 1 output terminal
+- **Start Node**: Diamond-shaped entry point (1 output)
+- **Stop Node**: Diamond-shaped exit point (1 input)
+- **Plus Node**: Compound node with 2 inputs, 1 output
+- **Combine Node**: Compound node with 2 inputs, 1 output
+- **Split Node**: Compound node with 1 input, 2 outputs
+- **NOP Node**: Pass-through node with 1 input, 1 output
+
+### Animation Controls
+- **PC Marker**: Visual program counter showing current execution position
+- **Step Forward**: Advance to next node
+- **Step Backward**: Return to previous node
+- **Reset**: Return to start node
+- PC marker follows pan/zoom and node movements
 
 ### Interactions
 
@@ -37,11 +48,44 @@ An interactive graph editor built with Cytoscape.js featuring drag-and-drop comp
 - Deleting a compound object removes all its terminals
 - Connected edges are automatically removed when nodes are deleted
 
+## Development
+
+### Prerequisites
+
+- Node.js (v16 or higher)
+- npm
+
+### Installation
+
+```bash
+npm install
+```
+
+This installs TypeScript and Cytoscape type definitions.
+
+### Building
+
+The project is written in TypeScript. Source files are in `src/` and compile to JavaScript in `js/`.
+
+#### Build once
+
+```bash
+npm run build
+```
+
+#### Watch mode (auto-rebuild on changes)
+
+```bash
+npm run watch
+# or
+npm run dev
+```
+
 ## Technical Details
 
 ### Technologies
+- **TypeScript** - Type-safe application logic
 - **Cytoscape.js** - Graph visualization and manipulation
-- **Vanilla JavaScript** - Application logic
 - **HTML5 Drag & Drop API** - Sidebar component dragging
 - **CSS3** - Dark IDE-themed styling
 
@@ -58,20 +102,54 @@ Dark theme inspired by modern IDEs with syntax highlighting colors:
 ```
 interactive-graph-tool/
 ├── index.html          # Main HTML structure
+├── src/
+│   └── app.ts         # TypeScript source code
+├── js/
+│   └── app.js         # Compiled JavaScript (generated)
 ├── css/
 │   └── styles.css     # Dark theme styling
-├── js/
-│   └── app.js         # Application logic
+├── tsconfig.json      # TypeScript configuration
+├── package.json       # Dependencies and scripts
 └── README.md          # Documentation
 ```
 
+### Type Safety
+
+The project uses TypeScript for improved maintainability. Key types include:
+
+- `ComponentType`: Valid node component types
+- `NodeData`: Data structure for graph nodes
+- `AnimationState`: State management for PC animation
+- `Position`: 2D coordinates
+- `Waypoint`: Position with angle for animation paths
+
 ## Usage
 
-1. Open `index.html` in a modern web browser
+### Running the Application
+
+After building, open `index.html` in a web browser. For development, use a local server:
+
+```bash
+# Using Python 3
+python3 -m http.server 8000
+
+# Using Node.js http-server (install: npm install -g http-server)
+http-server
+
+# Using VS Code Live Server extension
+# Right-click index.html and select "Open with Live Server"
+```
+
+Then navigate to `http://localhost:8000`.
+
+### Using the Tool
+
+1. Build the TypeScript code (see Development section)
 2. Drag components from the left sidebar onto the canvas
 3. Use left-click to move components
-4. Use right-click + drag to create/delete edges
+4. Use right-click + drag between terminals to create/delete edges
 5. Drag components back to sidebar to delete them
+6. Use animation controls on the right to step through execution
 
 ## Browser Compatibility
 
