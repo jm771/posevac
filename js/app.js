@@ -66,11 +66,8 @@ function getCytoscapeStyles() {
                 'text-valign': 'center',
                 'text-halign': 'center',
                 'font-size': 11,
-                'padding': 0,  // Set to 0 to allow terminals at edges
-                'min-width': 100,  // Enforce minimum width
-                'min-height': 60,  // Enforce minimum height
+                'padding': 5,
                 'shape': 'round-rectangle',
-                'compound-sizing-wrt-labels': 'include',
                 'box-shadow': '0 0 10px rgba(186, 104, 200, 0.3)'
             }
         },
