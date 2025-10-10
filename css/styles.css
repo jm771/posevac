@@ -94,115 +94,15 @@ body {
     align-items: center;
     justify-content: center;
     position: relative;
+    background-color: var(--bg-primary);
+    border-radius: 4px;
+    pointer-events: none; /* Allow drag events to pass through to parent */
 }
 
 .component-label {
     font-size: 14px;
     color: var(--text-secondary);
     font-weight: 500;
-}
-
-/* Start Node Preview */
-.start-preview .start-node {
-    width: 70px;
-    height: 40px;
-    border-radius: 20px;
-    background-color: var(--accent-green);
-    border: 3px solid var(--accent-green);
-    box-shadow: 0 0 10px rgba(129, 199, 132, 0.3);
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.start-preview .node-text {
-    color: white;
-    font-size: 12px;
-    font-weight: 600;
-    margin-right: 8px;
-}
-
-.start-preview .output-terminal {
-    position: absolute;
-    right: -7px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background-color: var(--accent-orange);
-    border: 2px solid var(--accent-orange);
-}
-
-/* Stop Node Preview */
-.stop-preview .stop-node {
-    width: 70px;
-    height: 40px;
-    border-radius: 20px;
-    background-color: var(--accent-red);
-    border: 3px solid var(--accent-red);
-    box-shadow: 0 0 10px rgba(229, 115, 115, 0.3);
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.stop-preview .node-text {
-    color: white;
-    font-size: 12px;
-    font-weight: 600;
-    margin-left: 8px;
-}
-
-.stop-preview .input-terminal {
-    position: absolute;
-    left: -7px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background-color: var(--accent-green);
-    border: 2px solid var(--accent-green);
-}
-
-/* Compound Object Preview */
-.compound-preview .compound-box {
-    width: 80px;
-    height: 60px;
-    background-color: var(--bg-tertiary);
-    border: 2px solid var(--accent-purple);
-    border-radius: 6px;
-    position: relative;
-    box-shadow: 0 0 10px rgba(186, 104, 200, 0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.compound-preview .compound-text {
-    color: var(--text-primary);
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.compound-preview .terminal {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    position: absolute;
-}
-
-.compound-preview .input-terminal {
-    background-color: var(--accent-green);
-    border: 2px solid var(--accent-green);
-}
-
-.compound-preview .output-terminal {
-    background-color: var(--accent-orange);
-    border: 2px solid var(--accent-orange);
 }
 
 /* Delete Zone */
@@ -349,33 +249,34 @@ body {
     cursor: not-allowed;
 }
 
-/* PC Marker */
-.pc-marker {
+/* PC Marker - SVG Arrow Overlay */
+.pc-arrow-overlay {
     position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     pointer-events: none;
     z-index: 1000;
     display: none; /* Hidden until initialized */
 }
 
-.pc-arrow {
-    position: absolute;
-    top: -50px;
-    left: -50px;
-    pointer-events: none;
-}
-
+/* PC Box */
 .pc-box {
     position: absolute;
-    width: 30px;
-    height: 30px;
-    background-color: var(--accent-orange);
-    border: 2px solid var(--text-primary);
-    border-radius: 4px;
-    display: flex;
+    width: 35px;
+    height: 35px;
+    background-color: #ffb74d;
+    border: 3px solid #fff;
+    border-radius: 6px;
+    display: none; /* Hidden until initialized */
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: bold;
-    color: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    color: #1e1e1e;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    pointer-events: none;
+    z-index: 1001;
+    transform: translate(-50%, -50%); /* Center on the position */
 }

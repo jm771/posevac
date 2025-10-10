@@ -15,74 +15,37 @@
             <div class="components-list">
                 <!-- Start Node -->
                 <div class="component-template" data-component-type="start" draggable="true">
-                    <div class="component-preview start-preview">
-                        <div class="start-node">
-                            <span class="node-text">start</span>
-                            <div class="output-terminal terminal"></div>
-                        </div>
-                    </div>
+                    <div class="component-preview" id="preview-start"></div>
                     <span class="component-label">Start</span>
                 </div>
 
                 <!-- Stop Node -->
                 <div class="component-template" data-component-type="stop" draggable="true">
-                    <div class="component-preview stop-preview">
-                        <div class="stop-node">
-                            <div class="input-terminal terminal"></div>
-                            <span class="node-text">stop</span>
-                        </div>
-                    </div>
+                    <div class="component-preview" id="preview-stop"></div>
                     <span class="component-label">Stop</span>
                 </div>
 
                 <!-- Plus Node (2 inputs, 1 output) -->
                 <div class="component-template" data-component-type="plus" draggable="true">
-                    <div class="component-preview compound-preview">
-                        <div class="compound-box">
-                            <span class="compound-text">+</span>
-                            <div class="input-terminal terminal" style="left: -7px; top: 15px;"></div>
-                            <div class="input-terminal terminal" style="left: -7px; bottom: 15px;"></div>
-                            <div class="output-terminal terminal" style="right: -7px; top: 50%; transform: translateY(-50%);"></div>
-                        </div>
-                    </div>
+                    <div class="component-preview" id="preview-plus"></div>
                     <span class="component-label">Plus</span>
                 </div>
 
                 <!-- Combine Node (2 inputs, 1 output) -->
                 <div class="component-template" data-component-type="combine" draggable="true">
-                    <div class="component-preview compound-preview">
-                        <div class="compound-box">
-                            <span class="compound-text">combine</span>
-                            <div class="input-terminal terminal" style="left: -7px; top: 15px;"></div>
-                            <div class="input-terminal terminal" style="left: -7px; bottom: 15px;"></div>
-                            <div class="output-terminal terminal" style="right: -7px; top: 50%; transform: translateY(-50%);"></div>
-                        </div>
-                    </div>
+                    <div class="component-preview" id="preview-combine"></div>
                     <span class="component-label">Combine</span>
                 </div>
 
                 <!-- Split Node (1 input, 2 outputs) -->
                 <div class="component-template" data-component-type="split" draggable="true">
-                    <div class="component-preview compound-preview">
-                        <div class="compound-box">
-                            <span class="compound-text">split</span>
-                            <div class="input-terminal terminal" style="left: -7px; top: 50%; transform: translateY(-50%);"></div>
-                            <div class="output-terminal terminal" style="right: -7px; top: 15px;"></div>
-                            <div class="output-terminal terminal" style="right: -7px; bottom: 15px;"></div>
-                        </div>
-                    </div>
+                    <div class="component-preview" id="preview-split"></div>
                     <span class="component-label">Split</span>
                 </div>
 
                 <!-- NOP Node (1 input, 1 output) -->
                 <div class="component-template" data-component-type="nop" draggable="true">
-                    <div class="component-preview compound-preview">
-                        <div class="compound-box">
-                            <span class="compound-text">nop</span>
-                            <div class="input-terminal terminal" style="left: -7px; top: 50%; transform: translateY(-50%);"></div>
-                            <div class="output-terminal terminal" style="right: -7px; top: 50%; transform: translateY(-50%);"></div>
-                        </div>
-                    </div>
+                    <div class="component-preview" id="preview-nop"></div>
                     <span class="component-label">NOP</span>
                 </div>
             </div>
@@ -97,14 +60,12 @@
         <main class="canvas-container">
             <div id="cy"></div>
 
-            <!-- PC Marker (animated) -->
-            <div id="pcMarker" class="pc-marker">
-                <svg class="pc-arrow" width="100" height="100">
-                    <line x1="50" y1="50" x2="50" y2="50" stroke="#ffeb3b" stroke-width="2" />
-                    <polygon points="50,50 50,50 50,50" fill="#ffeb3b" />
-                </svg>
-                <div class="pc-box">PC</div>
-            </div>
+            <!-- PC Marker (animated) - SVG overlay for arrow, absolute positioned PC box -->
+            <svg id="pcArrow" class="pc-arrow-overlay">
+                <line id="pcArrowLine" x1="0" y1="0" x2="0" y2="0" stroke="#ffeb3b" stroke-width="3" />
+                <polygon id="pcArrowHead" points="0,0 0,0 0,0" fill="#ffeb3b" />
+            </svg>
+            <div id="pcBox" class="pc-box">PC</div>
         </main>
 
         <!-- Animation Controls Panel -->
