@@ -382,7 +382,7 @@ export class ProgramCounter {
             const targetTerminal = cy.getElementById(edge.data('target')) as NodeSingular;
             const targetNode = targetTerminal.parent().first();
 
-            // Calculate positions and angles for smooth animation
+            // Calculate positions and angles for all 4 waypoints
             const currentPos = this._currentLocation.position();
             const currentScreen = this.modelToScreen(currentPos.x, currentPos.y);
 
@@ -394,14 +394,23 @@ export class ProgramCounter {
             const inputScreen = this.modelToScreen(inputPos.x, inputPos.y);
             const angleAlongEdge = Math.atan2(inputScreen.y - outputScreen.y, inputScreen.x - outputScreen.x) * 180 / Math.PI;
 
-            // Step 1: Move to output terminal
-            await this.moveToTerminal(sourceTerminal, angleToOutput, true, stepDuration);
+            const targetPos = targetNode.position();
+            const targetScreen = this.modelToScreen(targetPos.x, targetPos.y);
+            const angleToCenter = Math.atan2(targetScreen.y - inputScreen.y, targetScreen.x - inputScreen.x) * 180 / Math.PI;
 
-            // Step 2: Move to input terminal
-            await this.moveToTerminal(targetTerminal, angleAlongEdge, true, stepDuration);
+            // Build all waypoints for the complete animation
+            const waypoints: Waypoint[] = [
+                { x: currentScreen.x, y: currentScreen.y, angle: angleToOutput },
+                { x: outputScreen.x, y: outputScreen.y, angle: angleToOutput },
+                { x: inputScreen.x, y: inputScreen.y, angle: angleAlongEdge },
+                { x: targetScreen.x, y: targetScreen.y, angle: angleToCenter }
+            ];
 
-            // Step 3: Move to target node center
-            await this.moveTo(targetNode, true, stepDuration);
+            // Animate through all waypoints (total duration = 3 * stepDuration for 3 steps)
+            await this.animateAlongPath(waypoints, stepDuration * 3);
+
+            // Update current location to target
+            this._currentLocation = targetNode;
 
             return targetNode;
         } finally {

@@ -4,21 +4,21 @@ import { getOutgoingEdges } from './graph_management';
 import { ProgramCounter } from './program_counter';
 
 interface AnimationState {
-    programCounter: ProgramCounter | null;
-    stepHistory: NodeSingular[];
+    programCounters: ProgramCounter[];
+    stepHistory: NodeSingular[][];  // One history per program counter
     isAnimating: boolean;
 }
 
 // Animation state management
 export const animationState: AnimationState = {
-    programCounter: null,
+    programCounters: [],
     stepHistory: [],
     isAnimating: false
 };
 
-// Initialize animation - find start node and position marker
+// Initialize animation - find start nodes and create program counters
 function initializeAnimation(): boolean {
-    // Find start node
+    // Find all start nodes
     const startNodes = cy.nodes('[type="start"]');
 
     if (startNodes.length === 0) {
@@ -26,40 +26,44 @@ function initializeAnimation(): boolean {
         return false;
     }
 
-    if (startNodes.length > 1) {
-        console.warn('Multiple start nodes found, using first one');
+    // Destroy old program counters if they exist
+    for (const pc of animationState.programCounters) {
+        pc.destroy();
     }
 
-    const startNode = startNodes[0];
+    // Create a program counter for each start node
+    animationState.programCounters = [];
+    animationState.stepHistory = [];
 
-    // Destroy old program counter if it exists
-    if (animationState.programCounter) {
-        animationState.programCounter.destroy();
-    }
-
-    // Create new program counter at start node
-    animationState.programCounter = new ProgramCounter(startNode, 'PC');
-    animationState.stepHistory = [startNode];
+    startNodes.forEach((startNode, index) => {
+        const label = startNodes.length > 1 ? `PC${index + 1}` : 'PC';
+        const pc = new ProgramCounter(startNode, label);
+        animationState.programCounters.push(pc);
+        animationState.stepHistory.push([startNode]);
+    });
 
     // Update button states
     updateButtonStates();
 
-    console.log('Animation initialized at start node:', startNode.id());
+    console.log(`Animation initialized with ${startNodes.length} program counter(s)`);
 
     return true;
 }
 
-// Update PC marker position when viewport changes (pan/zoom) or nodes move
+// Update PC marker positions when viewport changes (pan/zoom) or nodes move
 function updatePCMarkerForViewportChange(): void {
     // Only update if animation is initialized and not currently animating
-    if (!animationState.programCounter || animationState.isAnimating) {
+    if (animationState.programCounters.length === 0 || animationState.isAnimating) {
         return;
     }
 
-    animationState.programCounter.updateForViewportChange();
+    // Update all program counters
+    for (const pc of animationState.programCounters) {
+        pc.updateForViewportChange();
+    }
 }
 
-// Step forward in animation
+// Step forward in animation - advances all program counters
 async function stepForward(): Promise<void> {
     console.log('stepForward called');
 
@@ -69,8 +73,8 @@ async function stepForward(): Promise<void> {
     }
 
     // Initialize if needed (first time)
-    if (!animationState.programCounter) {
-        console.log('No program counter, initializing...');
+    if (animationState.programCounters.length === 0) {
+        console.log('No program counters, initializing...');
         if (!initializeAnimation()) {
             console.log('Initialization failed');
             return;
@@ -80,45 +84,45 @@ async function stepForward(): Promise<void> {
         return;
     }
 
-    const pc = animationState.programCounter;
-    const currentNode = pc.currentLocation;
-
-    if (!currentNode) {
-        console.error('Program counter has no current location');
-        return;
-    }
-
-    console.log('Current node:', currentNode.id());
-
-    // Get outgoing edges
-    const outgoingEdges = getOutgoingEdges(currentNode);
-    console.log('Outgoing edges:', outgoingEdges.length);
-
-    if (outgoingEdges.length === 0) {
-        console.log('No outgoing edges - end of path');
-        updateButtonStates();
-        return;
-    }
-
-    if (outgoingEdges.length > 1) {
-        console.error('Multiple output edges detected - not supported yet');
-        updateButtonStates();
-        return;
-    }
-
     animationState.isAnimating = true;
 
     try {
-        const edge = outgoingEdges[0];
-        console.log('Following edge from', currentNode.id());
+        // Advance each program counter that can move
+        const movePromises = animationState.programCounters.map(async (pc, index) => {
+            const currentNode = pc.currentLocation;
 
-        // Use the ProgramCounter's followEdge method (handles all 3 steps)
-        const targetNode = await pc.followEdge(edge);
+            console.log(`PC${index + 1} at:`, currentNode.id());
 
-        // Update state
-        animationState.stepHistory.push(targetNode);
+            // Get outgoing edges
+            const outgoingEdges = getOutgoingEdges(currentNode);
 
-        console.log('Animation complete, now at:', targetNode.id());
+            if (outgoingEdges.length === 0) {
+                console.log(`PC${index + 1}: No outgoing edges - end of path`);
+                return null;
+            }
+
+            if (outgoingEdges.length > 1) {
+                console.error(`PC${index + 1}: Multiple output edges detected - not supported yet`);
+                return null;
+            }
+
+            const edge = outgoingEdges[0];
+            console.log(`PC${index + 1}: Following edge`);
+
+            // Use the ProgramCounter's followEdge method (handles all 3 steps)
+            const targetNode = await pc.followEdge(edge);
+
+            // Update history for this program counter
+            animationState.stepHistory[index].push(targetNode);
+
+            console.log(`PC${index + 1}: Now at:`, targetNode.id());
+            return targetNode;
+        });
+
+        // Wait for all program counters to complete their moves
+        await Promise.all(movePromises);
+
+        console.log('All program counters animation complete');
     } finally {
         animationState.isAnimating = false;
         updateButtonStates();
@@ -126,24 +130,44 @@ async function stepForward(): Promise<void> {
 }
 
 
-// Step backward in animation
+// Step backward in animation - rewinds all program counters
 async function stepBackward(): Promise<void> {
     if (animationState.isAnimating) return;
-    if (animationState.stepHistory.length <= 1) return; // Can't go before start
-    if (!animationState.programCounter) return;
+    if (animationState.programCounters.length === 0) return;
+
+    // Check if any program counter can step back (history length > 1)
+    const canStepBack = animationState.stepHistory.some(history => history.length > 1);
+    if (!canStepBack) return;
 
     animationState.isAnimating = true;
 
-    // Remove current node from history
-    animationState.stepHistory.pop();
-    const previousNode = animationState.stepHistory[animationState.stepHistory.length - 1];
+    try {
+        // Rewind each program counter that can move back
+        const movePromises = animationState.programCounters.map(async (pc, index) => {
+            const history = animationState.stepHistory[index];
 
-    // Animate back to previous node
-    await animationState.programCounter.moveTo(previousNode, true, 500);
+            if (history.length <= 1) {
+                // Already at start for this PC
+                return null;
+            }
 
-    animationState.isAnimating = false;
+            // Remove current node from history
+            history.pop();
+            const previousNode = history[history.length - 1];
 
-    updateButtonStates();
+            // Animate back to previous node
+            await pc.moveTo(previousNode, true, 500);
+
+            console.log(`PC${index + 1}: Moved back to:`, previousNode.id());
+            return previousNode;
+        });
+
+        // Wait for all program counters to complete
+        await Promise.all(movePromises);
+    } finally {
+        animationState.isAnimating = false;
+        updateButtonStates();
+    }
 }
 
 // Setup animation controls
@@ -168,25 +192,29 @@ export function setupAnimationControls(): void {
     // Initialize will happen automatically on first forward click
 }
 
-// Update button states based on current position
+// Update button states based on current positions of all program counters
 function updateButtonStates(): void {
     const forwardBtn = document.getElementById('forwardBtn') as HTMLButtonElement | null;
     const backBtn = document.getElementById('backBtn') as HTMLButtonElement | null;
 
     if (!forwardBtn || !backBtn) return;
 
-    if (!animationState.programCounter || !animationState.programCounter.currentLocation) {
+    if (animationState.programCounters.length === 0) {
         forwardBtn.disabled = false; // Allow initialization
         backBtn.disabled = true;
         return;
     }
 
-    // Forward: disabled if no outgoing edges
-    const outgoingEdges = getOutgoingEdges(animationState.programCounter.currentLocation);
-    forwardBtn.disabled = outgoingEdges.length === 0;
+    // Forward: disabled if ALL program counters have no outgoing edges
+    const anyCanMoveForward = animationState.programCounters.some((pc) => {
+        const outgoingEdges = getOutgoingEdges(pc.currentLocation);
+        return outgoingEdges.length > 0;
+    });
+    forwardBtn.disabled = !anyCanMoveForward;
 
-    // Back: disabled if at start
-    backBtn.disabled = animationState.stepHistory.length <= 1;
+    // Back: disabled if ALL program counters are at start
+    const anyCanMoveBack = animationState.stepHistory.some(history => history.length > 1);
+    backBtn.disabled = !anyCanMoveBack;
 }
 
 
