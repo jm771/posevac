@@ -19,7 +19,6 @@ export function getCytoscapeStyles(): StylesheetJson {
                 'font-weight': 'bold',
                 'border-width': 3,
                 'border-color': '#81c784',
-                // 'box-shadow': '0 0 10px rgba(129, 199, 132, 0.3)',
                 'padding': "0",  // Allow terminals at the edges
                 'compound-sizing-wrt-labels': 'include'  // Include label in size calculation
             }
@@ -40,7 +39,6 @@ export function getCytoscapeStyles(): StylesheetJson {
                 'font-weight': 'bold',
                 'border-width': 3,
                 'border-color': '#e57373',
-                // 'box-shadow': '0 0 10px rgba(229, 115, 115, 0.3)',
                 'padding': '0',  // Allow terminals at the edges
                 'compound-sizing-wrt-labels': 'include'  // Include label in size calculation
             }
@@ -59,7 +57,6 @@ export function getCytoscapeStyles(): StylesheetJson {
                 'font-size': '11',
                 'padding': '5',
                 'shape': 'round-rectangle',
-                // 'box-shadow': '0 0 10px rgba(186, 104, 200, 0.3)'
             }
         },
         // Input terminal styles (children of compound)
