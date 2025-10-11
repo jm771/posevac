@@ -30,14 +30,13 @@ function makeInputTerminals(nodeId: string, x: number, y: number, n: number): vo
     makeTerminals(nodeId, x-50, y, n, "input")
 }
 
-function makeOututTerminals(nodeId: string, x: number, y: number, n: number): void {
+function makeOutputTerminals(nodeId: string, x: number, y: number, n: number): void {
     makeTerminals(nodeId, x+50, y, n, "output")
 }
 
 // Create a start node (has 1 output terminal)
 export function createStartNode(x: number, y: number): void {
     const nodeId = `node-${nodeIdCounter++}`;
-    const outputId = `${nodeId}-out`;
 
     // Add start node
     cy.add({
@@ -51,15 +50,12 @@ export function createStartNode(x: number, y: number): void {
     });
 
     // Add output terminal (right point of diamond)
-
-
-    cy.$(`#${outputId}`).ungrabify();
+    makeOutputTerminals(nodeId, x, y, 1);
 }
 
 // Create a stop node (has 1 input terminal)
 export function createStopNode(x: number, y: number): void {
     const nodeId = `node-${nodeIdCounter++}`;
-    const inputId = `${nodeId}-in`;
 
     // Add stop node
     cy.add({
@@ -72,19 +68,7 @@ export function createStopNode(x: number, y: number): void {
         position: { x, y }
     });
 
-    // Add input terminal (left point of diamond)
-    cy.add({
-        group: 'nodes',
-        data: {
-            id: inputId,
-            parent: nodeId,
-            type: 'input-terminal',
-            terminalType: 'input'
-        },
-        position: { x: x - 40, y: y }
-    });
-
-    cy.$(`#${inputId}`).ungrabify();
+    makeInputTerminals(nodeId, x, y, 1);
 }
 
 // Create a plus node (2 inputs, 1 output)
@@ -102,7 +86,7 @@ export function createPlusNode(x: number, y: number): void {
     });
 
     makeInputTerminals(nodeId, x, y, 2);
-    makeOututTerminals(nodeId, x, y, 1);
+    makeOutputTerminals(nodeId, x, y, 1);
 }
 
 // Create a combine node (2 inputs, 1 output)
@@ -120,7 +104,7 @@ export function createCombineNode(x: number, y: number): void {
     });
 
     makeInputTerminals(nodeId, x, y, 2);
-    makeOututTerminals(nodeId, x, y, 1);
+    makeOutputTerminals(nodeId, x, y, 1);
 }
 
 // Create a split node (1 input, 2 outputs)
@@ -138,7 +122,7 @@ export function createSplitNode(x: number, y: number): void {
     });
 
     makeInputTerminals(nodeId, x, y, 1);
-    makeOututTerminals(nodeId, x, y, 2);
+    makeOutputTerminals(nodeId, x, y, 2);
 }
 
 // Create a nop node (1 input, 1 output)
@@ -156,5 +140,5 @@ export function createNopNode(x: number, y: number): void {
     });
 
     makeInputTerminals(nodeId, x, y, 1);
-    makeOututTerminals(nodeId, x, y, 1);
+    makeOutputTerminals(nodeId, x, y, 1);
 }
