@@ -108,9 +108,6 @@ export function createPlusNode(x: number, y: number): void {
 // Create a combine node (2 inputs, 1 output)
 export function createCombineNode(x: number, y: number): void {
     const nodeId = `node-${nodeIdCounter++}`;
-    const input1Id = `${nodeId}-in1`;
-    const input2Id = `${nodeId}-in2`;
-    const outputId = `${nodeId}-out`;
 
     cy.add({
         group: 'nodes',
@@ -122,48 +119,13 @@ export function createCombineNode(x: number, y: number): void {
         position: { x, y }
     });
 
-    cy.add({
-        group: 'nodes',
-        data: {
-            id: input1Id,
-            parent: nodeId,
-            type: 'input-terminal',
-            terminalType: 'input'
-        },
-        position: { x: x - 50, y: y - 20 }
-    });
-
-    cy.add({
-        group: 'nodes',
-        data: {
-            id: input2Id,
-            parent: nodeId,
-            type: 'input-terminal',
-            terminalType: 'input'
-        },
-        position: { x: x - 50, y: y + 20 }
-    });
-
-    cy.add({
-        group: 'nodes',
-        data: {
-            id: outputId,
-            parent: nodeId,
-            type: 'output-terminal',
-            terminalType: 'output'
-        },
-        position: { x: x + 50, y: y }
-    });
-
-    cy.$(`#${input1Id}, #${input2Id}, #${outputId}`).ungrabify();
+    makeInputTerminals(nodeId, x, y, 2);
+    makeOututTerminals(nodeId, x, y, 1);
 }
 
 // Create a split node (1 input, 2 outputs)
 export function createSplitNode(x: number, y: number): void {
     const nodeId = `node-${nodeIdCounter++}`;
-    const inputId = `${nodeId}-in`;
-    const output1Id = `${nodeId}-out1`;
-    const output2Id = `${nodeId}-out2`;
 
     cy.add({
         group: 'nodes',
@@ -175,47 +137,13 @@ export function createSplitNode(x: number, y: number): void {
         position: { x, y }
     });
 
-    cy.add({
-        group: 'nodes',
-        data: {
-            id: inputId,
-            parent: nodeId,
-            type: 'input-terminal',
-            terminalType: 'input'
-        },
-        position: { x: x - 50, y: y }
-    });
-
-    cy.add({
-        group: 'nodes',
-        data: {
-            id: output1Id,
-            parent: nodeId,
-            type: 'output-terminal',
-            terminalType: 'output'
-        },
-        position: { x: x + 50, y: y - 20 }
-    });
-
-    cy.add({
-        group: 'nodes',
-        data: {
-            id: output2Id,
-            parent: nodeId,
-            type: 'output-terminal',
-            terminalType: 'output'
-        },
-        position: { x: x + 50, y: y + 20 }
-    });
-
-    cy.$(`#${inputId}, #${output1Id}, #${output2Id}`).ungrabify();
+    makeInputTerminals(nodeId, x, y, 1);
+    makeOututTerminals(nodeId, x, y, 2);
 }
 
 // Create a nop node (1 input, 1 output)
 export function createNopNode(x: number, y: number): void {
     const nodeId = `node-${nodeIdCounter++}`;
-    const inputId = `${nodeId}-in`;
-    const outputId = `${nodeId}-out`;
 
     cy.add({
         group: 'nodes',
@@ -227,27 +155,6 @@ export function createNopNode(x: number, y: number): void {
         position: { x, y }
     });
 
-    cy.add({
-        group: 'nodes',
-        data: {
-            id: inputId,
-            parent: nodeId,
-            type: 'input-terminal',
-            terminalType: 'input'
-        },
-        position: { x: x - 50, y: y }
-    });
-
-    cy.add({
-        group: 'nodes',
-        data: {
-            id: outputId,
-            parent: nodeId,
-            type: 'output-terminal',
-            terminalType: 'output'
-        },
-        position: { x: x + 50, y: y }
-    });
-
-    cy.$(`#${inputId}, #${outputId}`).ungrabify();
+    makeInputTerminals(nodeId, x, y, 1);
+    makeOututTerminals(nodeId, x, y, 1);
 }
