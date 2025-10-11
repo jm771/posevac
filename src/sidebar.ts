@@ -50,22 +50,22 @@ export function setupSidebarDragDrop(): void {
         // Route to appropriate creation function based on component type
         switch (componentType) {
             case 'start':
-                createStartNode(modelX, modelY);
+                createStartNode(cy, modelX, modelY);
                 break;
             case 'stop':
-                createStopNode(modelX, modelY);
+                createStopNode(cy, modelX, modelY);
                 break;
             case 'plus':
-                createPlusNode(modelX, modelY);
+                createPlusNode(cy, modelX, modelY);
                 break;
             case 'combine':
-                createCombineNode(modelX, modelY);
+                createCombineNode(cy, modelX, modelY);
                 break;
             case 'split':
-                createSplitNode(modelX, modelY);
+                createSplitNode(cy, modelX, modelY);
                 break;
             case 'nop':
-                createNopNode(modelX, modelY);
+                createNopNode(cy, modelX, modelY);
                 break;
         }
     });
@@ -127,71 +127,29 @@ export function setupNodeDeletion(): void {
 }
 
 
+function makePreviewCy(type: ComponentType, func: Function) : void {
+    const container = document.getElementById(`preview-${type}`);
+
+    const previewCy = cytoscape({
+        container: container,
+        style: getCytoscapeStyles(),
+        userPanningEnabled: false,
+        userZoomingEnabled: false,
+        boxSelectionEnabled: false,
+        autoungrabify: true
+    });
+
+    func(previewCy, 0, 0);
+
+    previewCy.fit(undefined, 10);
+}
+
 // Create preview Cytoscape instances in sidebar
 export function initializePreviews(): void {
-    const previewTypes: ComponentType[] = ['start', 'stop', 'plus', 'combine', 'split', 'nop'];
-
-    previewTypes.forEach(type => {
-        const container = document.getElementById(`preview-${type}`);
-        if (!container) return;
-
-        const previewCy = cytoscape({
-            container: container,
-            style: getCytoscapeStyles(),
-            userPanningEnabled: false,
-            userZoomingEnabled: false,
-            boxSelectionEnabled: false,
-            autoungrabify: true
-        });
-
-        // Create the appropriate node type in the preview
-        switch (type) {
-            case 'start':
-                previewCy.add([
-                    { group: 'nodes', data: { id: 'node', label: 'start', type: 'start' }, position: { x: 0, y: 0 } },
-                    { group: 'nodes', data: { id: 'out', parent: 'node', type: 'output-terminal', terminalType: 'output' }, position: { x: 40, y: 0 } }
-                ]);
-                break;
-            case 'stop':
-                previewCy.add([
-                    { group: 'nodes', data: { id: 'node', label: 'stop', type: 'stop' }, position: { x: 0, y: 0 } },
-                    { group: 'nodes', data: { id: 'in', parent: 'node', type: 'input-terminal', terminalType: 'input' }, position: { x: -40, y: 0 } }
-                ]);
-                break;
-            case 'plus':
-                previewCy.add([
-                    { group: 'nodes', data: { id: 'node', label: '+', type: 'compound' }, position: { x: 0, y: 0 } },
-                    { group: 'nodes', data: { id: 'in1', parent: 'node', type: 'input-terminal', terminalType: 'input' }, position: { x: -50, y: -20 } },
-                    { group: 'nodes', data: { id: 'in2', parent: 'node', type: 'input-terminal', terminalType: 'input' }, position: { x: -50, y: 20 } },
-                    { group: 'nodes', data: { id: 'out', parent: 'node', type: 'output-terminal', terminalType: 'output' }, position: { x: 50, y: 0 } }
-                ]);
-                break;
-            case 'combine':
-                previewCy.add([
-                    { group: 'nodes', data: { id: 'node', label: 'combine', type: 'compound' }, position: { x: 0, y: 0 } },
-                    { group: 'nodes', data: { id: 'in1', parent: 'node', type: 'input-terminal', terminalType: 'input' }, position: { x: -50, y: -20 } },
-                    { group: 'nodes', data: { id: 'in2', parent: 'node', type: 'input-terminal', terminalType: 'input' }, position: { x: -50, y: 20 } },
-                    { group: 'nodes', data: { id: 'out', parent: 'node', type: 'output-terminal', terminalType: 'output' }, position: { x: 50, y: 0 } }
-                ]);
-                break;
-            case 'split':
-                previewCy.add([
-                    { group: 'nodes', data: { id: 'node', label: 'split', type: 'compound' }, position: { x: 0, y: 0 } },
-                    { group: 'nodes', data: { id: 'in', parent: 'node', type: 'input-terminal', terminalType: 'input' }, position: { x: -50, y: 0 } },
-                    { group: 'nodes', data: { id: 'out1', parent: 'node', type: 'output-terminal', terminalType: 'output' }, position: { x: 50, y: -20 } },
-                    { group: 'nodes', data: { id: 'out2', parent: 'node', type: 'output-terminal', terminalType: 'output' }, position: { x: 50, y: 20 } }
-                ]);
-                break;
-            case 'nop':
-                previewCy.add([
-                    { group: 'nodes', data: { id: 'node', label: 'nop', type: 'compound' }, position: { x: 0, y: 0 } },
-                    { group: 'nodes', data: { id: 'in', parent: 'node', type: 'input-terminal', terminalType: 'input' }, position: { x: -50, y: 0 } },
-                    { group: 'nodes', data: { id: 'out', parent: 'node', type: 'output-terminal', terminalType: 'output' }, position: { x: 50, y: 0 } }
-                ]);
-                break;
-        }
-
-        // Fit the preview to show the entire node
-        previewCy.fit(undefined, 10);
-    });
+    makePreviewCy("start", createStartNode);
+    makePreviewCy("stop", createStopNode);
+    makePreviewCy("plus", createPlusNode);
+    makePreviewCy("combine", createCombineNode);
+    makePreviewCy("split", createSplitNode);
+    makePreviewCy("nop", createNopNode);
 }

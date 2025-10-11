@@ -1,14 +1,16 @@
-import { cy } from './global_state'
+// import { cy } from './global_state'
+
+import { Core } from "cytoscape";
 
 let nodeIdCounter = 0;
 
 // Type definitions
 export type ComponentType = 'start' | 'stop' | 'plus' | 'combine' | 'split' | 'nop';
 
-function makeTerminals(nodeId: string, x: number, y: number, n: number, type: string): void {
+function makeTerminals(cy: Core, nodeId: string, x: number, y: number, n: number, type: string): void {
     if (n == 0)
     {
-        makeTerminals(nodeId, x, y, 1, "invisible")
+        makeTerminals(cy, nodeId, x, y, 1, "invisible")
         return;
     }
 
@@ -35,15 +37,15 @@ function makeTerminals(nodeId: string, x: number, y: number, n: number, type: st
     }
 }
 
-function makeInputTerminals(nodeId: string, x: number, y: number, n: number): void {
-    makeTerminals(nodeId, x-50, y, n, "input")
+function makeInputTerminals(cy: Core, nodeId: string, x: number, y: number, n: number): void {
+    makeTerminals(cy, nodeId, x-50, y, n, "input")
 }
 
-function makeOutputTerminals(nodeId: string, x: number, y: number, n: number): void {
-    makeTerminals(nodeId, x+50, y, n, "output")
+function makeOutputTerminals(cy: Core, nodeId: string, x: number, y: number, n: number): void {
+    makeTerminals(cy, nodeId, x+50, y, n, "output")
 }
 
-function createNode(x: number, y: number, label: string, type: string, inTerminals: number, outTerminals: number): void {
+function createNode(cy: Core, x: number, y: number, label: string, type: string, inTerminals: number, outTerminals: number): void {
     const nodeId = `node-${nodeIdCounter++}`;
         cy.add({
         group: 'nodes',
@@ -55,36 +57,36 @@ function createNode(x: number, y: number, label: string, type: string, inTermina
         position: { x, y }
     });
 
-    makeInputTerminals(nodeId, x, y, inTerminals);
-    makeOutputTerminals(nodeId, x, y, outTerminals);
+    makeInputTerminals(cy, nodeId, x, y, inTerminals);
+    makeOutputTerminals(cy, nodeId, x, y, outTerminals);
 }
 
 // Create a start node (has 1 output terminal)
-export function createStartNode(x: number, y: number): void {
-    createNode(x, y, "start", "start", 0, 1);
+export function createStartNode(cy: Core, x: number, y: number): void {
+    createNode(cy, x, y, "start", "start", 0, 1);
 }
 
 // Create a stop node (has 1 input terminal)
-export function createStopNode(x: number, y: number): void {
-    createNode(x, y, "stop", "stop", 1, 0);
+export function createStopNode(cy: Core, x: number, y: number): void {
+    createNode(cy, x, y, "stop", "stop", 1, 0);
 }
 
 // Create a plus node (2 inputs, 1 output)
-export function createPlusNode(x: number, y: number): void {
-    createNode(x, y, "+", "compound", 2, 1);
+export function createPlusNode(cy: Core, x: number, y: number): void {
+    createNode(cy, x, y, "+", "compound", 2, 1);
 }
 
 // Create a combine node (2 inputs, 1 output)
-export function createCombineNode(x: number, y: number): void {
-    createNode(x, y, "combine", "compound", 2, 1);
+export function createCombineNode(cy: Core, x: number, y: number): void {
+    createNode(cy, x, y, "combine", "compound", 2, 1);
 }
 
 // Create a split node (1 input, 2 outputs)
-export function createSplitNode(x: number, y: number): void {
-    createNode(x, y, "split", "compound", 1, 2);
+export function createSplitNode(cy: Core, x: number, y: number): void {
+    createNode(cy, x, y, "split", "compound", 1, 2);
 }
 
 // Create a nop node (1 input, 1 output)
-export function createNopNode(x: number, y: number): void {
-    createNode(x, y, "+", "compound", 1, 1);
+export function createNopNode(cy: Core, x: number, y: number): void {
+    createNode(cy, x, y, "+", "compound", 1, 1);
 }
