@@ -2,6 +2,9 @@ import { cy } from './global_state'
 
 let nodeIdCounter = 0;
 
+// Type definitions
+export type ComponentType = 'start' | 'stop' | 'plus' | 'combine' | 'split' | 'nop';
+
 function makeTerminals(nodeId: string, x: number, y: number, n: number, type: string): void {
     if (n == 0)
     {
