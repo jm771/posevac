@@ -1,7 +1,7 @@
 import cytoscape from 'cytoscape';
 import { cy } from './global_state'
 import { getCytoscapeStyles } from './styles';
-import { ComponentType, createStartNode, createStopNode, createPlusNode, createCombineNode, createSplitNode, createNopNode } from './nodes';
+import { ComponentType, CompNode, createStartNode, createStopNode, createPlusNode, createCombineNode, createSplitNode, createNopNode } from './nodes';
 import { Core } from 'cytoscape';
 
 
@@ -41,8 +41,8 @@ export function initializePreviews(): void {
 }
 
 // Component registry - single source of truth for all component types
-const COMPONENT_REGISTRY: { type: ComponentType, createFunc: (cy: Core, x: number, y: number) => void }[] = [
-    { type: 'start', createFunc: createStartNode },
+const COMPONENT_REGISTRY: { type: ComponentType, createFunc: (cy: Core, x: number, y: number) => CompNode }[] = [
+    { type: 'start', createFunc: (cy: Core, x: number, y: number) => createStartNode(cy, x, y, []) },
     { type: 'stop', createFunc: createStopNode },
     { type: 'plus', createFunc: createPlusNode },
     { type: 'combine', createFunc: createCombineNode },
