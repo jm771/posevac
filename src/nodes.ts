@@ -65,13 +65,13 @@ function createNode(cy: Core, x: number, y: number, label: string, type: string,
 
 export class CompNode
 {
-    private inputNodes : Array<>;
-    private outputNodes : Array<>;
+    private inputTerminals : Array<>;
+    private outputTerminals : Array<>;
     private func : Function;
 
-    constructor(inputNodes : Array<string>, outputNodes : Array<string>, func: Function) {
-        this.inputNodes = inputNodes;
-        this.outputNodes = outputNodes;
+    constructor(inputTerminals : Array<string>, outputTerminals : Array<string>, func: Function) {
+        this.inputTerminals = inputTerminals;
+        this.outputTerminals = outputTerminals;
         this.func = func;
     }
 }
