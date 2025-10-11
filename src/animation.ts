@@ -105,6 +105,12 @@ async function stepForward(): Promise<void> {
         return;
     }
 
+    // For each input - if nothing on output terminal - add the next value
+    // For each each program counter on an output terminal - if they can move to in input terminal - move them
+    // For each function cell - if all the input are there, and no outputs are there - move to the middle - 
+    // then create new program counters with output
+    // move them to output terminal
+
     animationState.isAnimating = true;
 
     try {
