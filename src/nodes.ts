@@ -34,111 +34,48 @@ function makeOutputTerminals(nodeId: string, x: number, y: number, n: number): v
     makeTerminals(nodeId, x+50, y, n, "output")
 }
 
-// Create a start node (has 1 output terminal)
-export function createStartNode(x: number, y: number): void {
+function createNode(x: number, y: number, label: string, type: string, inTerminals: number, outTerminals: number): void {
     const nodeId = `node-${nodeIdCounter++}`;
-
-    // Add start node
-    cy.add({
+        cy.add({
         group: 'nodes',
         data: {
             id: nodeId,
-            label: 'start',
-            type: 'start'
+            label: label,
+            type: type
         },
         position: { x, y }
     });
 
-    // Add output terminal (right point of diamond)
-    makeOutputTerminals(nodeId, x, y, 1);
+    makeInputTerminals(nodeId, x, y, inTerminals);
+    makeOutputTerminals(nodeId, x, y, outTerminals);
+}
+
+// Create a start node (has 1 output terminal)
+export function createStartNode(x: number, y: number): void {
+    createNode(x, y, "start", "start", 0, 1);
 }
 
 // Create a stop node (has 1 input terminal)
 export function createStopNode(x: number, y: number): void {
-    const nodeId = `node-${nodeIdCounter++}`;
-
-    // Add stop node
-    cy.add({
-        group: 'nodes',
-        data: {
-            id: nodeId,
-            label: 'stop',
-            type: 'stop'
-        },
-        position: { x, y }
-    });
-
-    makeInputTerminals(nodeId, x, y, 1);
+    createNode(x, y, "stop", "stop", 1, 0);
 }
 
 // Create a plus node (2 inputs, 1 output)
 export function createPlusNode(x: number, y: number): void {
-    const nodeId = `node-${nodeIdCounter++}`;
-
-    cy.add({
-        group: 'nodes',
-        data: {
-            id: nodeId,
-            label: '+',
-            type: 'compound'
-        },
-        position: { x, y }
-    });
-
-    makeInputTerminals(nodeId, x, y, 2);
-    makeOutputTerminals(nodeId, x, y, 1);
+    createNode(x, y, "+", "compound", 2, 1);
 }
 
 // Create a combine node (2 inputs, 1 output)
 export function createCombineNode(x: number, y: number): void {
-    const nodeId = `node-${nodeIdCounter++}`;
-
-    cy.add({
-        group: 'nodes',
-        data: {
-            id: nodeId,
-            label: 'combine',
-            type: 'compound'
-        },
-        position: { x, y }
-    });
-
-    makeInputTerminals(nodeId, x, y, 2);
-    makeOutputTerminals(nodeId, x, y, 1);
+    createNode(x, y, "combine", "compound", 2, 1);
 }
 
 // Create a split node (1 input, 2 outputs)
 export function createSplitNode(x: number, y: number): void {
-    const nodeId = `node-${nodeIdCounter++}`;
-
-    cy.add({
-        group: 'nodes',
-        data: {
-            id: nodeId,
-            label: 'split',
-            type: 'compound'
-        },
-        position: { x, y }
-    });
-
-    makeInputTerminals(nodeId, x, y, 1);
-    makeOutputTerminals(nodeId, x, y, 2);
+    createNode(x, y, "split", "compound", 1, 2);
 }
 
 // Create a nop node (1 input, 1 output)
 export function createNopNode(x: number, y: number): void {
-    const nodeId = `node-${nodeIdCounter++}`;
-
-    cy.add({
-        group: 'nodes',
-        data: {
-            id: nodeId,
-            label: 'nop',
-            type: 'compound'
-        },
-        position: { x, y }
-    });
-
-    makeInputTerminals(nodeId, x, y, 1);
-    makeOutputTerminals(nodeId, x, y, 1);
+    createNode(x, y, "+", "compound", 1, 1);
 }
