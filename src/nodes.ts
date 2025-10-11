@@ -2,6 +2,38 @@ import { cy } from './global_state'
 
 let nodeIdCounter = 0;
 
+function makeTerminals(nodeId: string, x: number, y: number, n: number, type: string): void {
+    const minY = -60;
+    const maxY = 60;
+
+    for (let i = 0; i < n; i++)
+    {
+        const terminalId = `${nodeId}-${type}${i}`;
+        const yOffset = ((i + 1.0) * (maxY - minY) / (n + 1.0)) + minY;
+        console.log(yOffset)
+        cy.add({
+            group: 'nodes',
+            data: {
+                id: terminalId,
+                parent: nodeId,
+                type: `${type}-terminal`,
+                terminalType: type
+            },
+            position: { x: x, y: y + yOffset }
+        });
+
+        cy.$(`#${terminalId}`).ungrabify();
+    }
+}
+
+function makeInputTerminals(nodeId: string, x: number, y: number, n: number): void {
+    makeTerminals(nodeId, x-50, y, n, "input")
+}
+
+function makeOututTerminals(nodeId: string, x: number, y: number, n: number): void {
+    makeTerminals(nodeId, x+50, y, n, "output")
+}
+
 // Create a start node (has 1 output terminal)
 export function createStartNode(x: number, y: number): void {
     const nodeId = `node-${nodeIdCounter++}`;
@@ -19,16 +51,7 @@ export function createStartNode(x: number, y: number): void {
     });
 
     // Add output terminal (right point of diamond)
-    cy.add({
-        group: 'nodes',
-        data: {
-            id: outputId,
-            parent: nodeId,
-            type: 'output-terminal',
-            terminalType: 'output'
-        },
-        position: { x: x + 40, y: y }
-    });
+
 
     cy.$(`#${outputId}`).ungrabify();
 }
@@ -67,9 +90,6 @@ export function createStopNode(x: number, y: number): void {
 // Create a plus node (2 inputs, 1 output)
 export function createPlusNode(x: number, y: number): void {
     const nodeId = `node-${nodeIdCounter++}`;
-    const input1Id = `${nodeId}-in1`;
-    const input2Id = `${nodeId}-in2`;
-    const outputId = `${nodeId}-out`;
 
     cy.add({
         group: 'nodes',
@@ -81,40 +101,8 @@ export function createPlusNode(x: number, y: number): void {
         position: { x, y }
     });
 
-    cy.add({
-        group: 'nodes',
-        data: {
-            id: input1Id,
-            parent: nodeId,
-            type: 'input-terminal',
-            terminalType: 'input'
-        },
-        position: { x: x - 50, y: y - 20 }
-    });
-
-    cy.add({
-        group: 'nodes',
-        data: {
-            id: input2Id,
-            parent: nodeId,
-            type: 'input-terminal',
-            terminalType: 'input'
-        },
-        position: { x: x - 50, y: y + 20 }
-    });
-
-    cy.add({
-        group: 'nodes',
-        data: {
-            id: outputId,
-            parent: nodeId,
-            type: 'output-terminal',
-            terminalType: 'output'
-        },
-        position: { x: x + 50, y: y }
-    });
-
-    cy.$(`#${input1Id}, #${input2Id}, #${outputId}`).ungrabify();
+    makeInputTerminals(nodeId, x, y, 2);
+    makeOututTerminals(nodeId, x, y, 1);
 }
 
 // Create a combine node (2 inputs, 1 output)
