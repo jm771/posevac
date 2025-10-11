@@ -46,7 +46,21 @@ function makeOutputTerminals(cy: Core, nodeId: string, x: number, y: number, n: 
     makeTerminals(cy, nodeId, x+50, y, n, "output")
 }
 
-function createNode(cy: Core, x: number, y: number, label: string, type: string, inTerminals: number, outTerminals: number, func: Function): void {
+export class CompNode
+{
+    private inputTerminals : Array<>;
+    private outputTerminals : Array<>;
+    private node;
+    private func : Function;
+
+    constructor(func: Function, node, inputTerminals : Array<string>, outputTerminals : Array<string>) {
+        this.inputTerminals = inputTerminals;
+        this.outputTerminals = outputTerminals;
+        this.func = func;
+    }
+}
+
+function createNode(cy: Core, x: number, y: number, label: string, type: string, inTerminals: number, outTerminals: number, func: Function): CompNode {
     const nodeId = `node-${nodeIdCounter++}`;
         cy.add({
         group: 'nodes',
@@ -54,7 +68,6 @@ function createNode(cy: Core, x: number, y: number, label: string, type: string,
             id: nodeId,
             label: label,
             type: type,
-            function: func
         },
         position: { x, y }
     });
@@ -63,18 +76,7 @@ function createNode(cy: Core, x: number, y: number, label: string, type: string,
     makeOutputTerminals(cy, nodeId, x, y, outTerminals);
 }
 
-export class CompNode
-{
-    private inputTerminals : Array<>;
-    private outputTerminals : Array<>;
-    private func : Function;
 
-    constructor(inputTerminals : Array<string>, outputTerminals : Array<string>, func: Function) {
-        this.inputTerminals = inputTerminals;
-        this.outputTerminals = outputTerminals;
-        this.func = func;
-    }
-}
 
 // Create a start node (has 1 output terminal)
 export function createStartNode(cy: Core, x: number, y: number, inputs: Array<any>): void {
