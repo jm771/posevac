@@ -8,9 +8,7 @@ export function getCytoscapeStyles(): StylesheetJson {
             selector: 'node[type="start"]',
             style: {
                 'background-color': '#81c784',
-                'min-width': "80",
-                'min-height': "50",
-                'shape': 'diamond',
+                'shape': 'roundrectangle',
                 'label': 'data(label)',
                 'color': 'white',
                 'text-valign': 'center',
@@ -19,7 +17,7 @@ export function getCytoscapeStyles(): StylesheetJson {
                 'font-weight': 'bold',
                 'border-width': 3,
                 'border-color': '#81c784',
-                'padding': "0",  // Allow terminals at the edges
+                'padding': "5",  // Allow terminals at the edges
                 'compound-sizing-wrt-labels': 'include'  // Include label in size calculation
             }
         },
@@ -28,9 +26,7 @@ export function getCytoscapeStyles(): StylesheetJson {
             selector: 'node[type="stop"]',
             style: {
                 'background-color': '#e57373',
-                'min-width': "80",
-                'min-height': "50",
-                'shape': 'diamond',
+                'shape': 'roundrectangle',
                 'label': 'data(label)',
                 'color': 'white',
                 'text-valign': 'center',
@@ -39,7 +35,8 @@ export function getCytoscapeStyles(): StylesheetJson {
                 'font-weight': 'bold',
                 'border-width': 3,
                 'border-color': '#e57373',
-                'padding': '0',  // Allow terminals at the edges
+                'padding-right': '200',
+                'padding': '5',  // Allow terminals at the edges
                 'compound-sizing-wrt-labels': 'include'  // Include label in size calculation
             }
         },
@@ -83,6 +80,15 @@ export function getCytoscapeStyles(): StylesheetJson {
                 'border-color': '#ffb74d',
                 'label': '',
                 'events': 'yes'
+            }
+        },
+        {
+            selector: 'node[type="invisible-terminal"]',
+            style: {
+                'opacity': 0,             // Transparent
+                'background-opacity': 0,
+                'border-opacity': 0,
+                'text-opacity': 0
             }
         },
         // Edge styles

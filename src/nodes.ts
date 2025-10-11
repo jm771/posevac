@@ -3,6 +3,12 @@ import { cy } from './global_state'
 let nodeIdCounter = 0;
 
 function makeTerminals(nodeId: string, x: number, y: number, n: number, type: string): void {
+    if (n == 0)
+    {
+        makeTerminals(nodeId, x, y, 1, "invisible")
+        return;
+    }
+
     const minY = -60;
     const maxY = 60;
 
