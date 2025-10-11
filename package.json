@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
-    "dev": "tsc --watch"
+    "dev": "vite",
+    "preview": "vite preview"
   },
   "keywords": [
     "graph",

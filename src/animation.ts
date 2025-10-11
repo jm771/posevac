@@ -1,101 +1,20 @@
 import { NodeSingular } from 'cytoscape';
 import { cy } from './global_state'
 import { getOutgoingEdges } from './graph_management';
-
-interface Position {
-    x: number;
-    y: number;
-}
-
-interface Waypoint extends Position {
-    angle: number;
-}
+import { ProgramCounter } from './program_counter';
 
 interface AnimationState {
-    currentNode: NodeSingular | null;
+    programCounter: ProgramCounter | null;
     stepHistory: NodeSingular[];
     isAnimating: boolean;
-    arrowTipX: number;
-    arrowTipY: number;
-    currentAngle: number;
-    arrowSvg: SVGElement | null;
-    arrowLine: SVGLineElement | null;
-    arrowHead: SVGPolygonElement | null;
-    pcBox: HTMLDivElement | null;
 }
 
 // Animation state management
 export const animationState: AnimationState = {
-    currentNode: null,
+    programCounter: null,
     stepHistory: [],
-    isAnimating: false,
-    arrowTipX: 0,
-    arrowTipY: 0,
-    currentAngle: 0,
-    arrowSvg: null,
-    arrowLine: null,
-    arrowHead: null,
-    pcBox: null
+    isAnimating: false
 };
-
-// Helper: Calculate PC marker position (offset above and to the side of arrow tip)
-function updatePCMarkerPosition(arrowTipX: number, arrowTipY: number, arrowAngle: number): void {
-    const { arrowLine, arrowHead, pcBox } = animationState;
-
-    if (!arrowLine || !arrowHead || !pcBox) return;
-
-    // PC box should be offset above and to the side of the arrow tip
-    // Constant offset distance from arrow tip to PC center
-    const offsetDistance = 50; // pixels
-    const offsetAngle = arrowAngle - 30; // 30 degrees counter-clockwise from arrow direction
-
-    const pcCenterX = arrowTipX + offsetDistance * Math.cos(offsetAngle * Math.PI / 180);
-    const pcCenterY = arrowTipY + offsetDistance * Math.sin(offsetAngle * Math.PI / 180);
-
-    // Position the PC box (uses transform: translate(-50%, -50%) to center)
-    pcBox.style.left = pcCenterX + 'px';
-    pcBox.style.top = pcCenterY + 'px';
-    pcBox.style.display = 'flex'; // Make visible
-
-    // Draw arrow from PC center to arrow tip
-    arrowLine.setAttribute('x1', pcCenterX.toString());
-    arrowLine.setAttribute('y1', pcCenterY.toString());
-    arrowLine.setAttribute('x2', arrowTipX.toString());
-    arrowLine.setAttribute('y2', arrowTipY.toString());
-
-    // Arrowhead at the tip
-    const arrowheadSize = 10;
-    const angle = Math.atan2(arrowTipY - pcCenterY, arrowTipX - pcCenterX);
-    const x1 = arrowTipX;
-    const y1 = arrowTipY;
-    const x2 = arrowTipX - arrowheadSize * Math.cos(angle - Math.PI / 6);
-    const y2 = arrowTipY - arrowheadSize * Math.sin(angle - Math.PI / 6);
-    const x3 = arrowTipX - arrowheadSize * Math.cos(angle + Math.PI / 6);
-    const y3 = arrowTipY - arrowheadSize * Math.sin(angle + Math.PI / 6);
-
-    arrowHead.setAttribute('points', `${x1},${y1} ${x2},${y2} ${x3},${y3}`);
-
-    // Store current arrow tip position and angle
-    animationState.arrowTipX = arrowTipX;
-    animationState.arrowTipY = arrowTipY;
-    animationState.currentAngle = arrowAngle;
-}
-
-// Helper: Convert model coordinates to canvas-relative coordinates
-// Returns coordinates relative to the canvas-container (where the SVG overlay is positioned)
-function modelToScreen(modelX: number, modelY: number): Position {
-    const pan = cy.pan();
-    const zoom = cy.zoom();
-
-    // Calculate rendered position (relative to canvas)
-    const renderedX = modelX * zoom + pan.x;
-    const renderedY = modelY * zoom + pan.y;
-
-    return {
-        x: renderedX,
-        y: renderedY
-    };
-}
 
 // Initialize animation - find start node and position marker
 function initializeAnimation(): boolean {
@@ -112,120 +31,32 @@ function initializeAnimation(): boolean {
     }
 
     const startNode = startNodes[0];
-    const startPos = startNode.position();
 
-    // Convert start node center to screen coordinates
-    const screenPos = modelToScreen(startPos.x, startPos.y);
-
-    // Initialize marker elements
-    animationState.arrowSvg = document.getElementById('pcArrow') as SVGElement | null;
-    animationState.arrowLine = document.getElementById('pcArrowLine') as SVGLineElement | null;
-    animationState.arrowHead = document.getElementById('pcArrowHead') as SVGPolygonElement | null;
-    animationState.pcBox = document.getElementById('pcBox') as HTMLDivElement | null;
-    animationState.currentNode = startNode;
-    animationState.stepHistory = [startNode];
-
-    // Show the SVG overlay
-    if (animationState.arrowSvg) {
-        animationState.arrowSvg.style.display = 'block';
+    // Destroy old program counter if it exists
+    if (animationState.programCounter) {
+        animationState.programCounter.destroy();
     }
 
-    // Position arrow tip at start node center, pointing right (0 degrees)
-    updatePCMarkerPosition(screenPos.x, screenPos.y, 0);
+    // Create new program counter at start node
+    animationState.programCounter = new ProgramCounter(startNode, 'PC');
+    animationState.stepHistory = [startNode];
 
     // Update button states
     updateButtonStates();
 
-    console.log('Animation initialized at', screenPos);
+    console.log('Animation initialized at start node:', startNode.id());
 
     return true;
 }
 
-// Animate along a path with multiple waypoints
-function animateAlongPath(waypoints: Waypoint[], duration: number): Promise<void> {
-    return new Promise((resolve) => {
-        if (!waypoints || waypoints.length === 0) {
-            console.error('No waypoints provided for animation');
-            resolve();
-            return;
-        }
-
-        console.log('Starting animation with', waypoints.length, 'waypoints over', duration, 'ms');
-
-        const startTime = performance.now();
-
-        function animate(currentTime: number): void {
-            const elapsed = currentTime - startTime;
-            // Clamp progress between 0 and 1 to handle timing edge cases
-            const progress = Math.min(Math.max(elapsed / duration, 0), 1);
-
-            // Find which segment we're on
-            const segmentCount = waypoints.length - 1;
-
-            if (segmentCount <= 0) {
-                // Only one waypoint (or invalid), just position there
-                console.log('Single waypoint, positioning at:', waypoints[0]);
-                updatePCMarkerPosition(waypoints[0].x, waypoints[0].y, waypoints[0].angle);
-                resolve();
-                return;
-            }
-
-            const segmentProgress = progress * segmentCount;
-            const segmentIndex = Math.floor(segmentProgress);
-            const localProgress = segmentProgress - segmentIndex;
-
-            if (segmentIndex >= segmentCount) {
-                // Animation complete - position at final waypoint
-                const final = waypoints[waypoints.length - 1];
-                console.log('Animation complete at final waypoint:', final);
-                updatePCMarkerPosition(final.x, final.y, final.angle);
-                resolve();
-                return;
-            }
-
-            // Interpolate between current and next waypoint
-            const current = waypoints[segmentIndex];
-            const next = waypoints[segmentIndex + 1];
-
-            if (!current || !next) {
-                console.error('Invalid waypoint - current:', current, 'next:', next, 'index:', segmentIndex, 'total:', waypoints.length);
-                console.error('All waypoints:', waypoints);
-                resolve();
-                return;
-            }
-
-            const x = current.x + (next.x - current.x) * localProgress;
-            const y = current.y + (next.y - current.y) * localProgress;
-            const angle = current.angle + (next.angle - current.angle) * localProgress;
-
-            updatePCMarkerPosition(x, y, angle);
-
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            } else {
-                console.log('Animation progress complete');
-                resolve();
-            }
-        }
-
-        requestAnimationFrame(animate);
-    });
-}
-
-
 // Update PC marker position when viewport changes (pan/zoom) or nodes move
 function updatePCMarkerForViewportChange(): void {
     // Only update if animation is initialized and not currently animating
-    if (!animationState.currentNode || !animationState.pcBox || animationState.isAnimating) {
+    if (!animationState.programCounter || animationState.isAnimating) {
         return;
     }
 
-    // Recalculate the position based on current node's current position
-    const currentPos = animationState.currentNode.position();
-    const screenPos = modelToScreen(currentPos.x, currentPos.y);
-
-    // Update marker to point at current node, preserving the current angle
-    updatePCMarkerPosition(screenPos.x, screenPos.y, animationState.currentAngle);
+    animationState.programCounter.updateForViewportChange();
 }
 
 // Step forward in animation
@@ -238,8 +69,8 @@ async function stepForward(): Promise<void> {
     }
 
     // Initialize if needed (first time)
-    if (!animationState.currentNode) {
-        console.log('No current node, initializing...');
+    if (!animationState.programCounter) {
+        console.log('No program counter, initializing...');
         if (!initializeAnimation()) {
             console.log('Initialization failed');
             return;
@@ -249,9 +80,14 @@ async function stepForward(): Promise<void> {
         return;
     }
 
-    animationState.isAnimating = true;
+    const pc = animationState.programCounter;
+    const currentNode = pc.currentLocation;
 
-    const currentNode = animationState.currentNode;
+    if (!currentNode) {
+        console.error('Program counter has no current location');
+        return;
+    }
+
     console.log('Current node:', currentNode.id());
 
     // Get outgoing edges
@@ -260,78 +96,33 @@ async function stepForward(): Promise<void> {
 
     if (outgoingEdges.length === 0) {
         console.log('No outgoing edges - end of path');
-        animationState.isAnimating = false;
         updateButtonStates();
         return;
     }
 
     if (outgoingEdges.length > 1) {
         console.error('Multiple output edges detected - not supported yet');
-        animationState.isAnimating = false;
         updateButtonStates();
         return;
     }
 
-    const edge = outgoingEdges[0];
-    const sourceTerminal = cy.getElementById(edge.data('source')) as NodeSingular;
-    const targetTerminal = cy.getElementById(edge.data('target')) as NodeSingular;
-    const targetNode = targetTerminal.parent().first();
+    animationState.isAnimating = true;
 
-    console.log('Animating from', currentNode.id(), 'to', targetNode.id());
+    try {
+        const edge = outgoingEdges[0];
+        console.log('Following edge from', currentNode.id());
 
-    // Build waypoints: current center → output terminal → target terminal → target center
-    const waypoints: Waypoint[] = [];
+        // Use the ProgramCounter's followEdge method (handles all 3 steps)
+        const targetNode = await pc.followEdge(edge);
 
-    // Current node center (where marker currently is)
-    const currentPos = currentNode.position();
-    const currentScreen = modelToScreen(currentPos.x, currentPos.y);
-    console.log('Current position:', currentScreen);
-    waypoints.push({ x: currentScreen.x, y: currentScreen.y, angle: 0 });
+        // Update state
+        animationState.stepHistory.push(targetNode);
 
-    // Output terminal position
-    const outputPos = sourceTerminal.position();
-    const outputScreen = modelToScreen(outputPos.x, outputPos.y);
-    const angleToOutput = Math.atan2(outputScreen.y - currentScreen.y, outputScreen.x - currentScreen.x) * 180 / Math.PI;
-    console.log('Output terminal:', outputScreen);
-    waypoints.push({ x: outputScreen.x, y: outputScreen.y, angle: angleToOutput });
-
-    // Target input terminal position
-    const inputPos = targetTerminal.position();
-    const inputScreen = modelToScreen(inputPos.x, inputPos.y);
-    const angleAlongEdge = Math.atan2(inputScreen.y - outputScreen.y, inputScreen.x - outputScreen.x) * 180 / Math.PI;
-    console.log('Input terminal:', inputScreen);
-    waypoints.push({ x: inputScreen.x, y: inputScreen.y, angle: angleAlongEdge });
-
-    // Target node center
-    const targetPos = targetNode.position();
-    const targetScreen = modelToScreen(targetPos.x, targetPos.y);
-    const angleToCenter = Math.atan2(targetScreen.y - inputScreen.y, targetScreen.x - inputScreen.x) * 180 / Math.PI;
-    console.log('Target center:', targetScreen);
-    waypoints.push({ x: targetScreen.x, y: targetScreen.y, angle: angleToCenter });
-
-    console.log('Built waypoints:', waypoints.length, waypoints);
-
-    // Validate waypoints before animating
-    for (let i = 0; i < waypoints.length; i++) {
-        const wp = waypoints[i];
-        if (!wp || isNaN(wp.x) || isNaN(wp.y) || isNaN(wp.angle)) {
-            console.error('Invalid waypoint at index', i, ':', wp);
-            animationState.isAnimating = false;
-            updateButtonStates();
-            return;
-        }
+        console.log('Animation complete, now at:', targetNode.id());
+    } finally {
+        animationState.isAnimating = false;
+        updateButtonStates();
     }
-
-    // Animate along path
-    await animateAlongPath(waypoints, 500);
-
-    // Update state
-    animationState.currentNode = targetNode;
-    animationState.stepHistory.push(targetNode);
-    animationState.isAnimating = false;
-
-    console.log('Animation complete, now at:', targetNode.id());
-    updateButtonStates();
 }
 
 
@@ -339,6 +130,7 @@ async function stepForward(): Promise<void> {
 async function stepBackward(): Promise<void> {
     if (animationState.isAnimating) return;
     if (animationState.stepHistory.length <= 1) return; // Can't go before start
+    if (!animationState.programCounter) return;
 
     animationState.isAnimating = true;
 
@@ -347,15 +139,8 @@ async function stepBackward(): Promise<void> {
     const previousNode = animationState.stepHistory[animationState.stepHistory.length - 1];
 
     // Animate back to previous node
-    const targetPos = previousNode.position();
-    const targetScreen = modelToScreen(targetPos.x, targetPos.y);
+    await animationState.programCounter.moveTo(previousNode, true, 500);
 
-    await animateAlongPath([
-        { x: animationState.arrowTipX, y: animationState.arrowTipY, angle: 0 },
-        { x: targetScreen.x, y: targetScreen.y, angle: 0 }
-    ], 500);
-
-    animationState.currentNode = previousNode;
     animationState.isAnimating = false;
 
     updateButtonStates();
@@ -390,14 +175,14 @@ function updateButtonStates(): void {
 
     if (!forwardBtn || !backBtn) return;
 
-    if (!animationState.currentNode) {
-        forwardBtn.disabled = true;
+    if (!animationState.programCounter || !animationState.programCounter.currentLocation) {
+        forwardBtn.disabled = false; // Allow initialization
         backBtn.disabled = true;
         return;
     }
 
     // Forward: disabled if no outgoing edges
-    const outgoingEdges = getOutgoingEdges(animationState.currentNode);
+    const outgoingEdges = getOutgoingEdges(animationState.programCounter.currentLocation);
     forwardBtn.disabled = outgoingEdges.length === 0;
 
     // Back: disabled if at start
