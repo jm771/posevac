@@ -2,6 +2,53 @@ import cytoscape from 'cytoscape';
 import { cy } from './global_state'
 import { getCytoscapeStyles } from './styles';
 import { ComponentType, createStartNode, createStopNode, createPlusNode, createCombineNode, createSplitNode, createNopNode } from './nodes';
+import { Core } from 'cytoscape';
+
+
+function addComponentToSidebar(type: ComponentType, func: Function) : void {
+    const componentsList = document.querySelector('.components-list');
+    if (componentsList == null) {
+            throw new Error("components-list missing from html");
+    }
+
+    const div = document.createElement('div');
+    div.className = 'component-template';
+    div.setAttribute('data-component-type', type);
+    div.id = `preview-${type}`;
+    div.draggable = true;
+    componentsList.appendChild(div);
+
+
+    const previewCy = cytoscape({
+        container: div,
+        style: getCytoscapeStyles(),
+        userPanningEnabled: false,
+        userZoomingEnabled: false,
+        boxSelectionEnabled: false,
+        autoungrabify: true
+    });
+
+    func(previewCy, 0, 0);
+
+    previewCy.fit(undefined, 10);
+}
+
+// Create preview Cytoscape instances in sidebar
+export function initializePreviews(): void {
+    COMPONENT_REGISTRY.forEach(({ type, createFunc }) => {
+        addComponentToSidebar(type, createFunc);
+    });
+}
+
+// Component registry - single source of truth for all component types
+const COMPONENT_REGISTRY: { type: ComponentType, createFunc: (cy: Core, x: number, y: number) => void }[] = [
+    { type: 'start', createFunc: createStartNode },
+    { type: 'stop', createFunc: createStopNode },
+    { type: 'plus', createFunc: createPlusNode },
+    { type: 'combine', createFunc: createCombineNode },
+    { type: 'split', createFunc: createSplitNode },
+    { type: 'nop', createFunc: createNopNode },
+];
 
 // Setup sidebar drag and drop
 export function setupSidebarDragDrop(): void {
@@ -48,25 +95,9 @@ export function setupSidebarDragDrop(): void {
         const modelY = (renderedY - pan.y) / zoom;
 
         // Route to appropriate creation function based on component type
-        switch (componentType) {
-            case 'start':
-                createStartNode(cy, modelX, modelY);
-                break;
-            case 'stop':
-                createStopNode(cy, modelX, modelY);
-                break;
-            case 'plus':
-                createPlusNode(cy, modelX, modelY);
-                break;
-            case 'combine':
-                createCombineNode(cy, modelX, modelY);
-                break;
-            case 'split':
-                createSplitNode(cy, modelX, modelY);
-                break;
-            case 'nop':
-                createNopNode(cy, modelX, modelY);
-                break;
+        const component = COMPONENT_REGISTRY.find(c => c.type === componentType);
+        if (component) {
+            component.createFunc(cy, modelX, modelY);
         }
     });
 }
@@ -127,29 +158,3 @@ export function setupNodeDeletion(): void {
 }
 
 
-function makePreviewCy(type: ComponentType, func: Function) : void {
-    const container = document.getElementById(`preview-${type}`);
-
-    const previewCy = cytoscape({
-        container: container,
-        style: getCytoscapeStyles(),
-        userPanningEnabled: false,
-        userZoomingEnabled: false,
-        boxSelectionEnabled: false,
-        autoungrabify: true
-    });
-
-    func(previewCy, 0, 0);
-
-    previewCy.fit(undefined, 10);
-}
-
-// Create preview Cytoscape instances in sidebar
-export function initializePreviews(): void {
-    makePreviewCy("start", createStartNode);
-    makePreviewCy("stop", createStopNode);
-    makePreviewCy("plus", createPlusNode);
-    makePreviewCy("combine", createCombineNode);
-    makePreviewCy("split", createSplitNode);
-    makePreviewCy("nop", createNopNode);
-}
