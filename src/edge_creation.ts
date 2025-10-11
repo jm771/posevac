@@ -1,9 +1,12 @@
+import { EdgeSingular, NodeSingular, Position } from "cytoscape";
+import { cy } from "./global_state";
+
 let edgeIdCounter = 0;
 let tempEdge: EdgeSingular | null = null;
 
 
 // Setup right-click edge creation/deletion
-function setupEdgeCreation(): void {
+export function setupEdgeCreation(): void {
     let isRightDragging = false;
     let sourceNode: NodeSingular | null = null;
     let mousePos: Position = { x: 0, y: 0 };

@@ -1,4 +1,4 @@
-import { NodeSingular, EdgeSingular } from 'cytoscape';
+import { NodeSingular } from 'cytoscape';
 import { cy } from './global_state'
 import { getOutgoingEdges } from './graph_management';
 
@@ -228,6 +228,112 @@ function updatePCMarkerForViewportChange(): void {
     updatePCMarkerPosition(screenPos.x, screenPos.y, animationState.currentAngle);
 }
 
+// Step forward in animation
+async function stepForward(): Promise<void> {
+    console.log('stepForward called');
+
+    if (animationState.isAnimating) {
+        console.log('Animation already in progress, ignoring');
+        return;
+    }
+
+    // Initialize if needed (first time)
+    if (!animationState.currentNode) {
+        console.log('No current node, initializing...');
+        if (!initializeAnimation()) {
+            console.log('Initialization failed');
+            return;
+        }
+        console.log('Initialization succeeded');
+        // Return after initialization - user needs to click forward again to actually move
+        return;
+    }
+
+    animationState.isAnimating = true;
+
+    const currentNode = animationState.currentNode;
+    console.log('Current node:', currentNode.id());
+
+    // Get outgoing edges
+    const outgoingEdges = getOutgoingEdges(currentNode);
+    console.log('Outgoing edges:', outgoingEdges.length);
+
+    if (outgoingEdges.length === 0) {
+        console.log('No outgoing edges - end of path');
+        animationState.isAnimating = false;
+        updateButtonStates();
+        return;
+    }
+
+    if (outgoingEdges.length > 1) {
+        console.error('Multiple output edges detected - not supported yet');
+        animationState.isAnimating = false;
+        updateButtonStates();
+        return;
+    }
+
+    const edge = outgoingEdges[0];
+    const sourceTerminal = cy.getElementById(edge.data('source')) as NodeSingular;
+    const targetTerminal = cy.getElementById(edge.data('target')) as NodeSingular;
+    const targetNode = targetTerminal.parent().first();
+
+    console.log('Animating from', currentNode.id(), 'to', targetNode.id());
+
+    // Build waypoints: current center → output terminal → target terminal → target center
+    const waypoints: Waypoint[] = [];
+
+    // Current node center (where marker currently is)
+    const currentPos = currentNode.position();
+    const currentScreen = modelToScreen(currentPos.x, currentPos.y);
+    console.log('Current position:', currentScreen);
+    waypoints.push({ x: currentScreen.x, y: currentScreen.y, angle: 0 });
+
+    // Output terminal position
+    const outputPos = sourceTerminal.position();
+    const outputScreen = modelToScreen(outputPos.x, outputPos.y);
+    const angleToOutput = Math.atan2(outputScreen.y - currentScreen.y, outputScreen.x - currentScreen.x) * 180 / Math.PI;
+    console.log('Output terminal:', outputScreen);
+    waypoints.push({ x: outputScreen.x, y: outputScreen.y, angle: angleToOutput });
+
+    // Target input terminal position
+    const inputPos = targetTerminal.position();
+    const inputScreen = modelToScreen(inputPos.x, inputPos.y);
+    const angleAlongEdge = Math.atan2(inputScreen.y - outputScreen.y, inputScreen.x - outputScreen.x) * 180 / Math.PI;
+    console.log('Input terminal:', inputScreen);
+    waypoints.push({ x: inputScreen.x, y: inputScreen.y, angle: angleAlongEdge });
+
+    // Target node center
+    const targetPos = targetNode.position();
+    const targetScreen = modelToScreen(targetPos.x, targetPos.y);
+    const angleToCenter = Math.atan2(targetScreen.y - inputScreen.y, targetScreen.x - inputScreen.x) * 180 / Math.PI;
+    console.log('Target center:', targetScreen);
+    waypoints.push({ x: targetScreen.x, y: targetScreen.y, angle: angleToCenter });
+
+    console.log('Built waypoints:', waypoints.length, waypoints);
+
+    // Validate waypoints before animating
+    for (let i = 0; i < waypoints.length; i++) {
+        const wp = waypoints[i];
+        if (!wp || isNaN(wp.x) || isNaN(wp.y) || isNaN(wp.angle)) {
+            console.error('Invalid waypoint at index', i, ':', wp);
+            animationState.isAnimating = false;
+            updateButtonStates();
+            return;
+        }
+    }
+
+    // Animate along path
+    await animateAlongPath(waypoints, 500);
+
+    // Update state
+    animationState.currentNode = targetNode;
+    animationState.stepHistory.push(targetNode);
+    animationState.isAnimating = false;
+
+    console.log('Animation complete, now at:', targetNode.id());
+    updateButtonStates();
+}
+
 
 // Step backward in animation
 async function stepBackward(): Promise<void> {
@@ -256,7 +362,7 @@ async function stepBackward(): Promise<void> {
 }
 
 // Setup animation controls
-function setupAnimationControls(): void {
+export function setupAnimationControls(): void {
     const forwardBtn = document.getElementById('forwardBtn');
     const backBtn = document.getElementById('backBtn');
     const resetBtn = document.getElementById('resetBtn');

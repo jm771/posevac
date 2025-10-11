@@ -195,24 +195,3 @@ export function initializePreviews(): void {
         previewCy.fit(undefined, 10);
     });
 }
-
-// Update button states based on current position
-function updateButtonStates(): void {
-    const forwardBtn = document.getElementById('forwardBtn') as HTMLButtonElement | null;
-    const backBtn = document.getElementById('backBtn') as HTMLButtonElement | null;
-
-    if (!forwardBtn || !backBtn) return;
-
-    if (!animationState.currentNode) {
-        forwardBtn.disabled = true;
-        backBtn.disabled = true;
-        return;
-    }
-
-    // Forward: disabled if no outgoing edges
-    const outgoingEdges = getOutgoingEdges(animationState.currentNode);
-    forwardBtn.disabled = outgoingEdges.length === 0;
-
-    // Back: disabled if at start
-    backBtn.disabled = animationState.stepHistory.length <= 1;
-}

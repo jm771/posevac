@@ -1,4 +1,5 @@
 import { EdgeSingular, NodeSingular } from "cytoscape";
+import { cy } from "./global_state";
 
 // Get output terminals from a node
 export function getOutputTerminals(node: NodeSingular): NodeSingular[] {
