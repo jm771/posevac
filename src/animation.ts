@@ -3,18 +3,37 @@ import { cy } from './global_state'
 import { getOutgoingEdges } from './graph_management';
 import { ProgramCounter } from './program_counter';
 
+// Snapshot of a single program counter's state
+interface ProgramCounterSnapshot {
+    id: string;
+    location: NodeSingular;
+    contents: string;
+}
+
+// Snapshot of the entire animation state at a point in time
+interface AnimationSnapshot {
+    programCounters: ProgramCounterSnapshot[];
+}
+
 interface AnimationState {
     programCounters: ProgramCounter[];
-    stepHistory: NodeSingular[][];  // One history per program counter
+    history: AnimationSnapshot[];  // Complete snapshots at each step
     isAnimating: boolean;
 }
 
 // Animation state management
 export const animationState: AnimationState = {
     programCounters: [],
-    stepHistory: [],
+    history: [],
     isAnimating: false
 };
+
+// Helper: Create a snapshot of the current animation state
+function captureSnapshot(): AnimationSnapshot {
+    return {
+        programCounters: animationState.programCounters.map(pc => pc.createSnapshot())
+    };
+}
 
 // Initialize animation - find start nodes and create program counters
 function initializeAnimation(): boolean {
@@ -33,14 +52,16 @@ function initializeAnimation(): boolean {
 
     // Create a program counter for each start node
     animationState.programCounters = [];
-    animationState.stepHistory = [];
+    animationState.history = [];
 
     startNodes.forEach((startNode, index) => {
         const label = startNodes.length > 1 ? `PC${index + 1}` : 'PC';
         const pc = new ProgramCounter(startNode, label);
         animationState.programCounters.push(pc);
-        animationState.stepHistory.push([startNode]);
     });
+
+    // Save initial snapshot
+    animationState.history.push(captureSnapshot());
 
     // Update button states
     updateButtonStates();
@@ -112,15 +133,15 @@ async function stepForward(): Promise<void> {
             // Use the ProgramCounter's followEdge method (handles all 3 steps)
             const targetNode = await pc.followEdge(edge);
 
-            // Update history for this program counter
-            animationState.stepHistory[index].push(targetNode);
-
             console.log(`PC${index + 1}: Now at:`, targetNode.id());
             return targetNode;
         });
 
         // Wait for all program counters to complete their moves
         await Promise.all(movePromises);
+
+        // Save snapshot of current state after all moves complete
+        animationState.history.push(captureSnapshot());
 
         console.log('All program counters animation complete');
     } finally {
@@ -130,40 +151,75 @@ async function stepForward(): Promise<void> {
 }
 
 
-// Step backward in animation - rewinds all program counters
+// Step backward in animation - restore from previous snapshot
 async function stepBackward(): Promise<void> {
     if (animationState.isAnimating) return;
-    if (animationState.programCounters.length === 0) return;
 
-    // Check if any program counter can step back (history length > 1)
-    const canStepBack = animationState.stepHistory.some(history => history.length > 1);
-    if (!canStepBack) return;
+    // Need at least 2 snapshots (current and previous)
+    if (animationState.history.length <= 1) return;
 
     animationState.isAnimating = true;
 
     try {
-        // Rewind each program counter that can move back
-        const movePromises = animationState.programCounters.map(async (pc, index) => {
-            const history = animationState.stepHistory[index];
+        // Remove current snapshot
+        animationState.history.pop();
 
-            if (history.length <= 1) {
-                // Already at start for this PC
-                return null;
-            }
+        // Get previous snapshot
+        const previousSnapshot = animationState.history[animationState.history.length - 1];
 
-            // Remove current node from history
-            history.pop();
-            const previousNode = history[history.length - 1];
+        console.log('Restoring to previous snapshot with', previousSnapshot.programCounters.length, 'program counters');
 
-            // Animate back to previous node
-            await pc.moveTo(previousNode, true, 500);
-
-            console.log(`PC${index + 1}: Moved back to:`, previousNode.id());
-            return previousNode;
+        // Build map of current PCs by ID
+        const currentPCsById = new Map<string, ProgramCounter>();
+        animationState.programCounters.forEach(pc => {
+            currentPCsById.set(pc.id, pc);
         });
 
-        // Wait for all program counters to complete
-        await Promise.all(movePromises);
+        // Build map of snapshot PCs by ID
+        const snapshotPCsById = new Map<string, ProgramCounterSnapshot>();
+        previousSnapshot.programCounters.forEach(pcSnap => {
+            snapshotPCsById.set(pcSnap.id, pcSnap);
+        });
+
+        // Destroy PCs that don't exist in the snapshot
+        const pcsToKeep: ProgramCounter[] = [];
+        for (const pc of animationState.programCounters) {
+            if (snapshotPCsById.has(pc.id)) {
+                pcsToKeep.push(pc);
+            } else {
+                console.log(`Destroying PC ${pc.id} (${pc.contents})`);
+                pc.destroy();
+            }
+        }
+
+        // Create PCs that exist in snapshot but not in current state
+        for (const pcSnap of previousSnapshot.programCounters) {
+            if (!currentPCsById.has(pcSnap.id)) {
+                console.log(`Creating PC ${pcSnap.id} (${pcSnap.contents}) at`, pcSnap.location.id());
+                const newPC = new ProgramCounter(pcSnap.location, pcSnap.contents);
+                // Override the uniqueId to match the snapshot (hacky but necessary)
+                (newPC as any).uniqueId = pcSnap.id;
+                pcsToKeep.push(newPC);
+            }
+        }
+
+        // Update animationState.programCounters to match snapshot order
+        animationState.programCounters = previousSnapshot.programCounters.map(pcSnap => {
+            const pc = pcsToKeep.find(p => p.id === pcSnap.id);
+            if (!pc) throw new Error(`PC ${pcSnap.id} not found`);
+            return pc;
+        });
+
+        // Restore state of each PC
+        for (const pc of animationState.programCounters) {
+            const pcSnap = snapshotPCsById.get(pc.id);
+            if (pcSnap) {
+                pc.restoreFromSnapshot(pcSnap.location, pcSnap.contents);
+                console.log(`Restored PC ${pc.id} to`, pcSnap.location.id());
+            }
+        }
+
+        console.log('Snapshot restoration complete');
     } finally {
         animationState.isAnimating = false;
         updateButtonStates();
@@ -212,9 +268,8 @@ function updateButtonStates(): void {
     });
     forwardBtn.disabled = !anyCanMoveForward;
 
-    // Back: disabled if ALL program counters are at start
-    const anyCanMoveBack = animationState.stepHistory.some(history => history.length > 1);
-    backBtn.disabled = !anyCanMoveBack;
+    // Back: disabled if only one snapshot (no previous state to return to)
+    backBtn.disabled = animationState.history.length <= 1;
 }
 
 
