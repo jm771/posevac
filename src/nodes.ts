@@ -65,6 +65,14 @@ export class CompNode
         this.func = func;
     }
 
+    /**
+     * Helper: Set the program_counter data on a terminal
+     */
+    private setTerminalProgramCounter(terminal: NodeSingular, value: ProgramCounter | null): void {
+        terminal.data('program_counter', value);
+    }
+
+
     getNode(): NodeSingular {
         return this.node;
     }
