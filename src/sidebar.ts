@@ -3,6 +3,7 @@ import { getCytoscapeStyles } from './styles';
 import { CompNode, createPlusNode, createCombineNode, createSplitNode, createNopNode } from './nodes';
 import { ComponentType } from './levels';
 import { Core } from 'cytoscape';
+import { GraphEditorContext } from './editor_context';
 
 
 function addComponentToSidebar(type: ComponentType, func: Function) : void {
@@ -63,7 +64,7 @@ const COMPONENT_REGISTRY: { type: ComponentType, createFunc: (cy: Core, x: numbe
 ];
 
 // Setup sidebar drag and drop
-export function setupSidebarDragDrop(cy: Core): void {
+export function setupSidebarDragDrop(context: GraphEditorContext): void {
     const componentTemplates = document.querySelectorAll<HTMLElement>('.component-template');
 
     componentTemplates.forEach(template => {
@@ -101,27 +102,30 @@ export function setupSidebarDragDrop(cy: Core): void {
 
         // Convert rendered (screen) coordinates to model (graph) coordinates
         // Account for pan and zoom
-        const pan = cy.pan();
-        const zoom = cy.zoom();
+        const pan = context.cy.pan();
+        const zoom = context.cy.zoom();
         const modelX = (renderedX - pan.x) / zoom;
         const modelY = (renderedY - pan.y) / zoom;
 
         // Route to appropriate creation function based on component type
         const component = COMPONENT_REGISTRY.find(c => c.type === componentType);
         if (component) {
-            component.createFunc(cy, modelX, modelY);
+            const newNode = component.createFunc(context.cy, modelX, modelY);
+            // Add to context's userNodes array
+            context.userNodes.push(newNode);
+            console.log(`Added ${componentType} node to context. Total user nodes: ${context.userNodes.length}`);
         }
     });
 }
 
 // Setup node dragging to delete
-export function setupNodeDeletion(cy: Core): void {
+export function setupNodeDeletion(context: GraphEditorContext): void {
     const sidebar = document.getElementById('sidebar');
     const deleteZone = document.getElementById('deleteZone');
     const cyContainer = document.getElementById('cy');
     if (!sidebar || !deleteZone || !cyContainer) return;
 
-    cy.on('drag', 'node', function(evt) {
+    context.cy.on('drag', 'node', function(evt) {
         const node = evt.target;
         const renderedPos = node.renderedPosition();
         const sidebarBounds = sidebar.getBoundingClientRect();
@@ -138,7 +142,7 @@ export function setupNodeDeletion(cy: Core): void {
         }
     });
 
-    cy.on('free', 'node', function(evt) {
+    context.cy.on('free', 'node', function(evt) {
         const node = evt.target;
         const renderedPos = node.renderedPosition();
         const sidebarBounds = sidebar.getBoundingClientRect();
@@ -159,6 +163,15 @@ export function setupNodeDeletion(cy: Core): void {
                 return;
             }
 
+            const nodeId = node.id();
+
+            // Remove from userNodes array
+            const nodeIndex = context.userNodes.findIndex(n => n.getNodeId() === nodeId);
+            if (nodeIndex !== -1) {
+                context.userNodes.splice(nodeIndex, 1);
+                console.log(`Removed node from context. Total user nodes: ${context.userNodes.length}`);
+            }
+
             // If it's a compound node or input/output node, remove all children first
             if (nodeType === 'compound' || nodeType === 'input' || nodeType === 'output') {
                 node.children().remove();
@@ -167,6 +180,15 @@ export function setupNodeDeletion(cy: Core): void {
             // If it's a child node (terminal), remove parent too
             else if (node.parent().length > 0) {
                 const parent = node.parent();
+                const parentId = parent.id();
+
+                // Remove parent from userNodes array
+                const parentIndex = context.userNodes.findIndex(n => n.getNodeId() === parentId);
+                if (parentIndex !== -1) {
+                    context.userNodes.splice(parentIndex, 1);
+                    console.log(`Removed parent node from context. Total user nodes: ${context.userNodes.length}`);
+                }
+
                 parent.children().remove();
                 parent.remove();
             } else {

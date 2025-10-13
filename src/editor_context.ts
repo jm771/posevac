@@ -9,6 +9,7 @@ export class GraphEditorContext {
     public level: Level;
     public inputNodes: CompNode[] = [];
     public outputNodes: CompNode[] = [];
+    public userNodes: CompNode[] = [];  // User-created nodes (dragged from sidebar)
 
     constructor(level: Level) {
         this.level = level;
@@ -81,6 +82,7 @@ export class GraphEditorContext {
         }
         this.inputNodes = [];
         this.outputNodes = [];
+        this.userNodes = [];
     }
 
     /**
@@ -103,5 +105,8 @@ export class GraphEditorContext {
 
         // Remove all edges
         this.cy.edges().remove();
+
+        // Clear user nodes array
+        this.userNodes = [];
     }
 }
