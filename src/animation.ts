@@ -3,6 +3,7 @@ import { editorContext } from './global_state'
 import { getOutgoingEdges } from './graph_management';
 import { ProgramCounter } from './program_counter';
 import { EvaluateOutput } from './nodes';
+import { GraphEditorContext } from './editor_context';
 
 // Helper to get cy from context
 function getCy(): Core {
@@ -95,20 +96,19 @@ function updatePCMarkerForViewportChange(): void {
     }
 }
 
-async function evaluateFunctions(): Promise<void> {
-    if (editorContext == null) {
-        throw Error("need non null editor context");
-    }
+async function evaluateFunctions(editorContext : GraphEditorContext): Promise<void> {
 
     const evaluations : Array<EvaluateOutput> = editorContext.allNodes.map((node) => node.evaluate());
 
     const moveInAnimations = [];
+    
 
     for (let i = 0; i < evaluations.length; i++)
     {
         moveInAnimations.push(...evaluations[i].pcsDestroyed.map(pc => pc.animateMoveToNode(editorContext.allNodes[i].getNode())));
     }
 
+    
     await Promise.all(moveInAnimations);
 
     const moveOutAnimations: Array<Promise<void>> = [];
@@ -148,13 +148,18 @@ async function stepForward(): Promise<void> {
 
     animationState.isAnimating = true;
 
+    if (editorContext == null) {
+        throw Error("need non null editor context");
+    }
+
+
     try {
         switch (animationState.stage) {
             case Stage.AdvanceCounter:
                 await advanceCounters();
                 break;
             case Stage.Evaluate:
-                await evaluateFunctions();
+                await evaluateFunctions(editorContext);
                 break;
         }
 
