@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4fc3f7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ba68c8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="48" fill="#1e1e1e" stroke="url(#grad1)" stroke-width="3"/>
+
+  <!-- Nodes -->
+  <circle cx="30" cy="35" r="8" fill="#4fc3f7"/>
+  <circle cx="70" cy="35" r="8" fill="#81c784"/>
+  <circle cx="50" cy="70" r="8" fill="#ffb74d"/>
+
+  <!-- Connecting lines -->
+  <line x1="30" y1="35" x2="50" y2="70" stroke="#4fc3f7" stroke-width="2.5" opacity="0.7"/>
+  <line x1="70" y1="35" x2="50" y2="70" stroke="#81c784" stroke-width="2.5" opacity="0.7"/>
+
+  <!-- Plus symbol on bottom node -->
+  <text x="50" y="75" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1e1e1e" text-anchor="middle">+</text>
+</svg>
