@@ -121,7 +121,7 @@ export class CompNode
         }
 
         // TODO need to do contents better
-        const result = (<any>this.func)(...(this.inputTerminals.map(t => getTerminalProgramCounters(t).values().next().value)));
+        const result = (<any>this.func)(...(this.inputTerminals.map(t => getTerminalProgramCounters(t).values().next().value?.contents)));
         let newPcs : Array<ProgramCounter> = []
 
         if(result != undefined)
