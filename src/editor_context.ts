@@ -58,6 +58,7 @@ export class GraphEditorContext {
             inputNode.getNode().data('deletable', false);
 
             this.inputNodes.push(inputNode);
+            this.allNodes.push(inputNode);
         });
 
         // Create output nodes
@@ -70,6 +71,7 @@ export class GraphEditorContext {
             outputNode.getNode().data('deletable', false);
 
             this.outputNodes.push(outputNode);
+            this.allNodes.push(outputNode);
         });
     }
 
@@ -80,35 +82,5 @@ export class GraphEditorContext {
         if (this.cy) {
             this.cy.destroy();
         }
-        this.inputNodes = [];
-        this.outputNodes = [];
-        this.allNodes = [];
-    }
-
-    /**
-     * Reset the graph to initial state (keep input/output nodes, remove everything else)
-     */
-    reset(): void {
-        // Remove all nodes except input and output nodes
-        const inputOutputIds = [
-            ...this.inputNodes.map(n => n.getNodeId()),
-            ...this.outputNodes.map(n => n.getNodeId())
-        ];
-
-        this.cy.nodes().forEach(node => {
-            if (!inputOutputIds.includes(node.id()) && node.parent().length === 0) {
-                // Only remove top-level nodes (compound nodes)
-                node.children().remove();
-                node.remove();
-            }
-        });
-
-        // Remove all edges
-        this.cy.edges().remove();
-
-        // Clear user nodes array
-        this.allNodes = [];
-        this.inputNodes.forEach(n => {this.allNodes.push(n)});
-        this.outputNodes.forEach(n => {this.allNodes.push(n)});
     }
 }
