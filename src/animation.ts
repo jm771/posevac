@@ -37,14 +37,6 @@ function captureSnapshot(): AnimationSnapshot {
 
 // Initialize animation - find input nodes and create program counters
 function initializeAnimation(): boolean {
-    // Find all input nodes
-    const inputNodes = cy.nodes('[type="input"]');
-
-    if (inputNodes.length === 0) {
-        console.error('No input node found in graph');
-        return false;
-    }
-
     // Destroy old program counters if they exist
     for (const pc of animationState.programCounters) {
         pc.destroy();
@@ -54,19 +46,11 @@ function initializeAnimation(): boolean {
     animationState.programCounters = [];
     animationState.history = [];
 
-    inputNodes.forEach((inputNode, index) => {
-        const label = inputNodes.length > 1 ? `PC${index + 1}` : 'PC';
-        const pc = new ProgramCounter(inputNode, label);
-        animationState.programCounters.push(pc);
-    });
-
     // Save initial snapshot
     animationState.history.push(captureSnapshot());
 
     // Update button states
     updateButtonStates();
-
-    console.log(`Animation initialized with ${inputNodes.length} program counter(s)`);
 
     return true;
 }

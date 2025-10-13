@@ -60,10 +60,10 @@ export class GraphEditorContext {
         });
 
         // Create output nodes
-        this.level.expectedOutputs.forEach((_, index) => {
+        this.level.expectedOutputs.forEach((outputs, index) => {
             const x = 700;
             const y = startY + (index * spacing);
-            const outputNode = createOutputNode(this.cy, x, y);
+            const outputNode = createOutputNode(this.cy, x, y, [...outputs]);
 
             // Mark as non-deletable
             outputNode.getNode().data('deletable', false);
