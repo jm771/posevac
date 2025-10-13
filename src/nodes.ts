@@ -34,7 +34,6 @@ function makeTerminals(cy: Core, nodeId: string, x: number, y: number, n: number
     {
         const terminalId = `${nodeId}-${type}${i}`;
         const yOffset = ((i + 1.0) * (maxY - minY) / (n + 1.0)) + minY;
-        console.log(yOffset)
         cy.add({
             group: 'nodes',
             data: {
