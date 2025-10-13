@@ -2,6 +2,7 @@ import { Core, NodeSingular } from 'cytoscape';
 import { editorContext } from './global_state'
 import { getOutgoingEdges } from './graph_management';
 import { ProgramCounter } from './program_counter';
+import { EvaluateOutput } from './nodes';
 
 // Helper to get cy from context
 function getCy(): Core {
@@ -9,6 +10,21 @@ function getCy(): Core {
         throw new Error('Editor context not initialized');
     }
     return editorContext.cy;
+}
+
+enum Stage {
+    AdvanceCounter = 1,
+    Evaluate
+}
+
+function nextStage(stage : Stage) : Stage
+{
+    switch(stage) {
+        case Stage.AdvanceCounter:
+            return Stage.Evaluate;
+        case Stage.Evaluate:
+            return Stage.AdvanceCounter;
+    }
 }
 
 // Snapshot of a single program counter's state
@@ -27,13 +43,15 @@ interface AnimationState {
     programCounters: ProgramCounter[];
     history: AnimationSnapshot[];  // Complete snapshots at each step
     isAnimating: boolean;
+    stage: Stage
 }
 
 // Animation state management
 export const animationState: AnimationState = {
     programCounters: [],
     history: [],
-    isAnimating: false
+    isAnimating: false,
+    stage: Stage.Evaluate
 };
 
 // Helper: Create a snapshot of the current animation state
@@ -53,6 +71,7 @@ function initializeAnimation(): boolean {
     // Create a program counter for each input node
     animationState.programCounters = [];
     animationState.history = [];
+    animationState.stage = Stage.Evaluate;
 
     // Save initial snapshot
     animationState.history.push(captureSnapshot());
@@ -76,76 +95,85 @@ function updatePCMarkerForViewportChange(): void {
     }
 }
 
+async function evaluateFunctions(): Promise<void> {
+    if (editorContext == null) {
+        throw Error("need non null editor context");
+    }
+
+    const evaluations : Array<EvaluateOutput> = editorContext.allNodes.map((node) => node.evaluate());
+
+    const moveInAnimations = [];
+
+    for (let i = 0; i < evaluations.length; i++)
+    {
+        moveInAnimations.push(...evaluations[i].pcsDestroyed.map(pc => pc.animateMoveToNode(editorContext.allNodes[i].getNode())));
+    }
+
+    await Promise.all(moveInAnimations);
+
+    const moveOutAnimations: Array<Promise<void>> = [];
+
+    for (let i = 0; i < evaluations.length; i++)
+    {
+        // Can animate properly later
+        evaluations[i].pcsCreated.forEach(pc => moveOutAnimations.push(pc.animateMoveToNode(pc.currentLocation)));
+    }
+
+    await Promise.all(moveOutAnimations);
+}
+
+async function advanceCounters(): Promise<void> {
+    // Advance each program counter that can move
+    const movePromises = animationState.programCounters.map(async (pc, index) => {
+        const nextNode = pc.tryAdvance();
+        if (nextNode != null) {
+            return pc.animateMoveToNode(nextNode);
+        }
+
+        return nextNode;
+    });
+
+
+    // is this fine is some are none?
+    // Wait for all program counters to complete their moves
+    await Promise.all(movePromises);
+}
+
 // Step forward in animation - advances all program counters
 async function stepForward(): Promise<void> {
-    console.log('stepForward called');
-
     if (animationState.isAnimating) {
         console.log('Animation already in progress, ignoring');
         return;
     }
 
-    // Initialize if needed (first time)
-    if (animationState.programCounters.length === 0) {
-        console.log('No program counters, initializing...');
-        if (!initializeAnimation()) {
-            console.log('Initialization failed');
-            return;
+    animationState.isAnimating = true;
+
+    try {
+        switch (animationState.stage) {
+            case Stage.AdvanceCounter:
+                await advanceCounters();
+                break;
+            case Stage.Evaluate:
+                await evaluateFunctions();
+                break;
         }
-        console.log('Initialization succeeded');
-        // Return after initialization - user needs to click forward again to actually move
-        return;
+
+        animationState.stage = nextStage(animationState.stage);
+        // Save snapshot of current state after all moves complete
+        animationState.history.push(captureSnapshot());
     }
+    finally 
+    {
+        animationState.isAnimating = false;
+        updateButtonStates();
+    }
+
 
     // For each input - if nothing on output terminal - add the next value
     // For each each program counter on an output terminal - if they can move to in input terminal - move them
     // For each function cell - if all the input are there, and no outputs are there - move to the middle - 
     // then create new program counters with output
     // move them to output terminal
-
-    animationState.isAnimating = true;
-
-    try {
-        // Advance each program counter that can move
-        const movePromises = animationState.programCounters.map(async (pc, index) => {
-            const currentNode = pc.currentLocation;
-
-            console.log(`PC${index + 1} at:`, currentNode.id());
-
-            // Get outgoing edges
-            const outgoingEdges = getOutgoingEdges(currentNode);
-
-            if (outgoingEdges.length === 0) {
-                console.log(`PC${index + 1}: No outgoing edges - end of path`);
-                return null;
-            }
-
-            if (outgoingEdges.length > 1) {
-                console.error(`PC${index + 1}: Multiple output edges detected - not supported yet`);
-                return null;
-            }
-
-            const edge = outgoingEdges[0];
-            console.log(`PC${index + 1}: Following edge`);
-
-            // Use the ProgramCounter's followEdge method (handles all 3 steps)
-            const targetNode = await pc.followEdge(edge);
-
-            console.log(`PC${index + 1}: Now at:`, targetNode.id());
-            return targetNode;
-        });
-
-        // Wait for all program counters to complete their moves
-        await Promise.all(movePromises);
-
-        // Save snapshot of current state after all moves complete
-        animationState.history.push(captureSnapshot());
-
-        console.log('All program counters animation complete');
-    } finally {
-        animationState.isAnimating = false;
-        updateButtonStates();
-    }
 }
 
 

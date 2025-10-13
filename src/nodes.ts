@@ -2,11 +2,23 @@
 
 import { Core, NodeSingular } from "cytoscape";
 import { ProgramCounter } from "./program_counter";
+import { editorContext } from "./global_state";
 
 let nodeIdCounter = 0;
 
 // Type definitions
 export type ComponentType = 'input' | 'output' | 'plus' | 'combine' | 'split' | 'nop';
+
+export class EvaluateOutput {
+    pcsDestroyed : Array<ProgramCounter>
+    pcsCreated : Array<ProgramCounter>
+
+    constructor(pcsDestroyed : Array<ProgramCounter>, pcsCreated : Array<ProgramCounter>) {
+        this.pcsCreated = pcsCreated;
+        this.pcsDestroyed =pcsDestroyed;
+    }
+}
+
 
 function makeTerminals(cy: Core, nodeId: string, x: number, y: number, n: number, type: string): NodeSingular[] {
     if (n == 0)
@@ -30,7 +42,7 @@ function makeTerminals(cy: Core, nodeId: string, x: number, y: number, n: number
                 parent: nodeId,
                 type: `${type}-terminal`,
                 terminalType: type,
-                program_counter: null
+                program_counters: []
             },
             position: { x: x, y: y + yOffset }
         });
@@ -85,9 +97,59 @@ export class CompNode
         return this.func;
     }
     
-    evaluate(programCounters: Map<string, ProgramCounter>) : void
+
+    evaluate() : EvaluateOutput
     {
-        programCounters;   
+        for (const term of this.outputTerminals) {
+            if (term.data("program_counters").length != 0) {
+                return new EvaluateOutput([], []);
+            }
+        }
+
+        for (const term of this.inputTerminals) {
+            if (term.data("program_counters").length > 1) {
+                throw Error("More than one program counter at input");
+            }
+            if (term.data("program_counters").length == 0) {
+                return new EvaluateOutput([], []);
+            }
+        }
+
+        // TODO need to do contents better
+        const result = (<any>this.func)(...(this.inputTerminals.map(t => t.data("program_counters")[0].contents)));
+
+        let newPcs = []
+
+        let resultArray;
+
+        if (this.outputTerminals.length == 1)
+        {
+            resultArray = [result];
+        } else
+        {
+            resultArray = result as Array<any>;
+        } 
+        if (this.outputTerminals.length != result.length) {
+            throw Error("N out terminals didn't match result length");
+        }
+
+        for (let i = 0; i < resultArray.length; i++)
+        {
+            for (let edge of editorContext!.cy.edges(`[source="${this.outputTerminals[i].id()}"]`).toArray())
+            {
+                let newPc = new ProgramCounter(this.outputTerminals[i], edge, resultArray[i]);
+                this.outputTerminals[i].data('program_counters').push(newPc);
+                newPcs.push(newPc);
+            }
+        }
+
+        let rmedPcs : Array<ProgramCounter> = [];
+        this.inputTerminals.forEach(term => {rmedPcs.push(term.data("program_counters").pop());});
+
+        return new EvaluateOutput(
+            newPcs,
+            rmedPcs
+        )
     }
 }
 

@@ -1,4 +1,4 @@
-import { NodeSingular } from 'cytoscape';
+import { EdgeSingular, NodeSingular } from 'cytoscape';
 import { editorContext } from './global_state';
 
 // Helper to get cy from context
@@ -23,8 +23,9 @@ interface Waypoint extends Position {
  */
 export class ProgramCounter {
     // Display properties
-    private _contents: string;
+    private _contents: any;
     private _currentLocation: NodeSingular;
+    private _currentEdge: EdgeSingular | null;
 
     // Position state
     private _position: Position;
@@ -45,9 +46,10 @@ export class ProgramCounter {
      * @param location Initial location (node or terminal)
      * @param contents Display text (default: "PC")
      */
-    constructor(location: NodeSingular, contents: string = "PC") {
+    constructor(location: NodeSingular, edge: EdgeSingular | null, contents: any = "PC") {
         this._contents = contents;
         this._currentLocation = location;
+        this._currentEdge = edge;
         this._position = { x: 0, y: 0 };
         this._angle = 0;
         this.uniqueId = `pc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -71,14 +73,14 @@ export class ProgramCounter {
     /**
      * Get the display contents
      */
-    get contents(): string {
+    get contents(): any {
         return this._contents;
     }
 
     /**
      * Set the display contents
      */
-    set contents(value: string) {
+    set contents(value: any) {
         this._contents = value;
         this.boxElement.textContent = value;
     }
@@ -291,77 +293,6 @@ export class ProgramCounter {
     }
 
     /**
-     * Move to a specific location (node center)
-     * @param target Target node
-     * @param animate Whether to animate the movement (default: true)
-     * @param duration Animation duration in ms (default: 500)
-     */
-    async moveTo(target: NodeSingular, animate: boolean = true, duration: number = 500): Promise<void> {
-        if (this.isAnimating) {
-            console.warn('Program counter is already animating');
-            return;
-        }
-
-        const targetPos = target.position();
-        const targetScreen = this.modelToScreen(targetPos.x, targetPos.y);
-
-        if (animate) {
-            this.isAnimating = true;
-            const waypoints: Waypoint[] = [
-                { x: this._position.x, y: this._position.y, angle: this._angle },
-                { x: targetScreen.x, y: targetScreen.y, angle: 0 }
-            ];
-            await this.animateAlongPath(waypoints, duration);
-            this.isAnimating = false;
-        } else {
-            this.updatePosition(targetScreen.x, targetScreen.y, 0);
-        }
-
-        this._currentLocation = target;
-    }
-
-    /**
-     * Move to a specific screen position (useful for terminals)
-     * @param x Screen X coordinate
-     * @param y Screen Y coordinate
-     * @param angle Arrow angle
-     * @param animate Whether to animate the movement (default: true)
-     * @param duration Animation duration in ms (default: 500)
-     */
-    async moveToPosition(x: number, y: number, angle: number, animate: boolean = true, duration: number = 500): Promise<void> {
-        if (this.isAnimating) {
-            console.warn('Program counter is already animating');
-            return;
-        }
-
-        if (animate) {
-            this.isAnimating = true;
-            const waypoints: Waypoint[] = [
-                { x: this._position.x, y: this._position.y, angle: this._angle },
-                { x, y, angle }
-            ];
-            await this.animateAlongPath(waypoints, duration);
-            this.isAnimating = false;
-        } else {
-            this.updatePosition(x, y, angle);
-        }
-    }
-
-    /**
-     * Move to a terminal node
-     * @param terminal Terminal node
-     * @param angle Arrow angle
-     * @param animate Whether to animate the movement (default: true)
-     * @param duration Animation duration in ms (default: 500)
-     */
-    async moveToTerminal(terminal: NodeSingular, angle: number, animate: boolean = true, duration: number = 500): Promise<void> {
-        const terminalPos = terminal.position();
-        const terminalScreen = this.modelToScreen(terminalPos.x, terminalPos.y);
-        await this.moveToPosition(terminalScreen.x, terminalScreen.y, angle, animate, duration);
-        this._currentLocation = terminal;
-    }
-
-    /**
      * Update position based on current location (for viewport changes)
      */
     updateForViewportChange(): void {
@@ -401,62 +332,50 @@ export class ProgramCounter {
         this.updatePosition(screenPos.x, screenPos.y, 0);
     }
 
-    /**
-     * Follow an edge to its target node with a 3-step animation:
-     * 1. Move from current node center to output terminal
-     * 2. Move from output terminal to input terminal
-     * 3. Move from input terminal to target node center
-     *
-     * @param edge The edge to follow (contains source and target terminal IDs)
-     * @param stepDuration Duration for each step in ms (default: 200)
-     * @returns The target node
-     */
-    async followEdge(edge: any, stepDuration: number = 200): Promise<NodeSingular> {
+    tryAdvance() : NodeSingular | null {
+        if (this._currentEdge != null)
+        {
+            const dest = getCy().getElementById(this._currentEdge.data('target'));
+            if (dest.data('program_counters').length == 0) {
+                dest.data('program_counters', [this]);
+            }
+
+            this._currentLocation.data('program_counters').remove(this);
+            this._currentEdge = null;
+
+            return dest;
+        }
+
+        return null;
+    }
+
+    async animateMoveToNode(target: NodeSingular, stepDuration: number = 200) {
         if (this.isAnimating) {
             throw new Error('Program counter is already animating');
         }
 
         this.isAnimating = true;
+        const currentPos = this._currentLocation.position();
+
+        this._currentLocation = target
 
         try {
-            // Get terminals and target node from edge
-            const sourceTerminal = getCy().getElementById(edge.data('source')) as NodeSingular;
-            const targetTerminal = getCy().getElementById(edge.data('target')) as NodeSingular;
-            const targetNode = targetTerminal.parent().first();
-
-            // Calculate positions and angles for all 4 waypoints
-            const currentPos = this._currentLocation.position();
+            
             const currentScreen = this.modelToScreen(currentPos.x, currentPos.y);
 
-            const outputPos = sourceTerminal.position();
+            const outputPos = target.position();
             const outputScreen = this.modelToScreen(outputPos.x, outputPos.y);
             const angleToOutput = Math.atan2(outputScreen.y - currentScreen.y, outputScreen.x - currentScreen.x) * 180 / Math.PI;
 
-            const inputPos = targetTerminal.position();
-            const inputScreen = this.modelToScreen(inputPos.x, inputPos.y);
-            const angleAlongEdge = Math.atan2(inputScreen.y - outputScreen.y, inputScreen.x - outputScreen.x) * 180 / Math.PI;
-
-            const targetPos = targetNode.position();
-            const targetScreen = this.modelToScreen(targetPos.x, targetPos.y);
-            const angleToCenter = Math.atan2(targetScreen.y - inputScreen.y, targetScreen.x - inputScreen.x) * 180 / Math.PI;
-
-            // Build all waypoints for the complete animation
             const waypoints: Waypoint[] = [
                 { x: currentScreen.x, y: currentScreen.y, angle: angleToOutput },
                 { x: outputScreen.x, y: outputScreen.y, angle: angleToOutput },
-                { x: inputScreen.x, y: inputScreen.y, angle: angleAlongEdge },
-                { x: targetScreen.x, y: targetScreen.y, angle: angleToCenter }
             ];
 
-            // Animate through all waypoints (total duration = 3 * stepDuration for 3 steps)
-            await this.animateAlongPath(waypoints, stepDuration * 3);
-
-            // Update current location to target
-            this._currentLocation = targetNode;
-
-            return targetNode;
+            await this.animateAlongPath(waypoints, stepDuration);
+            
         } finally {
-            this.isAnimating = false;
+            this.isAnimating = false
         }
     }
 }
