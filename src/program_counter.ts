@@ -1,5 +1,13 @@
 import { NodeSingular } from 'cytoscape';
-import { cy } from './global_state';
+import { editorContext } from './global_state';
+
+// Helper to get cy from context
+function getCy() {
+    if (!editorContext) {
+        throw new Error('Editor context not initialized');
+    }
+    return editorContext.cy;
+}
 
 interface Position {
     x: number;
@@ -207,8 +215,8 @@ export class ProgramCounter {
      * Convert model coordinates to screen coordinates
      */
     private modelToScreen(modelX: number, modelY: number): Position {
-        const pan = cy.pan();
-        const zoom = cy.zoom();
+        const pan = getCy().pan();
+        const zoom = getCy().zoom();
 
         const renderedX = modelX * zoom + pan.x;
         const renderedY = modelY * zoom + pan.y;
@@ -412,8 +420,8 @@ export class ProgramCounter {
 
         try {
             // Get terminals and target node from edge
-            const sourceTerminal = cy.getElementById(edge.data('source')) as NodeSingular;
-            const targetTerminal = cy.getElementById(edge.data('target')) as NodeSingular;
+            const sourceTerminal = getCy().getElementById(edge.data('source')) as NodeSingular;
+            const targetTerminal = getCy().getElementById(edge.data('target')) as NodeSingular;
             const targetNode = targetTerminal.parent().first();
 
             // Calculate positions and angles for all 4 waypoints

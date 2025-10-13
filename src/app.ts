@@ -34,9 +34,9 @@ function startLevel(level: Level): void {
     initializePreviews(level.allowedNodes);
 
     // Set up interactions (only needs to be done once, but safe to call multiple times)
-    setupSidebarDragDrop();
-    setupNodeDeletion();
-    setupEdgeCreation();
+    setupSidebarDragDrop(currentEditor.cy);
+    setupNodeDeletion(currentEditor.cy);
+    setupEdgeCreation(currentEditor.cy);
     setupAnimationControls();
 
     // Show the graph editor

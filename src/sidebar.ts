@@ -1,5 +1,4 @@
 import cytoscape from 'cytoscape';
-import { cy } from './global_state'
 import { getCytoscapeStyles } from './styles';
 import { CompNode, createPlusNode, createCombineNode, createSplitNode, createNopNode } from './nodes';
 import { ComponentType } from './levels';
@@ -64,7 +63,7 @@ const COMPONENT_REGISTRY: { type: ComponentType, createFunc: (cy: Core, x: numbe
 ];
 
 // Setup sidebar drag and drop
-export function setupSidebarDragDrop(): void {
+export function setupSidebarDragDrop(cy: Core): void {
     const componentTemplates = document.querySelectorAll<HTMLElement>('.component-template');
 
     componentTemplates.forEach(template => {
@@ -116,7 +115,7 @@ export function setupSidebarDragDrop(): void {
 }
 
 // Setup node dragging to delete
-export function setupNodeDeletion(): void {
+export function setupNodeDeletion(cy: Core): void {
     const sidebar = document.getElementById('sidebar');
     const deleteZone = document.getElementById('deleteZone');
     const cyContainer = document.getElementById('cy');

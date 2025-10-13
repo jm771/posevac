@@ -1,7 +1,15 @@
-import { NodeSingular } from 'cytoscape';
-import { cy } from './global_state'
+import { Core, NodeSingular } from 'cytoscape';
+import { editorContext } from './global_state'
 import { getOutgoingEdges } from './graph_management';
 import { ProgramCounter } from './program_counter';
+
+// Helper to get cy from context
+function getCy(): Core {
+    if (!editorContext) {
+        throw new Error('Editor context not initialized');
+    }
+    return editorContext.cy;
+}
 
 // Snapshot of a single program counter's state
 interface ProgramCounterSnapshot {
@@ -229,10 +237,10 @@ export function setupAnimationControls(): void {
     resetBtn.addEventListener('click', resetAnimation);
 
     // Listen for viewport changes (pan/zoom)
-    cy.on('pan zoom', updatePCMarkerForViewportChange);
+    getCy().on('pan zoom', updatePCMarkerForViewportChange);
 
     // Listen for node position changes (when user drags nodes)
-    cy.on('position', 'node', updatePCMarkerForViewportChange);
+    getCy().on('position', 'node', updatePCMarkerForViewportChange);
 
     // Don't initialize until user clicks - they need to add nodes first
     // Initialize will happen automatically on first forward click
