@@ -28,21 +28,9 @@ function nextStage(stage : Stage) : Stage
     }
 }
 
-// Snapshot of a single program counter's state
-interface ProgramCounterSnapshot {
-    id: string;
-    location: NodeSingular;
-    contents: string;
-}
-
-// Snapshot of the entire animation state at a point in time
-interface AnimationSnapshot {
-    programCounters: ProgramCounterSnapshot[];
-}
 
 interface AnimationState {
     programCounters: ProgramCounter[];
-    history: AnimationSnapshot[];  // Complete snapshots at each step
     isAnimating: boolean;
     stage: Stage
 }
@@ -50,17 +38,9 @@ interface AnimationState {
 // Animation state management
 export const animationState: AnimationState = {
     programCounters: [],
-    history: [],
     isAnimating: false,
     stage: Stage.Evaluate
 };
-
-// Helper: Create a snapshot of the current animation state
-function captureSnapshot(): AnimationSnapshot {
-    return {
-        programCounters: animationState.programCounters.map(pc => pc.createSnapshot())
-    };
-}
 
 // Initialize animation - find input nodes and create program counters
 function initializeAnimation(): boolean {
@@ -71,11 +51,7 @@ function initializeAnimation(): boolean {
 
     // Create a program counter for each input node
     animationState.programCounters = [];
-    animationState.history = [];
     animationState.stage = Stage.Evaluate;
-
-    // Save initial snapshot
-    animationState.history.push(captureSnapshot());
 
     // Update button states
     updateButtonStates();
@@ -124,7 +100,7 @@ async function evaluateFunctions(editorContext : GraphEditorContext): Promise<vo
 
 async function advanceCounters(): Promise<void> {
     // Advance each program counter that can move
-    const movePromises = animationState.programCounters.map(async (pc, index) => {
+    const movePromises = animationState.programCounters.map(async (pc) => {
         const nextNode = pc.tryAdvance();
         if (nextNode != null) {
             return pc.animateMoveToNode(nextNode);
@@ -164,8 +140,6 @@ async function stepForward(): Promise<void> {
         }
 
         animationState.stage = nextStage(animationState.stage);
-        // Save snapshot of current state after all moves complete
-        animationState.history.push(captureSnapshot());
     }
     finally 
     {
@@ -182,79 +156,8 @@ async function stepForward(): Promise<void> {
 }
 
 
-// Step backward in animation - restore from previous snapshot
+
 async function stepBackward(): Promise<void> {
-    if (animationState.isAnimating) return;
-
-    // Need at least 2 snapshots (current and previous)
-    if (animationState.history.length <= 1) return;
-
-    animationState.isAnimating = true;
-
-    try {
-        // Remove current snapshot
-        animationState.history.pop();
-
-        // Get previous snapshot
-        const previousSnapshot = animationState.history[animationState.history.length - 1];
-
-        console.log('Restoring to previous snapshot with', previousSnapshot.programCounters.length, 'program counters');
-
-        // Build map of current PCs by ID
-        const currentPCsById = new Map<string, ProgramCounter>();
-        animationState.programCounters.forEach(pc => {
-            currentPCsById.set(pc.id, pc);
-        });
-
-        // Build map of snapshot PCs by ID
-        const snapshotPCsById = new Map<string, ProgramCounterSnapshot>();
-        previousSnapshot.programCounters.forEach(pcSnap => {
-            snapshotPCsById.set(pcSnap.id, pcSnap);
-        });
-
-        // Destroy PCs that don't exist in the snapshot
-        const pcsToKeep: ProgramCounter[] = [];
-        for (const pc of animationState.programCounters) {
-            if (snapshotPCsById.has(pc.id)) {
-                pcsToKeep.push(pc);
-            } else {
-                console.log(`Destroying PC ${pc.id} (${pc.contents})`);
-                pc.destroy();
-            }
-        }
-
-        // Create PCs that exist in snapshot but not in current state
-        for (const pcSnap of previousSnapshot.programCounters) {
-            if (!currentPCsById.has(pcSnap.id)) {
-                console.log(`Creating PC ${pcSnap.id} (${pcSnap.contents}) at`, pcSnap.location.id());
-                const newPC = new ProgramCounter(pcSnap.location, pcSnap.contents);
-                // Override the uniqueId to match the snapshot (hacky but necessary)
-                (newPC as any).uniqueId = pcSnap.id;
-                pcsToKeep.push(newPC);
-            }
-        }
-
-        // Update animationState.programCounters to match snapshot order
-        animationState.programCounters = previousSnapshot.programCounters.map(pcSnap => {
-            const pc = pcsToKeep.find(p => p.id === pcSnap.id);
-            if (!pc) throw new Error(`PC ${pcSnap.id} not found`);
-            return pc;
-        });
-
-        // Restore state of each PC
-        for (const pc of animationState.programCounters) {
-            const pcSnap = snapshotPCsById.get(pc.id);
-            if (pcSnap) {
-                pc.restoreFromSnapshot(pcSnap.location, pcSnap.contents);
-                console.log(`Restored PC ${pc.id} to`, pcSnap.location.id());
-            }
-        }
-
-        console.log('Snapshot restoration complete');
-    } finally {
-        animationState.isAnimating = false;
-        updateButtonStates();
-    }
 }
 
 // Setup animation controls
@@ -298,9 +201,6 @@ function updateButtonStates(): void {
         return outgoingEdges.length > 0;
     });
     forwardBtn.disabled = !anyCanMoveForward;
-
-    // Back: disabled if only one snapshot (no previous state to return to)
-    backBtn.disabled = animationState.history.length <= 1;
 }
 
 

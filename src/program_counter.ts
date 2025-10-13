@@ -305,33 +305,6 @@ export class ProgramCounter {
         this.updatePosition(screenPos.x, screenPos.y, this._angle);
     }
 
-    /**
-     * Create a snapshot of the current state of this program counter
-     */
-    createSnapshot(): { id: string; location: NodeSingular; contents: string } {
-        return {
-            id: this.uniqueId,
-            location: this._currentLocation,
-            contents: this._contents
-        };
-    }
-
-    /**
-     * Restore this program counter to a previous state
-     * @param location The location to restore to
-     * @param contents The contents to restore
-     */
-    restoreFromSnapshot(location: NodeSingular, contents: string): void {
-        // Update contents
-        this.contents = contents;
-
-        // Update location and position without animation
-        this._currentLocation = location;
-        const pos = location.position();
-        const screenPos = this.modelToScreen(pos.x, pos.y);
-        this.updatePosition(screenPos.x, screenPos.y, 0);
-    }
-
     tryAdvance() : NodeSingular | null {
         if (this._currentEdge != null)
         {
