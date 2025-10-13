@@ -95,25 +95,19 @@ export function setupSidebarDragDrop(context: GraphEditorContext): void {
         const componentType = e.dataTransfer.getData('component-type') as ComponentType;
         if (!componentType) return;
 
-        // Get drop position relative to canvas container
         const cyBounds = cyContainer.getBoundingClientRect();
         const renderedX = e.clientX - cyBounds.left;
         const renderedY = e.clientY - cyBounds.top;
 
-        // Convert rendered (screen) coordinates to model (graph) coordinates
-        // Account for pan and zoom
         const pan = context.cy.pan();
         const zoom = context.cy.zoom();
         const modelX = (renderedX - pan.x) / zoom;
         const modelY = (renderedY - pan.y) / zoom;
 
-        // Route to appropriate creation function based on component type
         const component = COMPONENT_REGISTRY.find(c => c.type === componentType);
         if (component) {
             const newNode = component.createFunc(context.cy, modelX, modelY);
-            // Add to context's userNodes array
-            context.userNodes.push(newNode);
-            console.log(`Added ${componentType} node to context. Total user nodes: ${context.userNodes.length}`);
+            context.allNodes.push(newNode);
         }
     });
 }
@@ -166,10 +160,10 @@ export function setupNodeDeletion(context: GraphEditorContext): void {
             const nodeId = node.id();
 
             // Remove from userNodes array
-            const nodeIndex = context.userNodes.findIndex(n => n.getNodeId() === nodeId);
+            const nodeIndex = context.allNodes.findIndex(n => n.getNodeId() === nodeId);
             if (nodeIndex !== -1) {
-                context.userNodes.splice(nodeIndex, 1);
-                console.log(`Removed node from context. Total user nodes: ${context.userNodes.length}`);
+                context.allNodes.splice(nodeIndex, 1);
+                console.log(`Removed node from context. Total user nodes: ${context.allNodes.length}`);
             }
 
             // If it's a compound node or input/output node, remove all children first
@@ -183,10 +177,10 @@ export function setupNodeDeletion(context: GraphEditorContext): void {
                 const parentId = parent.id();
 
                 // Remove parent from userNodes array
-                const parentIndex = context.userNodes.findIndex(n => n.getNodeId() === parentId);
+                const parentIndex = context.allNodes.findIndex(n => n.getNodeId() === parentId);
                 if (parentIndex !== -1) {
-                    context.userNodes.splice(parentIndex, 1);
-                    console.log(`Removed parent node from context. Total user nodes: ${context.userNodes.length}`);
+                    context.allNodes.splice(parentIndex, 1);
+                    console.log(`Removed parent node from context. Total user nodes: ${context.allNodes.length}`);
                 }
 
                 parent.children().remove();

@@ -1,4 +1,4 @@
-import { Core, NodeSingular } from 'cytoscape';
+import { Core } from 'cytoscape';
 import { editorContext } from './global_state'
 import { getOutgoingEdges } from './graph_management';
 import { ProgramCounter } from './program_counter';
