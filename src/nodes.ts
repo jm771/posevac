@@ -19,6 +19,45 @@ export class EvaluateOutput {
     }
 }
 
+export class OutputChecker {
+    private i = 0;
+    private values;
+
+    constructor(values : Array<any>) {
+        this.values = values;
+    }
+
+    checkValue(val: any) : void {
+        val == this.values[this.i++];
+    }
+
+    reset() : void {
+        this.i = 0;
+    }
+}
+
+export class InputProvider {
+    private i = 0;
+    private values;
+
+    constructor(values : Array<any>) {
+        this.values = values;
+    }
+
+    getValue() : void {
+        if (this.i >= this.values.length) {
+            return undefined
+        }
+        else {
+            return this.values[this.i++];
+        }
+    }
+
+    reset() : void {
+        this.i = 0;
+    }
+}
+
 export function getTerminalProgramCounters(terminal: NodeSingular) : Map<string, ProgramCounter> {
     return terminal.data('program_counters')
 }
@@ -189,15 +228,13 @@ function createNode(cy: Core, x: number, y: number, label: string, type: string,
 
 
 // Create an input node (has 1 output terminal)
-export function createInputNode(cy: Core, x: number, y: number, inputs: Array<any>): CompNode {
-    inputs.reverse()
-    return createNode(cy, x, y, "input", "input", 0, 1, ()=> inputs.pop());
+export function createInputNode(cy: Core, x: number, y: number, inputs: InputProvider): CompNode {
+    return createNode(cy, x, y, "input", "input", 0, 1, inputs.getValue);
 }
 
 // Create an output node (has 1 input terminal)
-export function createOutputNode(cy: Core, x: number, y: number, expectedOutputs: Array<any>): CompNode {
-    expectedOutputs.reverse();
-    return createNode(cy, x, y, "output", "output", 1, 0, (value: any)=>{let expected = expectedOutputs.pop; console.log("Got output, ", expected, value);});
+export function createOutputNode(cy: Core, x: number, y: number, outputs: OutputChecker): CompNode {
+    return createNode(cy, x, y, "output", "output", 1, 0, outputs.checkValue);
 }
 
 // Create a plus node (2 inputs, 1 output)

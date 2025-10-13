@@ -2,7 +2,7 @@
 import cytoscape, { Core } from 'cytoscape';
 import { getCytoscapeStyles } from './styles';
 import { Level } from './levels';
-import { createInputNode, createOutputNode, CompNode } from './nodes';
+import { createInputNode, createOutputNode, CompNode, InputProvider, OutputChecker } from './nodes';
 import { ProgramCounter } from './program_counter';
 
 // Animation stage enum - exported for use in animation.ts
@@ -17,22 +17,15 @@ export class AnimationState {
     isAnimating: boolean;
     stage: Stage;
 
-    inputs : Array<Array<any>>
-    outputs : Array<Array<any>>
-
-    private initialInputs : Array<Array<any>>
-    private initialOutputs : Array<Array<any>>
+    inputProviders : Array<InputProvider>
+    outputCheckers : Array<OutputChecker>
 
     constructor(inputs : Array<Array<any>>, outputs : Array<Array<any>>){
-        this.initialInputs = inputs;
-        this.initialOutputs = outputs;
+        this.inputProviders = inputs.map(x => new InputProvider(x));
+        this.outputCheckers = outputs.map(x => new OutputChecker(x));
         this.programCounters = new Map<string, ProgramCounter>();
         this.isAnimating = false;
         this.stage = Stage.Evaluate;
-        this.inputs = [];
-        this.initialInputs.forEach(_ => this.inputs.push([]))
-        this.outputs = [];
-        this.initialOutputs.forEach(_ => this.outputs.push([]))
         this.resetState();
     }
 
@@ -45,10 +38,8 @@ export class AnimationState {
         // Create a program counter for each input node
         this.programCounters = new Map<string, ProgramCounter>();
         this.stage = Stage.Evaluate;
-        this.inputs.forEach(arr => arr.splice(0, this.inputs.length));
-        this.initialInputs.forEach((el, index) => el.forEach(innerEl => this.inputs[index].push(innerEl)));
-        this.outputs.forEach(arr => arr.splice(0, this.inputs.length));
-        this.initialOutputs.forEach((el, index) => el.forEach(innerEl => this.outputs[index].push(innerEl)));
+        this.inputProviders.forEach(p => p.reset());
+        this.outputCheckers.forEach(c => c.reset());
 
         return true;
     }
@@ -101,7 +92,7 @@ export class GraphEditorContext {
         const startY = 100;
 
         // Create input nodes
-        this.animationState.inputs.forEach((inputData, index) => {
+        this.animationState.inputProviders.forEach((inputData, index) => {
             const x = 100;
             const y = startY + (index * spacing);
             const inputNode = createInputNode(this.cy, x, y, inputData);
@@ -114,7 +105,7 @@ export class GraphEditorContext {
         });
 
         // Create output nodes
-        this.animationState.outputs.forEach((outputs, index) => {
+        this.animationState.outputCheckers.forEach((outputs, index) => {
             const x = 700;
             const y = startY + (index * spacing);
             const outputNode = createOutputNode(this.cy, x, y, outputs);

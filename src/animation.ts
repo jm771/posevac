@@ -16,7 +16,7 @@ function nextStage(stage : Stage) : Stage
 {
     switch(stage) {
         case Stage.AdvanceCounter:
-            return Stage.Evaluate;
+            return Stage.Evaluate
         case Stage.Evaluate:
             return Stage.AdvanceCounter;
     }
