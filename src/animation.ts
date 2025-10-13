@@ -49,7 +49,7 @@ function initializeAnimation(): boolean {
     }
 
     // Create a program counter for each input node
-    animationState.programCounters = new Map<string, ProgramCounter>;
+    animationState.programCounters = new Map<string, ProgramCounter>();
     animationState.stage = Stage.Evaluate;
 
     // Update button states

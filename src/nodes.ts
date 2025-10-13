@@ -19,6 +19,10 @@ export class EvaluateOutput {
     }
 }
 
+export function getTerminalProgramCounters(terminal: NodeSingular) : Map<string, ProgramCounter> {
+    return terminal.data('program_counters')
+}
+
 
 function makeTerminals(cy: Core, nodeId: string, x: number, y: number, n: number, type: string): NodeSingular[] {
     if (n == 0)
@@ -43,7 +47,7 @@ function makeTerminals(cy: Core, nodeId: string, x: number, y: number, n: number
                 parent: nodeId,
                 type: `${type}-terminal`,
                 terminalType: type,
-                program_counters: []
+                program_counters: new Map<string, ProgramCounter>()
             },
             position: { x: x, y: y + yOffset }
         });
@@ -102,22 +106,22 @@ export class CompNode
     evaluate() : EvaluateOutput
     {
         for (const term of this.outputTerminals) {
-            if (term.data("program_counters").length != 0) {
+            if (getTerminalProgramCounters(term).size != 0) {
                 return new EvaluateOutput([], []);
             }
         }
 
         for (const term of this.inputTerminals) {
-            if (term.data("program_counters").length > 1) {
+            if (getTerminalProgramCounters(term).size > 1) {
                 throw Error("More than one program counter at input");
             }
-            if (term.data("program_counters").length == 0) {
+            if (getTerminalProgramCounters(term).size == 0) {
                 return new EvaluateOutput([], []);
             }
         }
 
         // TODO need to do contents better
-        const result = (<any>this.func)(...(this.inputTerminals.map(t => t.data("program_counters")[0].contents)));
+        const result = (<any>this.func)(...(this.inputTerminals.map(t => getTerminalProgramCounters(t).values().next().value)));
 
         let newPcs = []
 
@@ -139,17 +143,20 @@ export class CompNode
             for (let edge of editorContext!.cy.edges(`[source="${this.outputTerminals[i].id()}"]`).toArray())
             {
                 let newPc = new ProgramCounter(this.outputTerminals[i], edge, resultArray[i]);
-                this.outputTerminals[i].data('program_counters').push(newPc);
+                getTerminalProgramCounters(this.outputTerminals[i]).set(newPc.id, newPc);
                 newPcs.push(newPc);
             }
         }
 
         let rmedPcs : Array<ProgramCounter> = [];
-        this.inputTerminals.forEach(term => {rmedPcs.push(term.data("program_counters").pop());});
+        this.inputTerminals.forEach(term => {
+            rmedPcs.push(getTerminalProgramCounters(term).values().next().value as ProgramCounter);
+            getTerminalProgramCounters(term).clear();
+        });
 
         return new EvaluateOutput(
+            rmedPcs,
             newPcs,
-            rmedPcs
         )
     }
 }

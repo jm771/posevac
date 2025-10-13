@@ -1,5 +1,6 @@
 import { EdgeSingular, NodeSingular } from 'cytoscape';
 import { editorContext } from './global_state';
+import { getTerminalProgramCounters } from './nodes';
 
 // Helper to get cy from context
 function getCy() {
@@ -309,11 +310,11 @@ export class ProgramCounter {
         if (this._currentEdge != null)
         {
             const dest = getCy().getElementById(this._currentEdge.data('target'));
-            if (dest.data('program_counters').length == 0) {
-                dest.data('program_counters', [this]);
+            if (getTerminalProgramCounters(dest).size === 0) {
+                getTerminalProgramCounters(dest).set(this.id, this);
             }
 
-            this._currentLocation.data('program_counters').remove(this);
+            getTerminalProgramCounters(this._currentLocation).delete(this.id);
             this._currentEdge = null;
 
             return dest;
