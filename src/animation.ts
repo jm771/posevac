@@ -1,6 +1,5 @@
 import { Core } from 'cytoscape';
 import { editorContext } from './global_state'
-import { getOutgoingEdges } from './graph_management';
 import { ProgramCounter } from './program_counter';
 import { EvaluateOutput } from './nodes';
 import { GraphEditorContext } from './editor_context';
@@ -30,14 +29,14 @@ function nextStage(stage : Stage) : Stage
 
 
 interface AnimationState {
-    programCounters: ProgramCounter[];
+    programCounters: Map<string, ProgramCounter>;
     isAnimating: boolean;
     stage: Stage
 }
 
 // Animation state management
 export const animationState: AnimationState = {
-    programCounters: [],
+    programCounters: new Map<string, ProgramCounter>(),
     isAnimating: false,
     stage: Stage.Evaluate
 };
@@ -45,12 +44,12 @@ export const animationState: AnimationState = {
 // Initialize animation - find input nodes and create program counters
 function initializeAnimation(): boolean {
     // Destroy old program counters if they exist
-    for (const pc of animationState.programCounters) {
+    for (const pc of animationState.programCounters.values()) {
         pc.destroy();
     }
 
     // Create a program counter for each input node
-    animationState.programCounters = [];
+    animationState.programCounters = new Map<string, ProgramCounter>;
     animationState.stage = Stage.Evaluate;
 
     // Update button states
@@ -62,12 +61,12 @@ function initializeAnimation(): boolean {
 // Update PC marker positions when viewport changes (pan/zoom) or nodes move
 function updatePCMarkerForViewportChange(): void {
     // Only update if animation is initialized and not currently animating
-    if (animationState.programCounters.length === 0 || animationState.isAnimating) {
+    if (animationState.programCounters.size === 0 || animationState.isAnimating) {
         return;
     }
 
     // Update all program counters
-    for (const pc of animationState.programCounters) {
+    for (const pc of animationState.programCounters.values()) {
         pc.updateForViewportChange();
     }
 }
@@ -81,6 +80,7 @@ async function evaluateFunctions(editorContext : GraphEditorContext): Promise<vo
 
     for (let i = 0; i < evaluations.length; i++)
     {
+        evaluations[i].pcsDestroyed.forEach((pc: ProgramCounter) => {animationState.programCounters.delete(pc.id); });
         moveInAnimations.push(...evaluations[i].pcsDestroyed.map(pc => pc.animateMoveToNode(editorContext.allNodes[i].getNode())));
     }
 
@@ -92,7 +92,10 @@ async function evaluateFunctions(editorContext : GraphEditorContext): Promise<vo
     for (let i = 0; i < evaluations.length; i++)
     {
         // Can animate properly later
-        evaluations[i].pcsCreated.forEach(pc => moveOutAnimations.push(pc.animateMoveToNode(pc.currentLocation)));
+        evaluations[i].pcsCreated.forEach( pc => {
+            moveOutAnimations.push(pc.animateMoveToNode(pc.currentLocation));
+            animationState.programCounters.set(pc.id, pc);
+        });
     }
 
     await Promise.all(moveOutAnimations);
@@ -100,13 +103,12 @@ async function evaluateFunctions(editorContext : GraphEditorContext): Promise<vo
 
 async function advanceCounters(): Promise<void> {
     // Advance each program counter that can move
-    const movePromises = animationState.programCounters.map(async (pc) => {
+    const movePromises: Array<Promise<void>> = []
+    animationState.programCounters.forEach((pc, _) => {
         const nextNode = pc.tryAdvance();
         if (nextNode != null) {
-            return pc.animateMoveToNode(nextNode);
+            movePromises.push(pc.animateMoveToNode(nextNode));
         }
-
-        return nextNode;
     });
 
 
@@ -188,19 +190,6 @@ function updateButtonStates(): void {
     const backBtn = document.getElementById('backBtn') as HTMLButtonElement | null;
 
     if (!forwardBtn || !backBtn) return;
-
-    if (animationState.programCounters.length === 0) {
-        forwardBtn.disabled = false; // Allow initialization
-        backBtn.disabled = true;
-        return;
-    }
-
-    // Forward: disabled if ALL program counters have no outgoing edges
-    const anyCanMoveForward = animationState.programCounters.some((pc) => {
-        const outgoingEdges = getOutgoingEdges(pc.currentLocation);
-        return outgoingEdges.length > 0;
-    });
-    forwardBtn.disabled = !anyCanMoveForward;
 }
 
 

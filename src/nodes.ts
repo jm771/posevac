@@ -23,7 +23,9 @@ export class EvaluateOutput {
 function makeTerminals(cy: Core, nodeId: string, x: number, y: number, n: number, type: string): NodeSingular[] {
     if (n == 0)
     {
-        return makeTerminals(cy, nodeId, x, y, 1, "invisible");
+        // Warning - this is "leaked" - probably fine?
+        makeTerminals(cy, nodeId, x, y, 1, "invisible");
+        return []
     }
 
     const minY = -60;
@@ -128,7 +130,7 @@ export class CompNode
         {
             resultArray = result as Array<any>;
         } 
-        if (this.outputTerminals.length != result.length) {
+        if (this.outputTerminals.length != resultArray.length) {
             throw Error("N out terminals didn't match result length");
         }
 
