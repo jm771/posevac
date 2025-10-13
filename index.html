@@ -8,10 +8,26 @@
     <script src="https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
 </head>
 <body>
-    <div class="container">
+    <!-- Level Selector Screen -->
+    <div class="level-selector" id="levelSelector">
+        <div class="level-selector-content">
+            <h1>Graph Programming Challenges</h1>
+            <p class="subtitle">Learn to program with visual graphs</p>
+            <div class="levels-grid" id="levelsGrid">
+                <!-- Level cards are dynamically created by TypeScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Graph Editor Screen -->
+    <div class="container" id="graphEditor" style="display: none;">
         <!-- Sidebar with component palette -->
         <aside class="sidebar" id="sidebar">
-            <h2>Components</h2>
+            <div class="level-info">
+                <h2 id="levelName">Level Name</h2>
+                <p id="levelDescription">Level description</p>
+            </div>
+            <h3>Components</h3>
             <div class="components-list">
                 <!-- Component templates are dynamically created by TypeScript -->
             </div>
@@ -35,6 +51,7 @@
                 <button id="resetBtn" class="control-btn">⟲ Reset</button>
                 <button id="backBtn" class="control-btn">◄ Back</button>
                 <button id="forwardBtn" class="control-btn">► Forward</button>
+                <button id="menuBtn" class="control-btn menu-btn">◄ Menu</button>
             </div>
         </aside>
     </div>

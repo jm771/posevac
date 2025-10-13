@@ -1,29 +1,15 @@
-import { getCytoscapeStyles } from './styles';
-import cytoscape, { Core } from 'cytoscape';
+// Global state for the current editor context
+import { GraphEditorContext } from './editor_context';
+import { Core } from 'cytoscape';
 
-export let cy: Core;
+export let editorContext: GraphEditorContext | null = null;
 
-// Initialize Cytoscape
-export function initCytoscape(): void {
-    const container = document.getElementById('cy');
-    if (!container) {
-        throw new Error('Cytoscape container element not found');
+// Export cy as a mutable reference that gets updated when context changes
+export let cy: Core = null as any;
+
+export function setEditorContext(context: GraphEditorContext | null): void {
+    editorContext = context;
+    if (context) {
+        cy = context.cy;
     }
-
-    cy = cytoscape({
-        container: container,
-        style: getCytoscapeStyles(),
-        layout: {
-            name: 'preset'
-        },
-        // Interaction settings
-        minZoom: 0.5,
-        maxZoom: 2,
-        wheelSensitivity: 0.2,
-        // Disable default behaviors we'll implement custom
-        autoungrabify: false,
-        userPanningEnabled: true,
-        userZoomingEnabled: true,
-        boxSelectionEnabled: false
-    });
 }

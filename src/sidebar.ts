@@ -1,7 +1,8 @@
 import cytoscape from 'cytoscape';
 import { cy } from './global_state'
 import { getCytoscapeStyles } from './styles';
-import { ComponentType, CompNode, createStartNode, createStopNode, createPlusNode, createCombineNode, createSplitNode, createNopNode } from './nodes';
+import { CompNode, createPlusNode, createCombineNode, createSplitNode, createNopNode } from './nodes';
+import { ComponentType } from './levels';
 import { Core } from 'cytoscape';
 
 
@@ -18,32 +19,44 @@ function addComponentToSidebar(type: ComponentType, func: Function) : void {
     div.draggable = true;
     componentsList.appendChild(div);
 
+    // Wait for the div to be rendered and have dimensions before initializing cytoscape
+    requestAnimationFrame(() => {
+        const previewCy = cytoscape({
+            container: div,
+            style: getCytoscapeStyles(),
+            userPanningEnabled: false,
+            userZoomingEnabled: false,
+            boxSelectionEnabled: false,
+            autoungrabify: true
+        });
 
-    const previewCy = cytoscape({
-        container: div,
-        style: getCytoscapeStyles(),
-        userPanningEnabled: false,
-        userZoomingEnabled: false,
-        boxSelectionEnabled: false,
-        autoungrabify: true
+        func(previewCy, 0, 0);
+
+        previewCy.fit(undefined, 10);
     });
-
-    func(previewCy, 0, 0);
-
-    previewCy.fit(undefined, 10);
 }
 
 // Create preview Cytoscape instances in sidebar
-export function initializePreviews(): void {
-    COMPONENT_REGISTRY.forEach(({ type, createFunc }) => {
+export function initializePreviews(allowedNodes?: ComponentType[]): void {
+    // Clear existing components
+    const componentsList = document.querySelector('.components-list');
+    if (componentsList) {
+        componentsList.innerHTML = '';
+    }
+
+    // Filter registry by allowed nodes if specified
+    const componentsToShow = allowedNodes
+        ? COMPONENT_REGISTRY.filter(({ type }) => allowedNodes.includes(type))
+        : COMPONENT_REGISTRY;
+
+    componentsToShow.forEach(({ type, createFunc }) => {
         addComponentToSidebar(type, createFunc);
     });
 }
 
 // Component registry - single source of truth for all component types
+// Note: input/output nodes are NOT in this registry - they are auto-created per level
 const COMPONENT_REGISTRY: { type: ComponentType, createFunc: (cy: Core, x: number, y: number) => CompNode }[] = [
-    { type: 'start', createFunc: (cy: Core, x: number, y: number) => createStartNode(cy, x, y, []) },
-    { type: 'stop', createFunc: createStopNode },
     { type: 'plus', createFunc: createPlusNode },
     { type: 'combine', createFunc: createCombineNode },
     { type: 'split', createFunc: createSplitNode },
@@ -138,8 +151,17 @@ export function setupNodeDeletion(): void {
         // Delete node if dropped in sidebar
         if (nodeScreenX < sidebarBounds.right) {
             const nodeType = node.data('type');
-            // If it's a compound node or start/stop node, remove all children first
-            if (nodeType === 'compound' || nodeType === 'start' || nodeType === 'stop') {
+            // Check if node is deletable (input/output nodes are not deletable)
+            const isDeletable = node.data('deletable') !== false;
+
+            if (!isDeletable) {
+                console.log('This node cannot be deleted');
+                deleteZone.classList.remove('active');
+                return;
+            }
+
+            // If it's a compound node or input/output node, remove all children first
+            if (nodeType === 'compound' || nodeType === 'input' || nodeType === 'output') {
                 node.children().remove();
                 node.remove();
             }

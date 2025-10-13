@@ -35,13 +35,13 @@ function captureSnapshot(): AnimationSnapshot {
     };
 }
 
-// Initialize animation - find start nodes and create program counters
+// Initialize animation - find input nodes and create program counters
 function initializeAnimation(): boolean {
-    // Find all start nodes
-    const startNodes = cy.nodes('[type="start"]');
+    // Find all input nodes
+    const inputNodes = cy.nodes('[type="input"]');
 
-    if (startNodes.length === 0) {
-        console.error('No start node found in graph');
+    if (inputNodes.length === 0) {
+        console.error('No input node found in graph');
         return false;
     }
 
@@ -50,13 +50,13 @@ function initializeAnimation(): boolean {
         pc.destroy();
     }
 
-    // Create a program counter for each start node
+    // Create a program counter for each input node
     animationState.programCounters = [];
     animationState.history = [];
 
-    startNodes.forEach((startNode, index) => {
-        const label = startNodes.length > 1 ? `PC${index + 1}` : 'PC';
-        const pc = new ProgramCounter(startNode, label);
+    inputNodes.forEach((inputNode, index) => {
+        const label = inputNodes.length > 1 ? `PC${index + 1}` : 'PC';
+        const pc = new ProgramCounter(inputNode, label);
         animationState.programCounters.push(pc);
     });
 
@@ -66,7 +66,7 @@ function initializeAnimation(): boolean {
     // Update button states
     updateButtonStates();
 
-    console.log(`Animation initialized with ${startNodes.length} program counter(s)`);
+    console.log(`Animation initialized with ${inputNodes.length} program counter(s)`);
 
     return true;
 }

@@ -6,7 +6,7 @@ import { ProgramCounter } from "./program_counter";
 let nodeIdCounter = 0;
 
 // Type definitions
-export type ComponentType = 'start' | 'stop' | 'plus' | 'combine' | 'split' | 'nop';
+export type ComponentType = 'input' | 'output' | 'plus' | 'combine' | 'split' | 'nop';
 
 function makeTerminals(cy: Core, nodeId: string, x: number, y: number, n: number, type: string): NodeSingular[] {
     if (n == 0)
@@ -65,14 +65,6 @@ export class CompNode
         this.func = func;
     }
 
-    /**
-     * Helper: Set the program_counter data on a terminal
-     */
-    private setTerminalProgramCounter(terminal: NodeSingular, value: ProgramCounter | null): void {
-        terminal.data('program_counter', value);
-    }
-
-
     getNode(): NodeSingular {
         return this.node;
     }
@@ -124,15 +116,15 @@ function createNode(cy: Core, x: number, y: number, label: string, type: string,
 
 
 
-// Create a start node (has 1 output terminal)
-export function createStartNode(cy: Core, x: number, y: number, inputs: Array<any>): CompNode {
+// Create an input node (has 1 output terminal)
+export function createInputNode(cy: Core, x: number, y: number, inputs: Array<any>): CompNode {
     inputs.reverse()
-    return createNode(cy, x, y, "start", "start", 0, 1, ()=>inputs.pop());
+    return createNode(cy, x, y, "input", "input", 0, 1, ()=>inputs.pop());
 }
 
-// Create a stop node (has 1 input terminal)
-export function createStopNode(cy: Core, x: number, y: number): CompNode {
-    return createNode(cy, x, y, "stop", "stop", 1, 0, (value: any)=>{console.log(value);});
+// Create an output node (has 1 input terminal)
+export function createOutputNode(cy: Core, x: number, y: number): CompNode {
+    return createNode(cy, x, y, "output", "output", 1, 0, (value: any)=>{console.log(value);});
 }
 
 // Create a plus node (2 inputs, 1 output)
