@@ -99,7 +99,6 @@ export function setupEdgeCreation(cy: Core): void {
                 group: 'nodes',
                 data: { id: tempTargetId },
                 position: mousePos,
-                style: { 'opacity': 0, 'width': 1, 'height': 1 }
             });
 
             tempEdge = cy.add({

@@ -29,7 +29,6 @@ export class GraphEditorContext {
             // Interaction settings
             minZoom: 0.5,
             maxZoom: 2,
-            wheelSensitivity: 0.2,
             // Disable default behaviors we'll implement custom
             autoungrabify: false,
             userPanningEnabled: true,

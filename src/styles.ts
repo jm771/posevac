@@ -40,6 +40,10 @@ export function getCytoscapeStyles(): StylesheetJson {
                 'compound-sizing-wrt-labels': 'include'  // Include label in size calculation
             }
         },
+        {
+            selector: 'node[id="temp-target"]',
+            style: { 'opacity': 0, 'width': 1, 'height': 1 }
+        },
         // Compound parent node styles
         {
             selector: 'node[type="compound"]',
