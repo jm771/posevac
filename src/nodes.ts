@@ -123,8 +123,9 @@ export function createInputNode(cy: Core, x: number, y: number, inputs: Array<an
 }
 
 // Create an output node (has 1 input terminal)
-export function createOutputNode(cy: Core, x: number, y: number): CompNode {
-    return createNode(cy, x, y, "output", "output", 1, 0, (value: any)=>{console.log(value);});
+export function createOutputNode(cy: Core, x: number, y: number, expectedOutputs: Array<any>): CompNode {
+    expectedOutputs.reverse();
+    return createNode(cy, x, y, "output", "output", 1, 0, (value: any)=>{let expected = expectedOutputs.pop; console.log("Got output, ", expected, value);});
 }
 
 // Create a plus node (2 inputs, 1 output)

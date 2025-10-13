@@ -5,7 +5,7 @@ export function getCytoscapeStyles(): StylesheetJson {
     return [
         // Start node styles
         {
-            selector: 'node[type="start"]',
+            selector: 'node[type="input"]',
             style: {
                 'background-color': '#81c784',
                 'shape': 'roundrectangle',
@@ -23,7 +23,7 @@ export function getCytoscapeStyles(): StylesheetJson {
         },
         // Stop node styles
         {
-            selector: 'node[type="stop"]',
+            selector: 'node[type="output"]',
             style: {
                 'background-color': '#e57373',
                 'shape': 'roundrectangle',

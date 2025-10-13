@@ -17,8 +17,8 @@ export const LEVELS: Level[] = [
         id: 'addition',
         name: 'Addition',
         description: 'Learn the basics! Connect two numbers to a plus node to add them together.',
-        inputs: [[3, 5]],  // One input node with values [3, 5]
-        expectedOutputs: [[8]],  // One output node expecting [8]
+        inputs: [[3, 5], [7, 8]],
+        expectedOutputs: [[10, 13]],
         allowedNodes: ['plus']
     },
     {
