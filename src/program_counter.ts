@@ -57,11 +57,6 @@ export class ProgramCounter {
 
         // Create DOM elements
         this.createDOMElements();
-
-        const pos = location.position();
-        const screenPos = this.modelToScreen(pos.x, pos.y);
-        this.updatePosition(screenPos.x, screenPos.y, 0);
-        this.show();
     }
 
     /**
@@ -323,14 +318,21 @@ export class ProgramCounter {
         return null;
     }
 
-    async animateMoveToNode(target: NodeSingular, stepDuration: number = 200) {
+    initializePositionAndShow(target: NodeSingular) {
+        const pos = target.position();
+        const screenPos = this.modelToScreen(pos.x, pos.y);
+        this.updatePosition(screenPos.x, screenPos.y, 0);
+        this.show();
+    }
+
+    async animateMoveToNode(startPosition: NodeSingular, target: NodeSingular, stepDuration: number = 200) {
         if (this.isAnimating) {
             throw new Error('Program counter is already animating');
         }
 
-        this.isAnimating = true;
-        const currentPos = this._currentLocation.position();
+        const currentPos = startPosition.position();
 
+        this.isAnimating = true;
         this._currentLocation = target
 
         try {

@@ -81,7 +81,7 @@ async function evaluateFunctions(editorContext : GraphEditorContext): Promise<vo
     for (let i = 0; i < evaluations.length; i++)
     {
         evaluations[i].pcsDestroyed.forEach((pc: ProgramCounter) => {animationState.programCounters.delete(pc.id); });
-        moveInAnimations.push(...evaluations[i].pcsDestroyed.map(pc => pc.animateMoveToNode(editorContext.allNodes[i].getNode())));
+        moveInAnimations.push(...evaluations[i].pcsDestroyed.map(pc => pc.animateMoveToNode(pc.currentLocation, editorContext.allNodes[i].getNode())));
     }
 
     
@@ -93,9 +93,10 @@ async function evaluateFunctions(editorContext : GraphEditorContext): Promise<vo
 
     for (let i = 0; i < evaluations.length; i++)
     {
-        // Can animate properly later
         evaluations[i].pcsCreated.forEach( pc => {
-            moveOutAnimations.push(pc.animateMoveToNode(pc.currentLocation));
+            const parentNode = editorContext.allNodes[i].getNode()
+            pc.initializePositionAndShow(parentNode);
+            moveOutAnimations.push(pc.animateMoveToNode(parentNode, pc.currentLocation));
             animationState.programCounters.set(pc.id, pc);
         });
     }
@@ -109,7 +110,7 @@ async function advanceCounters(): Promise<void> {
     animationState.programCounters.forEach((pc, _) => {
         const nextNode = pc.tryAdvance();
         if (nextNode != null) {
-            movePromises.push(pc.animateMoveToNode(nextNode));
+            movePromises.push(pc.animateMoveToNode(pc.currentLocation, nextNode, 600));
         }
     });
 
