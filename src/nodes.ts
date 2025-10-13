@@ -21,14 +21,15 @@ export class EvaluateOutput {
 
 export class OutputChecker {
     private i = 0;
-    private values;
+    private vals : Array<any>;
 
-    constructor(values : Array<any>) {
-        this.values = values;
+    constructor(vals : Array<any>) {
+        this.i = 0;
+        this.vals = [...vals];
     }
 
     checkValue(val: any) : void {
-        val == this.values[this.i++];
+        val == this.vals[this.i++];
     }
 
     reset() : void {
@@ -37,19 +38,20 @@ export class OutputChecker {
 }
 
 export class InputProvider {
-    private i = 0;
-    private values;
+    private i;
+    private vals : Array<any>;
 
-    constructor(values : Array<any>) {
-        this.values = values;
+    constructor(vals : Array<any>) {
+        this.i = 0;
+        this.vals = [...vals];
     }
 
     getValue() : void {
-        if (this.i >= this.values.length) {
+        if (this.i >= this.vals.length) {
             return undefined
         }
         else {
-            return this.values[this.i++];
+            return this.vals[this.i++];
         }
     }
 
