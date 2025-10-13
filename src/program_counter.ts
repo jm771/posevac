@@ -47,7 +47,7 @@ export class ProgramCounter {
      * @param location Initial location (node or terminal)
      * @param contents Display text (default: "PC")
      */
-    constructor(location: NodeSingular, edge: EdgeSingular | null, contents: any = "PC") {
+    constructor(location: NodeSingular, edge: EdgeSingular | null, contents: any) {
         this._contents = contents;
         this._currentLocation = location;
         this._currentEdge = edge;

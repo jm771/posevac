@@ -87,6 +87,8 @@ async function evaluateFunctions(editorContext : GraphEditorContext): Promise<vo
     
     await Promise.all(moveInAnimations);
 
+    evaluations.forEach(evaluation => evaluation.pcsDestroyed.forEach(pc => pc.destroy()))
+
     const moveOutAnimations: Array<Promise<void>> = [];
 
     for (let i = 0; i < evaluations.length; i++)

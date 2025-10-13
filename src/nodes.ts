@@ -122,29 +122,31 @@ export class CompNode
 
         // TODO need to do contents better
         const result = (<any>this.func)(...(this.inputTerminals.map(t => getTerminalProgramCounters(t).values().next().value)));
+        let newPcs : Array<ProgramCounter> = []
 
-        let newPcs = []
-
-        let resultArray;
-
-        if (this.outputTerminals.length == 1)
+        if(result != undefined)
         {
-            resultArray = [result];
-        } else
-        {
-            resultArray = result as Array<any>;
-        } 
-        if (this.outputTerminals.length != resultArray.length) {
-            throw Error("N out terminals didn't match result length");
-        }
+            let resultArray;
 
-        for (let i = 0; i < resultArray.length; i++)
-        {
-            for (let edge of editorContext!.cy.edges(`[source="${this.outputTerminals[i].id()}"]`).toArray())
+            if (this.outputTerminals.length == 1)
             {
-                let newPc = new ProgramCounter(this.outputTerminals[i], edge, resultArray[i]);
-                getTerminalProgramCounters(this.outputTerminals[i]).set(newPc.id, newPc);
-                newPcs.push(newPc);
+                resultArray = [result];
+            } else
+            {
+                resultArray = result as Array<any>;
+            } 
+            if (this.outputTerminals.length != resultArray.length) {
+                throw Error("N out terminals didn't match result length");
+            }
+
+            for (let i = 0; i < resultArray.length; i++)
+            {
+                for (let edge of editorContext!.cy.edges(`[source="${this.outputTerminals[i].id()}"]`).toArray())
+                {
+                    let newPc = new ProgramCounter(this.outputTerminals[i], edge, resultArray[i]);
+                    getTerminalProgramCounters(this.outputTerminals[i]).set(newPc.id, newPc);
+                    newPcs.push(newPc);
+                }
             }
         }
 
