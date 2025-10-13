@@ -2,7 +2,7 @@ import { Core } from 'cytoscape';
 import { editorContext } from './global_state'
 import { ProgramCounter } from './program_counter';
 import { EvaluateOutput } from './nodes';
-import { GraphEditorContext } from './editor_context';
+import { GraphEditorContext, Stage } from './editor_context';
 
 // Helper to get cy from context
 function getCy(): Core {
@@ -10,11 +10,6 @@ function getCy(): Core {
         throw new Error('Editor context not initialized');
     }
     return editorContext.cy;
-}
-
-enum Stage {
-    AdvanceCounter = 1,
-    Evaluate
 }
 
 function nextStage(stage : Stage) : Stage
@@ -27,64 +22,37 @@ function nextStage(stage : Stage) : Stage
     }
 }
 
-
-interface AnimationState {
-    programCounters: Map<string, ProgramCounter>;
-    isAnimating: boolean;
-    stage: Stage
-}
-
-// Animation state management
-export const animationState: AnimationState = {
-    programCounters: new Map<string, ProgramCounter>(),
-    isAnimating: false,
-    stage: Stage.Evaluate
-};
-
-// Initialize animation - find input nodes and create program counters
-function initializeAnimation(): boolean {
-    // Destroy old program counters if they exist
-    for (const pc of animationState.programCounters.values()) {
-        pc.destroy();
-    }
-
-    // Create a program counter for each input node
-    animationState.programCounters = new Map<string, ProgramCounter>();
-    animationState.stage = Stage.Evaluate;
-
-    // Update button states
-    updateButtonStates();
-
-    return true;
-}
-
 // Update PC marker positions when viewport changes (pan/zoom) or nodes move
 function updatePCMarkerForViewportChange(): void {
+    if (!editorContext) {
+        return;
+    }
+
     // Only update if animation is initialized and not currently animating
-    if (animationState.programCounters.size === 0 || animationState.isAnimating) {
+    if (editorContext.animationState.programCounters.size === 0 || editorContext.animationState.isAnimating) {
         return;
     }
 
     // Update all program counters
-    for (const pc of animationState.programCounters.values()) {
+    for (const pc of editorContext.animationState.programCounters.values()) {
         pc.updateForViewportChange();
     }
 }
 
-async function evaluateFunctions(editorContext : GraphEditorContext): Promise<void> {
+async function evaluateFunctions(context : GraphEditorContext): Promise<void> {
 
-    const evaluations : Array<EvaluateOutput> = editorContext.allNodes.map((node) => node.evaluate());
+    const evaluations : Array<EvaluateOutput> = context.allNodes.map((node) => node.evaluate());
 
     const moveInAnimations = [];
-    
+
 
     for (let i = 0; i < evaluations.length; i++)
     {
-        evaluations[i].pcsDestroyed.forEach((pc: ProgramCounter) => {animationState.programCounters.delete(pc.id); });
-        moveInAnimations.push(...evaluations[i].pcsDestroyed.map(pc => pc.animateMoveToNode(pc.currentLocation, editorContext.allNodes[i].getNode())));
+        evaluations[i].pcsDestroyed.forEach((pc: ProgramCounter) => {context.animationState.programCounters.delete(pc.id); });
+        moveInAnimations.push(...evaluations[i].pcsDestroyed.map(pc => pc.animateMoveToNode(pc.currentLocation, context.allNodes[i].getNode())));
     }
 
-    
+
     await Promise.all(moveInAnimations);
 
     evaluations.forEach(evaluation => evaluation.pcsDestroyed.forEach(pc => pc.destroy()))
@@ -94,10 +62,10 @@ async function evaluateFunctions(editorContext : GraphEditorContext): Promise<vo
     for (let i = 0; i < evaluations.length; i++)
     {
         evaluations[i].pcsCreated.forEach( pc => {
-            const parentNode = editorContext.allNodes[i].getNode()
+            const parentNode = context.allNodes[i].getNode()
             pc.initializePositionAndShow(parentNode);
             moveOutAnimations.push(pc.animateMoveToNode(parentNode, pc.currentLocation));
-            animationState.programCounters.set(pc.id, pc);
+            context.animationState.programCounters.set(pc.id, pc);
         });
     }
 
@@ -105,9 +73,13 @@ async function evaluateFunctions(editorContext : GraphEditorContext): Promise<vo
 }
 
 async function advanceCounters(): Promise<void> {
+    if (!editorContext) {
+        throw new Error('Editor context not initialized');
+    }
+
     // Advance each program counter that can move
     const movePromises: Array<Promise<void>> = []
-    animationState.programCounters.forEach((pc, _) => {
+    editorContext.animationState.programCounters.forEach((pc, _) => {
         const nextNode = pc.tryAdvance();
         if (nextNode != null) {
             movePromises.push(pc.animateMoveToNode(pc.currentLocation, nextNode, 600));
@@ -122,20 +94,19 @@ async function advanceCounters(): Promise<void> {
 
 // Step forward in animation - advances all program counters
 async function stepForward(): Promise<void> {
-    if (animationState.isAnimating) {
+    if (!editorContext) {
+        throw new Error('Editor context not initialized');
+    }
+
+    if (editorContext.animationState.isAnimating) {
         console.log('Animation already in progress, ignoring');
         return;
     }
 
-    animationState.isAnimating = true;
-
-    if (editorContext == null) {
-        throw Error("need non null editor context");
-    }
-
+    editorContext.animationState.isAnimating = true;
 
     try {
-        switch (animationState.stage) {
+        switch (editorContext.animationState.stage) {
             case Stage.AdvanceCounter:
                 await advanceCounters();
                 break;
@@ -144,11 +115,11 @@ async function stepForward(): Promise<void> {
                 break;
         }
 
-        animationState.stage = nextStage(animationState.stage);
+        editorContext.animationState.stage = nextStage(editorContext.animationState.stage);
     }
-    finally 
+    finally
     {
-        animationState.isAnimating = false;
+        editorContext.animationState.isAnimating = false;
         updateButtonStates();
     }
 
@@ -198,9 +169,13 @@ function updateButtonStates(): void {
 
 // Reset animation to start
 function resetAnimation(): void {
-    if (animationState.isAnimating) return;
+    if (!editorContext) {
+        throw new Error('Editor context not initialized');
+    }
 
-    initializeAnimation();
+    if (editorContext.animationState.isAnimating) return;
+
+    editorContext.animationState.resetState();
 }
 
 

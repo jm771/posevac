@@ -3,6 +3,56 @@ import cytoscape, { Core } from 'cytoscape';
 import { getCytoscapeStyles } from './styles';
 import { Level } from './levels';
 import { createInputNode, createOutputNode, CompNode } from './nodes';
+import { ProgramCounter } from './program_counter';
+
+// Animation stage enum - exported for use in animation.ts
+export enum Stage {
+    AdvanceCounter = 1,
+    Evaluate
+}
+
+// Animation state interface
+export class AnimationState {
+    programCounters: Map<string, ProgramCounter>;
+    isAnimating: boolean;
+    stage: Stage;
+
+    inputs : Array<Array<any>>
+    outputs : Array<Array<any>>
+
+    private initialInputs : Array<Array<any>>
+    private initialOutputs : Array<Array<any>>
+
+    constructor(inputs : Array<Array<any>>, outputs : Array<Array<any>>){
+        this.initialInputs = inputs;
+        this.initialOutputs = outputs;
+        this.programCounters = new Map<string, ProgramCounter>();
+        this.isAnimating = false;
+        this.stage = Stage.Evaluate;
+        this.inputs = [];
+        this.initialInputs.forEach(_ => this.inputs.push([]))
+        this.outputs = [];
+        this.initialOutputs.forEach(_ => this.outputs.push([]))
+        this.resetState();
+    }
+
+    resetState() {
+        // Destroy old program counters if they exist
+        for (const pc of this.programCounters.values()) {
+            pc.destroy();
+        }
+
+        // Create a program counter for each input node
+        this.programCounters = new Map<string, ProgramCounter>();
+        this.stage = Stage.Evaluate;
+        this.inputs.forEach(arr => arr.splice(0, this.inputs.length));
+        this.initialInputs.forEach((el, index) => el.forEach(innerEl => this.inputs[index].push(innerEl)));
+        this.outputs.forEach(arr => arr.splice(0, this.inputs.length));
+        this.initialOutputs.forEach((el, index) => el.forEach(innerEl => this.outputs[index].push(innerEl)));
+
+        return true;
+    }
+}
 
 export class GraphEditorContext {
     public cy: Core;
@@ -10,10 +60,13 @@ export class GraphEditorContext {
     public inputNodes: CompNode[] = [];
     public outputNodes: CompNode[] = [];
     public allNodes: CompNode[] = [];
+    public animationState: AnimationState;
 
     constructor(level: Level) {
         this.level = level;
 
+        // Initialize animation state
+        this.animationState = new AnimationState(level.inputs, level.expectedOutputs);
         // Initialize Cytoscape
         const container = document.getElementById('cy');
         if (!container) {
@@ -48,10 +101,10 @@ export class GraphEditorContext {
         const startY = 100;
 
         // Create input nodes
-        this.level.inputs.forEach((inputData, index) => {
+        this.animationState.inputs.forEach((inputData, index) => {
             const x = 100;
             const y = startY + (index * spacing);
-            const inputNode = createInputNode(this.cy, x, y, [...inputData]);
+            const inputNode = createInputNode(this.cy, x, y, inputData);
 
             // Mark as non-deletable
             inputNode.getNode().data('deletable', false);
@@ -61,10 +114,10 @@ export class GraphEditorContext {
         });
 
         // Create output nodes
-        this.level.expectedOutputs.forEach((outputs, index) => {
+        this.animationState.outputs.forEach((outputs, index) => {
             const x = 700;
             const y = startY + (index * spacing);
-            const outputNode = createOutputNode(this.cy, x, y, [...outputs]);
+            const outputNode = createOutputNode(this.cy, x, y, outputs);
 
             // Mark as non-deletable
             outputNode.getNode().data('deletable', false);
@@ -78,6 +131,12 @@ export class GraphEditorContext {
      * Clean up and destroy this editor context
      */
     destroy(): void {
+        // Destroy all program counters
+        for (const pc of this.animationState.programCounters.values()) {
+            pc.destroy();
+        }
+        this.animationState.programCounters.clear();
+
         if (this.cy) {
             this.cy.destroy();
         }

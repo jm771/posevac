@@ -150,6 +150,13 @@ export class ProgramCounter {
         if (this.boxElement.parentNode) {
             this.boxElement.parentNode.removeChild(this.boxElement);
         }
+        if (this._currentLocation != null) {
+            let termPc = getTerminalProgramCounters(this._currentLocation)
+            // this seems so wrong
+            if (termPc !== undefined) {
+                termPc.delete(this.id);
+            }
+        }
     }
 
     /**

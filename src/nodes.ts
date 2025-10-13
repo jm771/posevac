@@ -191,7 +191,7 @@ function createNode(cy: Core, x: number, y: number, label: string, type: string,
 // Create an input node (has 1 output terminal)
 export function createInputNode(cy: Core, x: number, y: number, inputs: Array<any>): CompNode {
     inputs.reverse()
-    return createNode(cy, x, y, "input", "input", 0, 1, ()=>inputs.pop());
+    return createNode(cy, x, y, "input", "input", 0, 1, ()=> inputs.pop());
 }
 
 // Create an output node (has 1 input terminal)
