@@ -2,7 +2,6 @@ import cytoscape from 'cytoscape';
 import { getCytoscapeStyles } from './styles';
 import { CompNode, createPlusNode, createMultiplyNode, createCombineNode, createSplitNode, createNopNode, createConstantNode } from './nodes';
 import { ComponentType } from './levels';
-import { Core } from 'cytoscape';
 import { GraphEditorContext } from './editor_context';
 import { createConstantControls, removeConstantControls } from './constant_controls';
 
@@ -57,7 +56,7 @@ export function initializePreviews(allowedNodes?: ComponentType[]): void {
 
 // Component registry - single source of truth for all component types
 // Note: input/output nodes are NOT in this registry - they are auto-created per level
-const COMPONENT_REGISTRY: { type: ComponentType, createFunc: (cy: Core, x: number, y: number) => CompNode }[] = [
+const COMPONENT_REGISTRY: { type: ComponentType, createFunc: (context: GraphEditorContext, x: number, y: number) => CompNode }[] = [
     { type: 'plus', createFunc: createPlusNode },
     { type: 'multiply', createFunc: createMultiplyNode },
     { type: 'combine', createFunc: createCombineNode },
@@ -109,7 +108,7 @@ export function setupSidebarDragDrop(context: GraphEditorContext): void {
 
         const component = COMPONENT_REGISTRY.find(c => c.type === componentType);
         if (component) {
-            const newNode = component.createFunc(context.cy, modelX, modelY);
+            const newNode = component.createFunc(context, modelX, modelY);
             context.allNodes.push(newNode);
 
             // Create controls for constant nodes

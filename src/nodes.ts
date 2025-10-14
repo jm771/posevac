@@ -1,8 +1,7 @@
 import { Core, NodeSingular } from "cytoscape";
 import { ProgramCounter } from "./program_counter";
 import { editorContext } from "./global_state";
-
-let nodeIdCounter = 0;
+import { GraphEditorContext } from "./editor_context";
 
 export type ComponentType = 'input' | 'output' | 'plus' | 'multiply' | 'combine' | 'split' | 'nop' | 'constant';
 
@@ -236,9 +235,9 @@ export class CompNode
     }
 }
 
-function createNode(cy: Core, x: number, y: number, label: string, type: string, inTerminals: number, outTerminals: number, func: Function): CompNode {
-    const nodeId = `node-${nodeIdCounter++}`;
-    cy.add({
+function createNode(context: GraphEditorContext, x: number, y: number, label: string, type: string, inTerminals: number, outTerminals: number, func: Function): CompNode {
+    const nodeId = `node-${context.nodeIdCounter++}`;
+    context.cy.add({
         group: 'nodes',
         data: {
             id: nodeId,
@@ -248,45 +247,45 @@ function createNode(cy: Core, x: number, y: number, label: string, type: string,
         position: { x, y }
     });
 
-    const node = cy.$(`#${nodeId}`) as NodeSingular;
+    const node = context.cy.$(`#${nodeId}`) as NodeSingular;
 
-    const inputTerminals = makeInputTerminals(cy, nodeId, x, y, inTerminals);
-    const outputTerminals = makeOutputTerminals(cy, nodeId, x, y, outTerminals);
+    const inputTerminals = makeInputTerminals(context.cy, nodeId, x, y, inTerminals);
+    const outputTerminals = makeOutputTerminals(context.cy, nodeId, x, y, outTerminals);
 
     return new CompNode(func, node, inputTerminals, outputTerminals);
 }
 
-export function createInputNode(cy: Core, x: number, y: number, inputs: InputProvider): CompNode {
-    return createNode(cy, x, y, "input", "input", 0, 1, () => inputs.getValue());
+export function createInputNode(context: GraphEditorContext, x: number, y: number, inputs: InputProvider): CompNode {
+    return createNode(context, x, y, "input", "input", 0, 1, () => inputs.getValue());
 }
 
-export function createOutputNode(cy: Core, x: number, y: number, outputs: OutputChecker): CompNode {
-    return createNode(cy, x, y, "output", "output", 1, 0, (v: any) => outputs.checkValue(v));
+export function createOutputNode(context: GraphEditorContext, x: number, y: number, outputs: OutputChecker): CompNode {
+    return createNode(context, x, y, "output", "output", 1, 0, (v: any) => outputs.checkValue(v));
 }
 
-export function createPlusNode(cy: Core, x: number, y: number): CompNode {
-    return createNode(cy, x, y, "+", "compound", 2, 1, (a: any, b: any)=>a+b);
+export function createPlusNode(context: GraphEditorContext, x: number, y: number): CompNode {
+    return createNode(context, x, y, "+", "compound", 2, 1, (a: any, b: any)=>a+b);
 }
 
-export function createMultiplyNode(cy: Core, x: number, y: number): CompNode {
-    return createNode(cy, x, y, "×", "compound", 2, 1, (a: any, b: any)=>a*b);
+export function createMultiplyNode(context: GraphEditorContext, x: number, y: number): CompNode {
+    return createNode(context, x, y, "×", "compound", 2, 1, (a: any, b: any)=>a*b);
 }
 
-export function createCombineNode(cy: Core, x: number, y: number): CompNode {
-    return createNode(cy, x, y, "combine", "compound", 2, 1, (a: any, b: any)=>[a, b]);
+export function createCombineNode(context: GraphEditorContext, x: number, y: number): CompNode {
+    return createNode(context, x, y, "combine", "compound", 2, 1, (a: any, b: any)=>[a, b]);
 }
 
-export function createSplitNode(cy: Core, x: number, y: number): CompNode {
-    return createNode(cy, x, y, "split", "compound", 1, 2, (a: any)=>a);
+export function createSplitNode(context: GraphEditorContext, x: number, y: number): CompNode {
+    return createNode(context, x, y, "split", "compound", 1, 2, (a: any)=>a);
 }
 
-export function createNopNode(cy: Core, x: number, y: number): CompNode {
-    return createNode(cy, x, y, "+", "compound", 1, 1, (a: any)=>a);
+export function createNopNode(context: GraphEditorContext, x: number, y: number): CompNode {
+    return createNode(context, x, y, "+", "compound", 1, 1, (a: any)=>a);
 }
 
-export function createConstantNode(cy: Core, x: number, y: number, initialValue: any = 0, initialRepeat: boolean = true): CompNode {
-    const nodeId = `node-${nodeIdCounter++}`;
-    cy.add({
+export function createConstantNode(context: GraphEditorContext, x: number, y: number, initialValue: any = 0, initialRepeat: boolean = true): CompNode {
+    const nodeId = `node-${context.nodeIdCounter++}`;
+    context.cy.add({
         group: 'nodes',
         data: {
             id: nodeId,
@@ -298,10 +297,10 @@ export function createConstantNode(cy: Core, x: number, y: number, initialValue:
         position: { x, y }
     });
 
-    const node = cy.$(`#${nodeId}`) as NodeSingular;
+    const node = context.cy.$(`#${nodeId}`) as NodeSingular;
 
-    const inputTerminals = makeInputTerminals(cy, nodeId, x, y, 0);
-    const outputTerminals = makeOutputTerminals(cy, nodeId, x, y, 1);
+    const inputTerminals = makeInputTerminals(context.cy, nodeId, x, y, 0);
+    const outputTerminals = makeOutputTerminals(context.cy, nodeId, x, y, 1);
 
     // Create the constant provider that reads from node data
     const constantProvider = new ConstantProvider(initialValue, initialRepeat);

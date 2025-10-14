@@ -59,6 +59,7 @@ export class GraphEditorContext {
     public outputNodes: CompNode[] = [];
     public allNodes: CompNode[] = [];
     public animationState: AnimationState;
+    public nodeIdCounter = 0;
 
     constructor(level: Level) {
         this.level = level;
@@ -102,7 +103,7 @@ export class GraphEditorContext {
         this.animationState.inputProviders.forEach((inputData, index) => {
             const x = 100;
             const y = startY + (index * spacing);
-            const inputNode = createInputNode(this.cy, x, y, inputData);
+            const inputNode = createInputNode(this, x, y, inputData);
 
             // Mark as non-deletable
             inputNode.getNode().data('deletable', false);
@@ -115,7 +116,7 @@ export class GraphEditorContext {
         this.animationState.outputCheckers.forEach((outputs, index) => {
             const x = 700;
             const y = startY + (index * spacing);
-            const outputNode = createOutputNode(this.cy, x, y, outputs);
+            const outputNode = createOutputNode(this, x, y, outputs);
 
             // Mark as non-deletable
             outputNode.getNode().data('deletable', false);

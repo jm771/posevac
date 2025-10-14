@@ -160,23 +160,23 @@ export function importGraph(context: GraphEditorContext, serializedGraph: Serial
 
         switch (serializedNode.type) {
             case 'plus':
-                newNode = createPlusNode(cy, serializedNode.position.x, serializedNode.position.y);
+                newNode = createPlusNode(context, serializedNode.position.x, serializedNode.position.y);
                 break;
             case 'multiply':
-                newNode = createMultiplyNode(cy, serializedNode.position.x, serializedNode.position.y);
+                newNode = createMultiplyNode(context, serializedNode.position.x, serializedNode.position.y);
                 break;
             case 'combine':
-                newNode = createCombineNode(cy, serializedNode.position.x, serializedNode.position.y);
+                newNode = createCombineNode(context, serializedNode.position.x, serializedNode.position.y);
                 break;
             case 'split':
-                newNode = createSplitNode(cy, serializedNode.position.x, serializedNode.position.y);
+                newNode = createSplitNode(context, serializedNode.position.x, serializedNode.position.y);
                 break;
             case 'nop':
-                newNode = createNopNode(cy, serializedNode.position.x, serializedNode.position.y);
+                newNode = createNopNode(context, serializedNode.position.x, serializedNode.position.y);
                 break;
             case 'constant':
                 newNode = createConstantNode(
-                    cy,
+                    context,
                     serializedNode.position.x,
                     serializedNode.position.y,
                     serializedNode.constantValue ?? 0,
