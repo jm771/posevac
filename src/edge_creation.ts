@@ -172,7 +172,8 @@ export function setupEdgeCreation(cy: Core): void {
                             data: {
                                 id: `edge-${edgeIdCounter++}`,
                                 source: sourceNode.id(),
-                                target: targetNode.id()
+                                target: targetNode.id(),
+                                condition: ''
                             }
                         });
                     }

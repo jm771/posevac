@@ -210,7 +210,7 @@ export class CompNode
             {
                 const edges = editorContext!.cy.edges(`[source="${this.outputTerminals[i].id()}"]`).toArray()
                 const filteredEdges = edges.filter(edge => {
-                    if (edge.data("condition") === undefined) {
+                    if (edge.data("condition") === '') {
                         return true;
                     }
                     const func = eval(edge.data("condition"));

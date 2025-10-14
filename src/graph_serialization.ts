@@ -228,7 +228,8 @@ export function importGraph(context: GraphEditorContext, serializedGraph: Serial
         // Create edge between the terminals
         const edgeData: any = {
             source: sourceTerminal.id(),
-            target: targetTerminal.id()
+            target: targetTerminal.id(),
+            condition: ''
         };
 
         // Restore condition if it exists
