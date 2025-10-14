@@ -205,7 +205,16 @@ export class CompNode
 
             for (let i = 0; i < resultArray.length; i++)
             {
-                for (let edge of editorContext!.cy.edges(`[source="${this.outputTerminals[i].id()}"]`).toArray())
+                const edges = editorContext!.cy.edges(`[source="${this.outputTerminals[i].id()}"]`).toArray()
+                const filteredEdges = edges.filter(edge => {
+                    if (edge.data("condition") === undefined) {
+                        return true;
+                    }
+                    const func = eval(edge.data("condition"));
+                    return func(resultArray[i]);
+                })
+
+                for (let edge of filteredEdges)
                 {
                     let newPc = new ProgramCounter(this.outputTerminals[i], edge, resultArray[i]);
                     getTerminalProgramCounters(this.outputTerminals[i]).set(newPc.id, newPc);
