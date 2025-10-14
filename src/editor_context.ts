@@ -1,9 +1,16 @@
 // Graph Editor Context - encapsulates all editor state for a level
 import cytoscape, { Core } from 'cytoscape';
+// @ts-ignore - no types available
+import nodeHtmlLabel from 'cytoscape-node-html-label';
 import { getCytoscapeStyles } from './styles';
 import { Level } from './levels';
 import { createInputNode, createOutputNode, CompNode, InputProvider, OutputChecker } from './nodes';
 import { ProgramCounter } from './program_counter';
+
+// Register the node-html-label extension
+if (typeof cytoscape !== 'undefined') {
+    nodeHtmlLabel(cytoscape);
+}
 
 // Animation stage enum - exported for use in animation.ts
 export enum Stage {

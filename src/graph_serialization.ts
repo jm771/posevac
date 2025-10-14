@@ -2,7 +2,7 @@
 import { NodeSingular } from 'cytoscape';
 import { GraphEditorContext } from './editor_context';
 import { createPlusNode, createCombineNode, createSplitNode, createNopNode, createConstantNode, CompNode } from './nodes';
-import { createConstantControls, removeConstantControls } from './constant_controls';
+import { createConstantControls, removeConstantControls, initializeConstantControls } from './constant_controls';
 
 /**
  * Serializable graph structure - excludes animation state
@@ -223,6 +223,9 @@ export function importGraph(context: GraphEditorContext, serializedGraph: Serial
     }
 
     console.log(`Imported ${serializedGraph.nodes.length} nodes and ${serializedGraph.edges.length} edges`);
+
+    // Refresh constant node labels if any were loaded
+    initializeConstantControls();
 }
 
 /**

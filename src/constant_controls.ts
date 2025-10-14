@@ -1,200 +1,166 @@
 // UI controls for constant nodes - text input and repeat/once toggle
+// Uses cytoscape-node-html-label extension
 import { NodeSingular } from 'cytoscape';
 import { editorContext } from './global_state';
 
 /**
- * Manages UI controls for a constant node
- */
-export class ConstantControls {
-    private node: NodeSingular;
-    private container: HTMLDivElement;
-    private input: HTMLInputElement;
-    private toggleBtn: HTMLButtonElement;
-
-    constructor(node: NodeSingular) {
-        this.node = node;
-
-        // Create container for controls
-        this.container = document.createElement('div');
-        this.container.className = 'constant-controls';
-        this.container.style.position = 'absolute';
-        this.container.style.display = 'flex';
-        this.container.style.flexDirection = 'column';
-        this.container.style.alignItems = 'center';
-        this.container.style.gap = '4px';
-        this.container.style.pointerEvents = 'auto';
-        this.container.style.zIndex = '100';
-
-        // Create text input for constant value
-        this.input = document.createElement('input');
-        this.input.type = 'text';
-        this.input.className = 'constant-input';
-        this.input.value = String(node.data('constantValue'));
-        this.input.style.width = '60px';
-        this.input.style.padding = '2px 4px';
-        this.input.style.fontSize = '12px';
-        this.input.style.textAlign = 'center';
-        this.input.style.border = '1px solid #666';
-        this.input.style.borderRadius = '3px';
-        this.input.style.background = '#fff';
-
-        // Create toggle button for repeat/once mode
-        this.toggleBtn = document.createElement('button');
-        this.toggleBtn.className = 'constant-toggle';
-        this.updateToggleButton();
-        this.toggleBtn.style.padding = '2px 8px';
-        this.toggleBtn.style.fontSize = '10px';
-        this.toggleBtn.style.border = '1px solid #666';
-        this.toggleBtn.style.borderRadius = '3px';
-        this.toggleBtn.style.cursor = 'pointer';
-        this.toggleBtn.style.background = '#f0f0f0';
-
-        // Add event listeners
-        this.input.addEventListener('input', () => this.handleValueChange());
-        this.input.addEventListener('click', (e) => e.stopPropagation());
-        this.input.addEventListener('mousedown', (e) => e.stopPropagation());
-
-        this.toggleBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.handleToggle();
-        });
-        this.toggleBtn.addEventListener('mousedown', (e) => e.stopPropagation());
-
-        // Add to container
-        this.container.appendChild(this.input);
-        this.container.appendChild(this.toggleBtn);
-
-        // Add to DOM
-        const cyContainer = document.getElementById('cy');
-        if (cyContainer) {
-            cyContainer.appendChild(this.container);
-        }
-
-        // Update position
-        this.updatePosition();
-
-        // Listen for node position changes
-        this.node.on('position', () => this.updatePosition());
-    }
-
-    private handleValueChange(): void {
-        const value = this.input.value;
-
-        // Try to parse as number, otherwise keep as string
-        let parsedValue: any = value;
-        const numValue = Number(value);
-        if (!isNaN(numValue) && value.trim() !== '') {
-            parsedValue = numValue;
-        }
-
-        this.node.data('constantValue', parsedValue);
-    }
-
-    private handleToggle(): void {
-        const currentRepeat = this.node.data('constantRepeat');
-        this.node.data('constantRepeat', !currentRepeat);
-        this.updateToggleButton();
-    }
-
-    private updateToggleButton(): void {
-        const repeat = this.node.data('constantRepeat');
-        this.toggleBtn.textContent = repeat ? 'repeat' : 'once';
-        this.toggleBtn.style.background = repeat ? '#d0e8ff' : '#ffe8d0';
-    }
-
-    private updatePosition(): void {
-        if (!editorContext) return;
-
-        const cy = editorContext.cy;
-        const pos = this.node.position();
-        const zoom = cy.zoom();
-        const pan = cy.pan();
-
-        // Calculate screen position
-        const x = pos.x * zoom + pan.x;
-        const y = pos.y * zoom + pan.y;
-
-        // Center the controls on the node
-        this.container.style.left = `${x}px`;
-        this.container.style.top = `${y - 40}px`;
-        this.container.style.transform = 'translate(-50%, -50%)';
-    }
-
-    /**
-     * Update control values from node data
-     */
-    public update(): void {
-        this.input.value = String(this.node.data('constantValue'));
-        this.updateToggleButton();
-        this.updatePosition();
-    }
-
-    /**
-     * Clean up and remove controls
-     */
-    public destroy(): void {
-        this.node.removeListener('position');
-        if (this.container.parentElement) {
-            this.container.parentElement.removeChild(this.container);
-        }
-    }
-}
-
-// Global registry of constant controls
-const constantControlsMap = new Map<string, ConstantControls>();
-
-/**
- * Initialize controls for all constant nodes in the graph
+ * Initialize HTML labels for all constant nodes
+ * This uses the cytoscape-node-html-label extension
  */
 export function initializeConstantControls(): void {
     if (!editorContext) return;
 
-    const constantNodes = editorContext.cy.nodes('[type="constant"]');
+    // @ts-ignore - nodeHtmlLabel is added by extension
+    editorContext.cy.nodeHtmlLabel([{
+        query: 'node[type="constant"]',
+        halign: 'center',
+        valign: 'center',
+        halignBox: 'center',
+        valignBox: 'center',
+        cssClass: 'constant-node-label',
+        tpl: function(data: any) {
+            const value = data.constantValue !== undefined ? data.constantValue : 0;
+            const repeat = data.constantRepeat !== undefined ? data.constantRepeat : true;
+            const nodeId = data.id;
 
-    constantNodes.forEach(node => {
-        const nodeId = node.id();
-        if (!constantControlsMap.has(nodeId)) {
-            const controls = new ConstantControls(node as NodeSingular);
-            constantControlsMap.set(nodeId, controls);
+            return `
+                <div class="constant-controls" data-node-id="${nodeId}" style="
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 4px;
+                    pointer-events: auto;
+                ">
+                    <input
+                        type="text"
+                        class="constant-input"
+                        value="${value}"
+                        data-node-id="${nodeId}"
+                        style="
+                            width: 70px;
+                            padding: 4px 6px;
+                            font-size: 14px;
+                            font-weight: bold;
+                            text-align: center;
+                            border: 2px solid #64b5f6;
+                            border-radius: 4px;
+                            background: #fff;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                        "
+                    />
+                    <button
+                        class="constant-toggle"
+                        data-node-id="${nodeId}"
+                        style="
+                            padding: 2px 6px;
+                            font-size: 9px;
+                            font-weight: bold;
+                            border: 1px solid #64b5f6;
+                            border-radius: 3px;
+                            cursor: pointer;
+                            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+                            background: ${repeat ? '#64b5f6' : '#ffb74d'};
+                            color: #fff;
+                        "
+                    >${repeat ? 'REPEAT' : 'ONCE'}</button>
+                </div>
+            `;
+        }
+    }]);
+
+    // Set up event delegation for inputs and buttons
+    setupEventDelegation();
+}
+
+/**
+ * Set up event delegation for constant control interactions
+ */
+function setupEventDelegation(): void {
+    if (!editorContext) return;
+
+    const cyContainer = document.getElementById('cy');
+    if (!cyContainer) return;
+
+    // Handle input changes
+    cyContainer.addEventListener('input', (e: Event) => {
+        const target = e.target as HTMLInputElement;
+        if (target.classList.contains('constant-input')) {
+            const nodeId = target.getAttribute('data-node-id');
+            if (nodeId) {
+                const value = target.value;
+
+                // Try to parse as number, otherwise keep as string
+                let parsedValue: any = value;
+                const numValue = Number(value);
+                if (!isNaN(numValue) && value.trim() !== '') {
+                    parsedValue = numValue;
+                }
+
+                if (editorContext) {
+                    const node = editorContext.cy.$id(nodeId);
+                    if (node.length > 0) {
+                        node.data('constantValue', parsedValue);
+                    }
+                }
+            }
         }
     });
 
-    // Listen for zoom/pan events to update positions
-    editorContext.cy.on('zoom pan', () => {
-        constantControlsMap.forEach(controls => controls.update());
+    // Handle button clicks
+    cyContainer.addEventListener('click', (e: Event) => {
+        const target = e.target as HTMLButtonElement;
+        if (target.classList.contains('constant-toggle')) {
+            e.stopPropagation();
+
+            const nodeId = target.getAttribute('data-node-id');
+            if (nodeId && editorContext) {
+                const node = editorContext.cy.$id(nodeId);
+                if (node.length > 0) {
+                    const currentRepeat = node.data('constantRepeat');
+                    node.data('constantRepeat', !currentRepeat);
+
+                    // Update button appearance
+                    const newRepeat = !currentRepeat;
+                    target.textContent = newRepeat ? 'REPEAT' : 'ONCE';
+                    target.style.background = newRepeat ? '#64b5f6' : '#ffb74d';
+                }
+            }
+        }
+    });
+
+    // Prevent input/button clicks from triggering node selection
+    cyContainer.addEventListener('mousedown', (e: Event) => {
+        const target = e.target as HTMLElement;
+        if (target.classList.contains('constant-input') || target.classList.contains('constant-toggle')) {
+            e.stopPropagation();
+        }
     });
 }
 
 /**
- * Create controls for a specific constant node
+ * Create/update controls for a specific constant node
  */
-export function createConstantControls(node: NodeSingular): ConstantControls {
-    const nodeId = node.id();
-
-    // Remove existing controls if any
-    if (constantControlsMap.has(nodeId)) {
-        constantControlsMap.get(nodeId)!.destroy();
+export function createConstantControls(_node: NodeSingular): void {
+    // With node-html-label, we just need to trigger a refresh
+    // The extension will automatically create the label
+    if (editorContext) {
+        // @ts-ignore
+        editorContext.cy.nodeHtmlLabel('refresh');
     }
-
-    const controls = new ConstantControls(node);
-    constantControlsMap.set(nodeId, controls);
-    return controls;
 }
 
 /**
  * Remove controls for a specific node
  */
-export function removeConstantControls(nodeId: string): void {
-    if (constantControlsMap.has(nodeId)) {
-        constantControlsMap.get(nodeId)!.destroy();
-        constantControlsMap.delete(nodeId);
-    }
+export function removeConstantControls(_nodeId: string): void {
+    // With node-html-label, labels are automatically removed when nodes are removed
+    // No manual cleanup needed
 }
 
 /**
  * Clean up all constant controls
  */
 export function destroyAllConstantControls(): void {
-    constantControlsMap.forEach(controls => controls.destroy());
-    constantControlsMap.clear();
+    // With node-html-label, labels are automatically managed
+    // No manual cleanup needed
 }

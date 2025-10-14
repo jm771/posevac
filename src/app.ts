@@ -9,6 +9,7 @@ import { initializePreviews, setupNodeDeletion, setupSidebarDragDrop } from './s
 import { initializeLevelSelector, showLevelSelector, showGraphEditor, updateLevelInfo } from './level_selector';
 import { Level } from './levels';
 import { downloadGraphAsJSON, loadGraphFromFile } from './graph_serialization';
+import { initializeConstantControls } from './constant_controls';
 
 // Global reference to current editor context
 let currentEditor: GraphEditorContext | null = null;
@@ -39,6 +40,9 @@ function startLevel(level: Level): void {
     setupNodeDeletion(currentEditor);
     setupEdgeCreation(currentEditor.cy);
     setupAnimationControls();
+
+    // Initialize constant node HTML labels
+    initializeConstantControls();
 
     // Show the graph editor
     showGraphEditor();

@@ -60,6 +60,22 @@ export function getCytoscapeStyles(): StylesheetJson {
                 'shape': 'round-rectangle',
             }
         },
+        // Constant node styles
+        {
+            selector: 'node[type="constant"]',
+            style: {
+                'background-color': '#4a4a4a',
+                'border-width': 2,
+                'border-color': '#64b5f6',
+                'label': '',  // No label - we use HTML overlay instead
+                'color': '#d4d4d4',
+                'text-valign': 'center',
+                'text-halign': 'center',
+                'font-size': '11',
+                'padding': '5',
+                'shape': 'round-rectangle',
+            }
+        },
         // Input terminal styles (children of compound)
         {
             selector: 'node[type="input-terminal"]',

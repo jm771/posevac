@@ -166,24 +166,15 @@ export function setupEdgeCreation(cy: Core): void {
                         // Delete existing edge
                         existingEdge.remove();
                     } else {
-                        // Check if target input already has an incoming edge
-                        const targetIncomingEdges = cy.edges(`[target="${targetNode.id()}"]`);
-
-                        if (targetIncomingEdges.length > 0) {
-                            // Target already has an incoming edge - reject with visual feedback
-                            console.log('Input terminal already has a connection');
-                            // Could add visual feedback here (flash red, etc.)
-                        } else {
-                            // Create new edge
-                            cy.add({
-                                group: 'edges',
-                                data: {
-                                    id: `edge-${edgeIdCounter++}`,
-                                    source: sourceNode.id(),
-                                    target: targetNode.id()
-                                }
-                            });
-                        }
+                        // Create new edge
+                        cy.add({
+                            group: 'edges',
+                            data: {
+                                id: `edge-${edgeIdCounter++}`,
+                                source: sourceNode.id(),
+                                target: targetNode.id()
+                            }
+                        });
                     }
                 } else {
                     // Invalid connection direction
