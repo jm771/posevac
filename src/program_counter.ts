@@ -314,12 +314,11 @@ export class ProgramCounter {
             const dest = getCy().getElementById(this._currentEdge.data('target'));
             if (getTerminalProgramCounters(dest).size === 0) {
                 getTerminalProgramCounters(dest).set(this.id, this);
-            }
 
-            getTerminalProgramCounters(this._currentLocation).delete(this.id);
-            this._currentEdge = null;
-
-            return dest;
+                getTerminalProgramCounters(this._currentLocation).delete(this.id);
+                this._currentEdge = null;
+                return dest;
+            }            
         }
 
         return null;
