@@ -161,7 +161,6 @@ export class CompNode
             }
         }
 
-        // TODO need to do contents better
         const result = (<any>this.func)(...(this.inputTerminals.map(t => getTerminalProgramCounters(t).values().next().value?.contents)));
         let newPcs : Array<ProgramCounter> = []
 
@@ -216,45 +215,34 @@ function createNode(cy: Core, x: number, y: number, label: string, type: string,
         position: { x, y }
     });
 
-    // Get the created node
     const node = cy.$(`#${nodeId}`) as NodeSingular;
 
-    // Create terminals and collect references
     const inputTerminals = makeInputTerminals(cy, nodeId, x, y, inTerminals);
     const outputTerminals = makeOutputTerminals(cy, nodeId, x, y, outTerminals);
 
-    // Construct and return CompNode
     return new CompNode(func, node, inputTerminals, outputTerminals);
 }
 
-
-
-// Create an input node (has 1 output terminal)
 export function createInputNode(cy: Core, x: number, y: number, inputs: InputProvider): CompNode {
     return createNode(cy, x, y, "input", "input", 0, 1, () => inputs.getValue());
 }
 
-// Create an output node (has 1 input terminal)
 export function createOutputNode(cy: Core, x: number, y: number, outputs: OutputChecker): CompNode {
     return createNode(cy, x, y, "output", "output", 1, 0, (v: any) => outputs.checkValue(v));
 }
 
-// Create a plus node (2 inputs, 1 output)
 export function createPlusNode(cy: Core, x: number, y: number): CompNode {
     return createNode(cy, x, y, "+", "compound", 2, 1, (a: any, b: any)=>a+b);
 }
 
-// Create a combine node (2 inputs, 1 output)
 export function createCombineNode(cy: Core, x: number, y: number): CompNode {
     return createNode(cy, x, y, "combine", "compound", 2, 1, (a: any, b: any)=>[a, b]);
 }
 
-// Create a split node (1 input, 2 outputs)
 export function createSplitNode(cy: Core, x: number, y: number): CompNode {
     return createNode(cy, x, y, "split", "compound", 1, 2, (a: any)=>a);
 }
 
-// Create a nop node (1 input, 1 output)
 export function createNopNode(cy: Core, x: number, y: number): CompNode {
     return createNode(cy, x, y, "+", "compound", 1, 1, (a: any)=>a);
 }
