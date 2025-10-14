@@ -231,12 +231,12 @@ function createNode(cy: Core, x: number, y: number, label: string, type: string,
 
 // Create an input node (has 1 output terminal)
 export function createInputNode(cy: Core, x: number, y: number, inputs: InputProvider): CompNode {
-    return createNode(cy, x, y, "input", "input", 0, 1, inputs.getValue);
+    return createNode(cy, x, y, "input", "input", 0, 1, () => inputs.getValue());
 }
 
 // Create an output node (has 1 input terminal)
 export function createOutputNode(cy: Core, x: number, y: number, outputs: OutputChecker): CompNode {
-    return createNode(cy, x, y, "output", "output", 1, 0, outputs.checkValue);
+    return createNode(cy, x, y, "output", "output", 1, 0, (v: any) => outputs.checkValue(v));
 }
 
 // Create a plus node (2 inputs, 1 output)
