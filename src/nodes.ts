@@ -15,7 +15,11 @@ export class EvaluateOutput {
     }
 }
 
-export class OutputChecker {
+export interface Resetable {
+     reset() : void
+}
+
+export class OutputChecker implements Resetable {
     private i = 0;
     private vals : Array<any>;
 
@@ -33,7 +37,7 @@ export class OutputChecker {
     }
 }
 
-export class InputProvider {
+export class InputProvider implements Resetable {
     private i;
     private vals : Array<any>;
 
@@ -56,7 +60,7 @@ export class InputProvider {
     }
 }
 
-export class ConstantProvider {
+export class ConstantProvider implements Resetable {
     private i;
     private val : any
     repeat : boolean;
@@ -304,6 +308,7 @@ export function createConstantNode(context: NodeBuildContext, x: number, y: numb
 
     // Create the constant provider that reads from node data
     const constantProvider = new ConstantProvider(initialValue, initialRepeat);
+    context.resetables.set(nodeId, constantProvider);
 
     // Update the provider when node data changes
     const updateProvider = () => {

@@ -4,7 +4,7 @@ import cytoscape, { Core } from 'cytoscape';
 import nodeHtmlLabel from 'cytoscape-node-html-label';
 import { getCytoscapeStyles } from './styles';
 import { Level } from './levels';
-import { createInputNode, createOutputNode, CompNode, InputProvider, OutputChecker } from './nodes';
+import { createInputNode, createOutputNode, CompNode, InputProvider, OutputChecker, Resetable } from './nodes';
 import { ProgramCounter } from './program_counter';
 
 // Register the node-html-label extension
@@ -26,10 +26,13 @@ export class AnimationState {
 
     inputProviders : Array<InputProvider>
     outputCheckers : Array<OutputChecker>
+    // This just leaks for now :blush"
+    resetables : Map<string, Resetable>
 
     constructor(inputs : Array<Array<any>>, outputs : Array<Array<any>>){
         this.inputProviders = inputs.map(x => new InputProvider(x));
         this.outputCheckers = outputs.map(x => new OutputChecker(x));
+        this.resetables = new Map<string, Resetable>();
         this.programCounters = new Map<string, ProgramCounter>();
         this.isAnimating = false;
         this.stage = Stage.Evaluate;
@@ -47,6 +50,7 @@ export class AnimationState {
         this.stage = Stage.Evaluate;
         this.inputProviders.forEach(p => p.reset());
         this.outputCheckers.forEach(c => c.reset());
+        this.resetables.forEach((r, _) => r.reset());
 
         return true;
     }
@@ -55,6 +59,7 @@ export class AnimationState {
 export interface NodeBuildContext {
     cy: Core;
     nodeIdCounter: number;
+    resetables: Map<string, Resetable>
 }
 
 export class GraphEditorContext implements NodeBuildContext {
@@ -65,12 +70,14 @@ export class GraphEditorContext implements NodeBuildContext {
     public allNodes: CompNode[] = [];
     public animationState: AnimationState;
     public nodeIdCounter = 0;
+    public resetables: Map<string, Resetable> // eeeew
 
     constructor(level: Level) {
         this.level = level;
 
         // Initialize animation state
         this.animationState = new AnimationState(level.inputs, level.expectedOutputs);
+        this.resetables = this.animationState.resetables; // eeeew
         // Initialize Cytoscape
         const container = document.getElementById('cy');
         if (!container) {

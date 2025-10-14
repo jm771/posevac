@@ -1,6 +1,6 @@
 import cytoscape from 'cytoscape';
 import { getCytoscapeStyles } from './styles';
-import { CompNode, createPlusNode, createMultiplyNode, createCombineNode, createSplitNode, createNopNode, createConstantNode } from './nodes';
+import { CompNode, createPlusNode, createMultiplyNode, createCombineNode, createSplitNode, createNopNode, createConstantNode, Resetable } from './nodes';
 import { ComponentType } from './levels';
 import { GraphEditorContext, NodeBuildContext } from './editor_context';
 import { createConstantControls, removeConstantControls } from './constant_controls';
@@ -30,7 +30,7 @@ function addComponentToSidebar(type: ComponentType, func: (context: NodeBuildCon
             autoungrabify: true
         });
 
-        let context : NodeBuildContext = {cy : previewCy, nodeIdCounter : 0};
+        let context : NodeBuildContext = {cy : previewCy, nodeIdCounter : 0, resetables : new Map<string, Resetable>()};
 
         func(context, 0, 0);
 

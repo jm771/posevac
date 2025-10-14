@@ -35,7 +35,7 @@ export const LEVELS: Level[] = [
         description: 'Split and combine together with conditional branches let us compute factorial',
         inputs: [[5]],
         expectedOutputs: [[120]],
-        allowedNodes: ['split', 'combine', 'constant', 'multiply']
+        allowedNodes: ['split', 'combine', 'constant', 'multiply', 'plus']
     }
 ];
 
