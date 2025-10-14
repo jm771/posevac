@@ -4,7 +4,7 @@ import { editorContext } from "./global_state";
 
 let nodeIdCounter = 0;
 
-export type ComponentType = 'input' | 'output' | 'plus' | 'combine' | 'split' | 'nop' | 'constant';
+export type ComponentType = 'input' | 'output' | 'plus' | 'multiply' | 'combine' | 'split' | 'nop' | 'constant';
 
 export class EvaluateOutput {
     pcsDestroyed : Array<ProgramCounter>
@@ -257,6 +257,10 @@ export function createOutputNode(cy: Core, x: number, y: number, outputs: Output
 
 export function createPlusNode(cy: Core, x: number, y: number): CompNode {
     return createNode(cy, x, y, "+", "compound", 2, 1, (a: any, b: any)=>a+b);
+}
+
+export function createMultiplyNode(cy: Core, x: number, y: number): CompNode {
+    return createNode(cy, x, y, "×", "compound", 2, 1, (a: any, b: any)=>a*b);
 }
 
 export function createCombineNode(cy: Core, x: number, y: number): CompNode {

@@ -1,6 +1,6 @@
 // Level data structure for the graph editing game
 
-export type ComponentType = 'plus' | 'combine' | 'split' | 'nop' | 'constant';
+export type ComponentType = 'plus' | 'multiply' | 'combine' | 'split' | 'nop' | 'constant';
 
 export interface Level {
     id: string;
@@ -30,12 +30,12 @@ export const LEVELS: Level[] = [
         allowedNodes: ['plus', 'constant']
     },
     {
-        id: 'split-and-combine',
+        id: 'factorial',
         name: 'Split and Combine',
         description: 'Learn to split data streams and combine them back together.',
         inputs: [[5]],
-        expectedOutputs: [[5, 5]],
-        allowedNodes: ['split', 'combine']
+        expectedOutputs: [[120]],
+        allowedNodes: ['split', 'combine', 'constant']
     }
 ];
 

@@ -1,6 +1,6 @@
 import cytoscape from 'cytoscape';
 import { getCytoscapeStyles } from './styles';
-import { CompNode, createPlusNode, createCombineNode, createSplitNode, createNopNode, createConstantNode } from './nodes';
+import { CompNode, createPlusNode, createMultiplyNode, createCombineNode, createSplitNode, createNopNode, createConstantNode } from './nodes';
 import { ComponentType } from './levels';
 import { Core } from 'cytoscape';
 import { GraphEditorContext } from './editor_context';
@@ -59,6 +59,7 @@ export function initializePreviews(allowedNodes?: ComponentType[]): void {
 // Note: input/output nodes are NOT in this registry - they are auto-created per level
 const COMPONENT_REGISTRY: { type: ComponentType, createFunc: (cy: Core, x: number, y: number) => CompNode }[] = [
     { type: 'plus', createFunc: createPlusNode },
+    { type: 'multiply', createFunc: createMultiplyNode },
     { type: 'combine', createFunc: createCombineNode },
     { type: 'split', createFunc: createSplitNode },
     { type: 'nop', createFunc: createNopNode },

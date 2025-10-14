@@ -1,7 +1,7 @@
 // Graph Serialization - Save and load graph structures to/from JSON
 import { NodeSingular } from 'cytoscape';
 import { GraphEditorContext } from './editor_context';
-import { createPlusNode, createCombineNode, createSplitNode, createNopNode, createConstantNode, CompNode } from './nodes';
+import { createPlusNode, createMultiplyNode, createCombineNode, createSplitNode, createNopNode, createConstantNode, CompNode } from './nodes';
 import { createConstantControls, removeConstantControls, initializeConstantControls } from './constant_controls';
 
 /**
@@ -17,7 +17,7 @@ export interface SerializedGraph {
 
 export interface SerializedNode {
     id: string;
-    type: 'plus' | 'combine' | 'split' | 'nop' | 'constant';
+    type: 'plus' | 'multiply' | 'combine' | 'split' | 'nop' | 'constant';
     position: { x: number; y: number };
     label: string;
     constantValue?: any;
@@ -59,6 +59,7 @@ export function exportGraph(context: GraphEditorContext): SerializedGraph {
         } else {
             switch (label) {
                 case '+': type = 'plus'; break;
+                case '×': type = 'multiply'; break;
                 case 'combine': type = 'combine'; break;
                 case 'split': type = 'split'; break;
                 default: type = 'nop'; break;
@@ -160,6 +161,9 @@ export function importGraph(context: GraphEditorContext, serializedGraph: Serial
         switch (serializedNode.type) {
             case 'plus':
                 newNode = createPlusNode(cy, serializedNode.position.x, serializedNode.position.y);
+                break;
+            case 'multiply':
+                newNode = createMultiplyNode(cy, serializedNode.position.x, serializedNode.position.y);
                 break;
             case 'combine':
                 newNode = createCombineNode(cy, serializedNode.position.x, serializedNode.position.y);
