@@ -1,166 +1,249 @@
-// UI controls for constant nodes - text input and repeat/once toggle
-// Uses cytoscape-node-html-label extension
+// UI controls for constant nodes - click-to-edit approach (similar to edge editor)
 import { NodeSingular } from 'cytoscape';
 import { editorContext } from './global_state';
 
+let currentConstantInput: HTMLInputElement | null = null;
+let currentEditingNode: NodeSingular | null = null;
+
 /**
- * Initialize HTML labels for all constant nodes
- * This uses the cytoscape-node-html-label extension
+ * Initialize constant node editing functionality
  */
 export function initializeConstantControls(): void {
     if (!editorContext) return;
 
-    // @ts-ignore - nodeHtmlLabel is added by extension
-    editorContext.cy.nodeHtmlLabel([{
-        query: 'node[type="constant"]',
-        halign: 'center',
-        valign: 'center',
-        halignBox: 'center',
-        valignBox: 'center',
-        cssClass: 'constant-node-label',
-        tpl: function(data: any) {
-            const value = data.constantValue !== undefined ? data.constantValue : 0;
-            const repeat = data.constantRepeat !== undefined ? data.constantRepeat : true;
-            const nodeId = data.id;
+    const cy = editorContext.cy;
 
-            return `
-                <div class="constant-controls" data-node-id="${nodeId}" style="
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 4px;
-                    pointer-events: auto;
-                ">
-                    <input
-                        type="text"
-                        class="constant-input"
-                        value="${value}"
-                        data-node-id="${nodeId}"
-                        style="
-                            width: 70px;
-                            padding: 4px 6px;
-                            font-size: 14px;
-                            font-weight: bold;
-                            text-align: center;
-                            border: 2px solid #64b5f6;
-                            border-radius: 4px;
-                            background: #fff;
-                            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                        "
-                    />
-                    <button
-                        class="constant-toggle"
-                        data-node-id="${nodeId}"
-                        style="
-                            padding: 2px 6px;
-                            font-size: 9px;
-                            font-weight: bold;
-                            border: 1px solid #64b5f6;
-                            border-radius: 3px;
-                            cursor: pointer;
-                            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-                            background: ${repeat ? '#64b5f6' : '#ffb74d'};
-                            color: #fff;
-                        "
-                    >${repeat ? 'REPEAT' : 'ONCE'}</button>
-                </div>
-            `;
+    // Click on constant node to edit
+    cy.on('tap', 'node[type="constant"]', (evt) => {
+        const node = evt.target as NodeSingular;
+        showConstantEditor(node);
+    });
+
+    // Click on background to close any open editor
+    cy.on('tap', (evt) => {
+        if (evt.target === cy) {
+            closeConstantEditor();
         }
-    }]);
+    });
 
-    // Set up event delegation for inputs and buttons
-    setupEventDelegation();
+    // Click on other nodes to close editor
+    cy.on('tap', 'node', (evt) => {
+        const node = evt.target as NodeSingular;
+        if (node.data('type') !== 'constant') {
+            closeConstantEditor();
+        }
+    });
+
+    // Update node labels when data changes
+    cy.on('data', 'node[type="constant"]', (evt) => {
+        const node = evt.target as NodeSingular;
+        updateNodeLabel(node);
+    });
+
+    // Initialize labels for existing constant nodes
+    cy.nodes('[type="constant"]').forEach((node: NodeSingular) => {
+        updateNodeLabel(node);
+    });
 }
 
 /**
- * Set up event delegation for constant control interactions
+ * Update the label of a constant node to show its value and mode
  */
-function setupEventDelegation(): void {
+function updateNodeLabel(node: NodeSingular): void {
+    const value = node.data('constantValue') !== undefined ? node.data('constantValue') : 0;
+    const repeat = node.data('constantRepeat') !== undefined ? node.data('constantRepeat') : true;
+    const modeText = repeat ? '∞' : '1×';
+    node.data('label', `${value} ${modeText}`);
+}
+
+/**
+ * Show editor for constant node (input + toggle button)
+ */
+function showConstantEditor(node: NodeSingular): void {
     if (!editorContext) return;
 
+    // Close any existing editor
+    closeConstantEditor();
+
+    currentEditingNode = node;
+
+    // Get current values
+    const currentValue = node.data('constantValue') !== undefined ? node.data('constantValue') : 0;
+    const currentRepeat = node.data('constantRepeat') !== undefined ? node.data('constantRepeat') : true;
+
+    // Create container div
+    const container = document.createElement('div');
+    container.className = 'constant-editor-container';
+    container.style.position = 'absolute';
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.gap = '4px';
+    container.style.alignItems = 'center';
+    container.style.zIndex = '1000';
+
+    // Create input element for value
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = String(currentValue);
+    input.className = 'constant-value-input';
+    input.style.padding = '4px 8px';
+    input.style.fontSize = '14px';
+    input.style.fontWeight = 'bold';
+    input.style.textAlign = 'center';
+    input.style.border = '2px solid #64b5f6';
+    input.style.borderRadius = '4px';
+    input.style.background = '#fff';
+    input.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+    input.style.width = '80px';
+
+    // Create toggle button for repeat/once mode
+    const toggle = document.createElement('button');
+    toggle.className = 'constant-toggle-button';
+    toggle.textContent = currentRepeat ? 'REPEAT' : 'ONCE';
+    toggle.style.padding = '3px 8px';
+    toggle.style.fontSize = '10px';
+    toggle.style.fontWeight = 'bold';
+    toggle.style.border = '1px solid #64b5f6';
+    toggle.style.borderRadius = '3px';
+    toggle.style.cursor = 'pointer';
+    toggle.style.background = currentRepeat ? '#64b5f6' : '#ffb74d';
+    toggle.style.color = '#fff';
+    toggle.style.boxShadow = '0 1px 2px rgba(0,0,0,0.2)';
+
+    container.appendChild(input);
+    container.appendChild(toggle);
+
+    // Position the editor over the node
+    updateEditorPosition(container, node);
+
+    // Add to DOM
     const cyContainer = document.getElementById('cy');
-    if (!cyContainer) return;
+    if (cyContainer) {
+        cyContainer.appendChild(container);
+        currentConstantInput = input;
+        input.focus();
+        input.select();
+    }
 
     // Handle input changes
-    cyContainer.addEventListener('input', (e: Event) => {
-        const target = e.target as HTMLInputElement;
-        if (target.classList.contains('constant-input')) {
-            const nodeId = target.getAttribute('data-node-id');
-            if (nodeId) {
-                const value = target.value;
+    input.addEventListener('input', () => {
+        let parsedValue: any = input.value;
+        const numValue = Number(input.value);
+        if (!isNaN(numValue) && input.value.trim() !== '') {
+            parsedValue = numValue;
+        }
+        node.data('constantValue', parsedValue);
+    });
 
-                // Try to parse as number, otherwise keep as string
-                let parsedValue: any = value;
-                const numValue = Number(value);
-                if (!isNaN(numValue) && value.trim() !== '') {
-                    parsedValue = numValue;
-                }
+    // Handle toggle button click
+    toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const newRepeat = !node.data('constantRepeat');
+        node.data('constantRepeat', newRepeat);
+        toggle.textContent = newRepeat ? 'REPEAT' : 'ONCE';
+        toggle.style.background = newRepeat ? '#64b5f6' : '#ffb74d';
+    });
 
-                if (editorContext) {
-                    const node = editorContext.cy.$id(nodeId);
-                    if (node.length > 0) {
-                        node.data('constantValue', parsedValue);
-                    }
-                }
+    // Handle blur - close the editor
+    input.addEventListener('blur', () => {
+        setTimeout(() => {
+            // Only close if we're not clicking the toggle button
+            if (document.activeElement !== toggle) {
+                closeConstantEditor();
             }
+        }, 100);
+    });
+
+    // Handle Enter key - close the editor
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            closeConstantEditor();
+        } else if (e.key === 'Escape') {
+            // Restore original values on Escape
+            node.data('constantValue', currentValue);
+            node.data('constantRepeat', currentRepeat);
+            closeConstantEditor();
         }
     });
 
-    // Handle button clicks
-    cyContainer.addEventListener('click', (e: Event) => {
-        const target = e.target as HTMLButtonElement;
-        if (target.classList.contains('constant-toggle')) {
-            e.stopPropagation();
+    // Prevent clicks on editor from propagating
+    container.addEventListener('mousedown', (e) => e.stopPropagation());
+    container.addEventListener('click', (e) => e.stopPropagation());
 
-            const nodeId = target.getAttribute('data-node-id');
-            if (nodeId && editorContext) {
-                const node = editorContext.cy.$id(nodeId);
-                if (node.length > 0) {
-                    const currentRepeat = node.data('constantRepeat');
-                    node.data('constantRepeat', !currentRepeat);
+    // Update position on zoom/pan/drag
+    const updateHandler = () => updateEditorPosition(container, node);
+    editorContext.cy.on('zoom pan viewport drag', updateHandler);
 
-                    // Update button appearance
-                    const newRepeat = !currentRepeat;
-                    target.textContent = newRepeat ? 'REPEAT' : 'ONCE';
-                    target.style.background = newRepeat ? '#64b5f6' : '#ffb74d';
-                }
-            }
+    // Store handler for cleanup
+    (container as any)._updateHandler = updateHandler;
+}
+
+/**
+ * Update editor position to match node position
+ */
+function updateEditorPosition(container: HTMLElement, node: NodeSingular): void {
+    if (!editorContext) return;
+
+    const cy = editorContext.cy;
+
+    // Get node position in model coordinates
+    const nodePos = node.position();
+
+    // Convert to rendered coordinates
+    const zoom = cy.zoom();
+    const pan = cy.pan();
+    const renderedX = nodePos.x * zoom + pan.x;
+    const renderedY = nodePos.y * zoom + pan.y;
+
+    // Position editor
+    container.style.left = `${renderedX}px`;
+    container.style.top = `${renderedY}px`;
+    container.style.transform = 'translate(-50%, -50%)';
+}
+
+/**
+ * Close the constant editor
+ */
+function closeConstantEditor(): void {
+    if (currentConstantInput && currentConstantInput.parentElement) {
+        const container = currentConstantInput.parentElement;
+
+        // Remove zoom/pan listener
+        if (editorContext && (container as any)._updateHandler) {
+            editorContext.cy.off('zoom pan viewport drag', (container as any)._updateHandler);
         }
-    });
 
-    // Prevent input/button clicks from triggering node selection
-    cyContainer.addEventListener('mousedown', (e: Event) => {
-        const target = e.target as HTMLElement;
-        if (target.classList.contains('constant-input') || target.classList.contains('constant-toggle')) {
-            e.stopPropagation();
+        // Remove from DOM
+        if (container.parentElement) {
+            container.parentElement.removeChild(container);
         }
-    });
+    }
+
+    currentConstantInput = null;
+    currentEditingNode = null;
 }
 
 /**
  * Create/update controls for a specific constant node
  */
-export function createConstantControls(_node: NodeSingular): void {
-    // With node-html-label, we just need to trigger a refresh
-    // The extension will automatically create the label
-    if (editorContext) {
-        // @ts-ignore
-        editorContext.cy.nodeHtmlLabel('refresh');
-    }
+export function createConstantControls(node: NodeSingular): void {
+    // Just update the label
+    updateNodeLabel(node);
 }
 
 /**
  * Remove controls for a specific node
  */
 export function removeConstantControls(_nodeId: string): void {
-    // With node-html-label, labels are automatically removed when nodes are removed
-    // No manual cleanup needed
+    // Close editor if this node is being edited
+    if (currentEditingNode && currentEditingNode.id() === _nodeId) {
+        closeConstantEditor();
+    }
 }
 
 /**
  * Clean up all constant controls
  */
 export function destroyAllConstantControls(): void {
-    // With node-html-label, labels are automatically managed
-    // No manual cleanup needed
+    closeConstantEditor();
 }
