@@ -31,8 +31,8 @@ export const LEVELS: Level[] = [
     },
     {
         id: 'factorial',
-        name: 'Split and Combine',
-        description: 'Learn to split data streams and combine them back together.',
+        name: 'Factorial',
+        description: 'Split and combine together with conditional branches let us compute factorial',
         inputs: [[5]],
         expectedOutputs: [[120]],
         allowedNodes: ['split', 'combine', 'constant']
