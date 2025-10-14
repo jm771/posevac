@@ -52,7 +52,12 @@ export class AnimationState {
     }
 }
 
-export class GraphEditorContext {
+export interface NodeBuildContext {
+    cy: Core;
+    nodeIdCounter: number;
+}
+
+export class GraphEditorContext implements NodeBuildContext {
     public cy: Core;
     public level: Level;
     public inputNodes: CompNode[] = [];

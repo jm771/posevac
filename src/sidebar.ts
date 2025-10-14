@@ -2,11 +2,11 @@ import cytoscape from 'cytoscape';
 import { getCytoscapeStyles } from './styles';
 import { CompNode, createPlusNode, createMultiplyNode, createCombineNode, createSplitNode, createNopNode, createConstantNode } from './nodes';
 import { ComponentType } from './levels';
-import { GraphEditorContext } from './editor_context';
+import { GraphEditorContext, NodeBuildContext } from './editor_context';
 import { createConstantControls, removeConstantControls } from './constant_controls';
 
 
-function addComponentToSidebar(type: ComponentType, func: Function) : void {
+function addComponentToSidebar(type: ComponentType, func: (context: NodeBuildContext, x: number, y: number) => CompNode) : void {
     const componentsList = document.querySelector('.components-list');
     if (componentsList == null) {
             throw new Error("components-list missing from html");
@@ -30,7 +30,9 @@ function addComponentToSidebar(type: ComponentType, func: Function) : void {
             autoungrabify: true
         });
 
-        func(previewCy, 0, 0);
+        let context : NodeBuildContext = {cy : previewCy, nodeIdCounter : 0};
+
+        func(context, 0, 0);
 
         previewCy.fit(undefined, 10);
     });
@@ -56,7 +58,7 @@ export function initializePreviews(allowedNodes?: ComponentType[]): void {
 
 // Component registry - single source of truth for all component types
 // Note: input/output nodes are NOT in this registry - they are auto-created per level
-const COMPONENT_REGISTRY: { type: ComponentType, createFunc: (context: GraphEditorContext, x: number, y: number) => CompNode }[] = [
+const COMPONENT_REGISTRY: { type: ComponentType, createFunc: (context: NodeBuildContext, x: number, y: number) => CompNode }[] = [
     { type: 'plus', createFunc: createPlusNode },
     { type: 'multiply', createFunc: createMultiplyNode },
     { type: 'combine', createFunc: createCombineNode },

@@ -1,7 +1,7 @@
 import { Core, NodeSingular } from "cytoscape";
 import { ProgramCounter } from "./program_counter";
 import { editorContext } from "./global_state";
-import { GraphEditorContext } from "./editor_context";
+import { NodeBuildContext } from "./editor_context";
 
 export type ComponentType = 'input' | 'output' | 'plus' | 'multiply' | 'combine' | 'split' | 'nop' | 'constant';
 
@@ -235,7 +235,7 @@ export class CompNode
     }
 }
 
-function createNode(context: GraphEditorContext, x: number, y: number, label: string, type: string, inTerminals: number, outTerminals: number, func: Function): CompNode {
+function createNode(context: NodeBuildContext, x: number, y: number, label: string, type: string, inTerminals: number, outTerminals: number, func: Function): CompNode {
     const nodeId = `node-${context.nodeIdCounter++}`;
     context.cy.add({
         group: 'nodes',
@@ -255,35 +255,35 @@ function createNode(context: GraphEditorContext, x: number, y: number, label: st
     return new CompNode(func, node, inputTerminals, outputTerminals);
 }
 
-export function createInputNode(context: GraphEditorContext, x: number, y: number, inputs: InputProvider): CompNode {
+export function createInputNode(context: NodeBuildContext, x: number, y: number, inputs: InputProvider): CompNode {
     return createNode(context, x, y, "input", "input", 0, 1, () => inputs.getValue());
 }
 
-export function createOutputNode(context: GraphEditorContext, x: number, y: number, outputs: OutputChecker): CompNode {
+export function createOutputNode(context: NodeBuildContext, x: number, y: number, outputs: OutputChecker): CompNode {
     return createNode(context, x, y, "output", "output", 1, 0, (v: any) => outputs.checkValue(v));
 }
 
-export function createPlusNode(context: GraphEditorContext, x: number, y: number): CompNode {
+export function createPlusNode(context: NodeBuildContext, x: number, y: number): CompNode {
     return createNode(context, x, y, "+", "compound", 2, 1, (a: any, b: any)=>a+b);
 }
 
-export function createMultiplyNode(context: GraphEditorContext, x: number, y: number): CompNode {
+export function createMultiplyNode(context: NodeBuildContext, x: number, y: number): CompNode {
     return createNode(context, x, y, "×", "compound", 2, 1, (a: any, b: any)=>a*b);
 }
 
-export function createCombineNode(context: GraphEditorContext, x: number, y: number): CompNode {
+export function createCombineNode(context: NodeBuildContext, x: number, y: number): CompNode {
     return createNode(context, x, y, "combine", "compound", 2, 1, (a: any, b: any)=>[a, b]);
 }
 
-export function createSplitNode(context: GraphEditorContext, x: number, y: number): CompNode {
+export function createSplitNode(context: NodeBuildContext, x: number, y: number): CompNode {
     return createNode(context, x, y, "split", "compound", 1, 2, (a: any)=>a);
 }
 
-export function createNopNode(context: GraphEditorContext, x: number, y: number): CompNode {
+export function createNopNode(context: NodeBuildContext, x: number, y: number): CompNode {
     return createNode(context, x, y, "+", "compound", 1, 1, (a: any)=>a);
 }
 
-export function createConstantNode(context: GraphEditorContext, x: number, y: number, initialValue: any = 0, initialRepeat: boolean = true): CompNode {
+export function createConstantNode(context: NodeBuildContext, x: number, y: number, initialValue: any = 0, initialRepeat: boolean = true): CompNode {
     const nodeId = `node-${context.nodeIdCounter++}`;
     context.cy.add({
         group: 'nodes',
