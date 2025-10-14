@@ -1,4 +1,4 @@
-// UI controls for constant nodes - click-to-edit approach (similar to edge editor)
+// UI controls for constant nodes - HTML labels + click-to-edit popup
 import { NodeSingular } from 'cytoscape';
 import { editorContext } from './global_state';
 
@@ -12,6 +12,48 @@ export function initializeConstantControls(): void {
     if (!editorContext) return;
 
     const cy = editorContext.cy;
+
+    // Set up HTML labels for constant nodes using cytoscape-node-html-label
+    // @ts-ignore - nodeHtmlLabel is added by extension
+    cy.nodeHtmlLabel([{
+        query: 'node[type="constant"]',
+        halign: 'center',
+        valign: 'center',
+        halignBox: 'center',
+        valignBox: 'center',
+        cssClass: 'constant-node-display',
+        tpl: function(data: any) {
+            const value = data.constantValue !== undefined ? data.constantValue : 0;
+            const repeat = data.constantRepeat !== undefined ? data.constantRepeat : true;
+            const modeIcon = repeat ? '∞' : '1×';
+
+            return `
+                <div class="constant-display" style="
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 2px;
+                    pointer-events: none;
+                    user-select: none;
+                ">
+                    <div style="
+                        font-size: 16px;
+                        font-weight: bold;
+                        color: #fff;
+                        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                    ">${value}</div>
+                    <div style="
+                        font-size: 10px;
+                        font-weight: bold;
+                        color: ${repeat ? '#64b5f6' : '#ffb74d'};
+                        background: rgba(0,0,0,0.3);
+                        padding: 1px 4px;
+                        border-radius: 2px;
+                    ">${modeIcon}</div>
+                </div>
+            `;
+        }
+    }]);
 
     // Click on constant node to edit
     cy.on('tap', 'node[type="constant"]', (evt) => {
@@ -34,26 +76,11 @@ export function initializeConstantControls(): void {
         }
     });
 
-    // Update node labels when data changes
-    cy.on('data', 'node[type="constant"]', (evt) => {
-        const node = evt.target as NodeSingular;
-        updateNodeLabel(node);
+    // Refresh HTML labels when data changes
+    cy.on('data', 'node[type="constant"]', () => {
+        // @ts-ignore
+        cy.nodeHtmlLabel('refresh');
     });
-
-    // Initialize labels for existing constant nodes
-    cy.nodes('[type="constant"]').forEach((node: NodeSingular) => {
-        updateNodeLabel(node);
-    });
-}
-
-/**
- * Update the label of a constant node to show its value and mode
- */
-function updateNodeLabel(node: NodeSingular): void {
-    const value = node.data('constantValue') !== undefined ? node.data('constantValue') : 0;
-    const repeat = node.data('constantRepeat') !== undefined ? node.data('constantRepeat') : true;
-    const modeText = repeat ? '∞' : '1×';
-    node.data('label', `${value} ${modeText}`);
 }
 
 /**
@@ -226,9 +253,12 @@ function closeConstantEditor(): void {
 /**
  * Create/update controls for a specific constant node
  */
-export function createConstantControls(node: NodeSingular): void {
-    // Just update the label
-    updateNodeLabel(node);
+export function createConstantControls(_node: NodeSingular): void {
+    // Refresh HTML labels to show the new node
+    if (editorContext) {
+        // @ts-ignore
+        editorContext.cy.nodeHtmlLabel('refresh');
+    }
 }
 
 /**

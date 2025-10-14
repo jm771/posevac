@@ -67,7 +67,7 @@ export function getCytoscapeStyles(): StylesheetJson {
                 'background-color': '#4a4a4a',
                 'border-width': 2,
                 'border-color': '#64b5f6',
-                'label': 'data(label)',
+                'label': '',  // No label - using HTML overlay for display
                 'color': '#d4d4d4',
                 'text-valign': 'center',
                 'text-halign': 'center',
