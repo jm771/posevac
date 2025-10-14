@@ -1,9 +1,10 @@
 import cytoscape from 'cytoscape';
 import { getCytoscapeStyles } from './styles';
-import { CompNode, createPlusNode, createCombineNode, createSplitNode, createNopNode } from './nodes';
+import { CompNode, createPlusNode, createCombineNode, createSplitNode, createNopNode, createConstantNode } from './nodes';
 import { ComponentType } from './levels';
 import { Core } from 'cytoscape';
 import { GraphEditorContext } from './editor_context';
+import { createConstantControls, removeConstantControls } from './constant_controls';
 
 
 function addComponentToSidebar(type: ComponentType, func: Function) : void {
@@ -61,6 +62,7 @@ const COMPONENT_REGISTRY: { type: ComponentType, createFunc: (cy: Core, x: numbe
     { type: 'combine', createFunc: createCombineNode },
     { type: 'split', createFunc: createSplitNode },
     { type: 'nop', createFunc: createNopNode },
+    { type: 'constant', createFunc: createConstantNode },
 ];
 
 // Setup sidebar drag and drop
@@ -108,6 +110,11 @@ export function setupSidebarDragDrop(context: GraphEditorContext): void {
         if (component) {
             const newNode = component.createFunc(context.cy, modelX, modelY);
             context.allNodes.push(newNode);
+
+            // Create controls for constant nodes
+            if (componentType === 'constant') {
+                createConstantControls(newNode.getNode());
+            }
         }
     });
 }
@@ -159,6 +166,11 @@ export function setupNodeDeletion(context: GraphEditorContext): void {
 
             const nodeId = node.id();
 
+            // Remove constant controls if it's a constant node
+            if (nodeType === 'constant') {
+                removeConstantControls(nodeId);
+            }
+
             // Remove from userNodes array
             const nodeIndex = context.allNodes.findIndex(n => n.getNodeId() === nodeId);
             if (nodeIndex !== -1) {
@@ -166,8 +178,8 @@ export function setupNodeDeletion(context: GraphEditorContext): void {
                 console.log(`Removed node from context. Total user nodes: ${context.allNodes.length}`);
             }
 
-            // If it's a compound node or input/output node, remove all children first
-            if (nodeType === 'compound' || nodeType === 'input' || nodeType === 'output') {
+            // If it's a compound node or input/output node or constant node, remove all children first
+            if (nodeType === 'compound' || nodeType === 'input' || nodeType === 'output' || nodeType === 'constant') {
                 node.children().remove();
                 node.remove();
             }

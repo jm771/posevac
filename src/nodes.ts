@@ -4,7 +4,7 @@ import { editorContext } from "./global_state";
 
 let nodeIdCounter = 0;
 
-export type ComponentType = 'input' | 'output' | 'plus' | 'combine' | 'split' | 'nop';
+export type ComponentType = 'input' | 'output' | 'plus' | 'combine' | 'split' | 'nop' | 'constant';
 
 export class EvaluateOutput {
     pcsDestroyed : Array<ProgramCounter>
@@ -269,4 +269,40 @@ export function createSplitNode(cy: Core, x: number, y: number): CompNode {
 
 export function createNopNode(cy: Core, x: number, y: number): CompNode {
     return createNode(cy, x, y, "+", "compound", 1, 1, (a: any)=>a);
+}
+
+export function createConstantNode(cy: Core, x: number, y: number, initialValue: any = 0, initialRepeat: boolean = true): CompNode {
+    const nodeId = `node-${nodeIdCounter++}`;
+    cy.add({
+        group: 'nodes',
+        data: {
+            id: nodeId,
+            label: "const",
+            type: 'constant',
+            constantValue: initialValue,
+            constantRepeat: initialRepeat
+        },
+        position: { x, y }
+    });
+
+    const node = cy.$(`#${nodeId}`) as NodeSingular;
+
+    const inputTerminals = makeInputTerminals(cy, nodeId, x, y, 0);
+    const outputTerminals = makeOutputTerminals(cy, nodeId, x, y, 1);
+
+    // Create the constant provider that reads from node data
+    const constantProvider = new ConstantProvider(initialValue, initialRepeat);
+
+    // Update the provider when node data changes
+    const updateProvider = () => {
+        constantProvider.repeat = node.data('constantRepeat');
+        (constantProvider as any).val = node.data('constantValue');
+    };
+
+    const compNode = new CompNode(() => {
+        updateProvider();
+        return constantProvider.getValue();
+    }, node, inputTerminals, outputTerminals);
+
+    return compNode;
 }

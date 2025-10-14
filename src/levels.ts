@@ -1,6 +1,6 @@
 // Level data structure for the graph editing game
 
-export type ComponentType = 'plus' | 'combine' | 'split' | 'nop';
+export type ComponentType = 'plus' | 'combine' | 'split' | 'nop' | 'constant';
 
 export interface Level {
     id: string;
@@ -17,17 +17,17 @@ export const LEVELS: Level[] = [
         id: 'addition',
         name: 'Addition',
         description: 'Learn the basics! Connect two numbers to a plus node to add them together.',
-        inputs: [[3, 5], [7, 8]],
-        expectedOutputs: [[10, 13]],
+        inputs: [[3, 5, 7], [7, 8, 10]],
+        expectedOutputs: [[10, 13, 17]],
         allowedNodes: ['plus']
     },
     {
-        id: 'double-addition',
-        name: 'Double Addition',
-        description: 'Use two plus nodes to add three numbers together.',
-        inputs: [[2, 3, 4]],
-        expectedOutputs: [[9]],
-        allowedNodes: ['plus', 'nop']
+        id: 'cum-sum',
+        name: 'Cumulative Sum',
+        description: 'Learn basic looping and branching - compute the cumulative sum of some numbers',
+        inputs: [[1, 2, 3, 4, 5]],
+        expectedOutputs: [[1, 3, 6, 10, 15]],
+        allowedNodes: ['plus', 'constant']
     },
     {
         id: 'split-and-combine',

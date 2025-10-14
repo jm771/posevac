@@ -1,7 +1,8 @@
 // Graph Serialization - Save and load graph structures to/from JSON
 import { NodeSingular } from 'cytoscape';
 import { GraphEditorContext } from './editor_context';
-import { createPlusNode, createCombineNode, createSplitNode, createNopNode, CompNode } from './nodes';
+import { createPlusNode, createCombineNode, createSplitNode, createNopNode, createConstantNode, CompNode } from './nodes';
+import { createConstantControls, removeConstantControls } from './constant_controls';
 
 /**
  * Serializable graph structure - excludes animation state
@@ -16,9 +17,11 @@ export interface SerializedGraph {
 
 export interface SerializedNode {
     id: string;
-    type: 'plus' | 'combine' | 'split' | 'nop';
+    type: 'plus' | 'combine' | 'split' | 'nop' | 'constant';
     position: { x: number; y: number };
     label: string;
+    constantValue?: any;
+    constantRepeat?: boolean;
 }
 
 export interface SerializedEdge {
@@ -38,7 +41,7 @@ export function exportGraph(context: GraphEditorContext): SerializedGraph {
     // Get all user-created nodes (exclude input/output nodes and terminals)
     const userNodes = cy.nodes().filter(node => {
         const nodeType = node.data('type');
-        return nodeType === 'compound' && !node.data('parent');
+        return (nodeType === 'compound' || nodeType === 'constant') && !node.data('parent');
     });
 
     // Serialize nodes
@@ -46,22 +49,35 @@ export function exportGraph(context: GraphEditorContext): SerializedGraph {
         const nodeSingular = node as NodeSingular;
         const position = nodeSingular.position();
         const label = nodeSingular.data('label');
+        const nodeType = nodeSingular.data('type');
 
-        // Determine node type based on label
+        // Determine node type based on label or node type
         let type: SerializedNode['type'];
-        switch (label) {
-            case '+': type = 'plus'; break;
-            case 'combine': type = 'combine'; break;
-            case 'split': type = 'split'; break;
-            default: type = 'nop'; break;
+        if (nodeType === 'constant') {
+            type = 'constant';
+        } else {
+            switch (label) {
+                case '+': type = 'plus'; break;
+                case 'combine': type = 'combine'; break;
+                case 'split': type = 'split'; break;
+                default: type = 'nop'; break;
+            }
         }
 
-        return {
+        const serialized: SerializedNode = {
             id: nodeSingular.id(),
             type: type,
             position: { x: position.x, y: position.y },
             label: label
         };
+
+        // Add constant-specific fields
+        if (type === 'constant') {
+            serialized.constantValue = nodeSingular.data('constantValue');
+            serialized.constantRepeat = nodeSingular.data('constantRepeat');
+        }
+
+        return serialized;
     });
 
     // Get all edges between user-created nodes (exclude edges to/from input/output)
@@ -145,6 +161,17 @@ export function importGraph(context: GraphEditorContext, serializedGraph: Serial
             case 'nop':
                 newNode = createNopNode(cy, serializedNode.position.x, serializedNode.position.y);
                 break;
+            case 'constant':
+                newNode = createConstantNode(
+                    cy,
+                    serializedNode.position.x,
+                    serializedNode.position.y,
+                    serializedNode.constantValue ?? 0,
+                    serializedNode.constantRepeat ?? true
+                );
+                // Create UI controls for the constant node
+                createConstantControls(newNode.getNode());
+                break;
             default:
                 throw new Error(`Unknown node type: ${serializedNode.type}`);
         }
@@ -212,7 +239,14 @@ export function clearUserCreatedElements(context: GraphEditorContext): void {
         const nodeType = node.data('type');
         const parent = node.data('parent');
         // Keep input/output nodes and their terminals
-        return nodeType === 'compound' && !parent;
+        return (nodeType === 'compound' || nodeType === 'constant') && !parent;
+    });
+
+    // Clean up constant controls before removing nodes
+    userNodes.forEach(node => {
+        if (node.data('type') === 'constant') {
+            removeConstantControls(node.id());
+        }
     });
 
     cy.remove(userNodes);
