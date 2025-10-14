@@ -1,12 +1,9 @@
-// import { cy } from './global_state'
-
 import { Core, NodeSingular } from "cytoscape";
 import { ProgramCounter } from "./program_counter";
 import { editorContext } from "./global_state";
 
 let nodeIdCounter = 0;
 
-// Type definitions
 export type ComponentType = 'input' | 'output' | 'plus' | 'combine' | 'split' | 'nop';
 
 export class EvaluateOutput {
@@ -57,6 +54,33 @@ export class InputProvider {
 
     reset() : void {
         this.i = 0;
+    }
+}
+
+export class ConstantProvider {
+    private i;
+    private val : any
+    repeat : boolean;
+
+    constructor(val : any, repeat : boolean) {
+        this.i = false;
+        this.val = val;
+        this.repeat = repeat;
+    }
+
+    getValue() : void {
+        if (this.repeat) {
+            return this.val;
+        }
+        else if (!this.i) {
+            this.i = true;
+            return this.val
+        }
+        else return undefined;
+    }
+
+    reset() : void {
+        this.i = false
     }
 }
 
