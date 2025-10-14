@@ -29,6 +29,7 @@ export interface SerializedEdge {
     sourceTerminalIndex: number;
     targetNodeId: string;
     targetTerminalIndex: number;
+    condition?: string;
 }
 
 /**
@@ -106,12 +107,20 @@ export function exportGraph(context: GraphEditorContext): SerializedGraph {
         const sourceIndex = sourceMatch ? parseInt(sourceMatch[1]) : 0;
         const targetIndex = targetMatch ? parseInt(targetMatch[1]) : 0;
 
-        return {
+        const serialized: SerializedEdge = {
             sourceNodeId: sourceParent.id(),
             sourceTerminalIndex: sourceIndex,
             targetNodeId: targetParent.id(),
             targetTerminalIndex: targetIndex
         };
+
+        // Add condition if it exists
+        const condition = edge.data('condition');
+        if (condition) {
+            serialized.condition = condition;
+        }
+
+        return serialized;
     });
 
     return {
@@ -213,12 +222,19 @@ export function importGraph(context: GraphEditorContext, serializedGraph: Serial
         }
 
         // Create edge between the terminals
+        const edgeData: any = {
+            source: sourceTerminal.id(),
+            target: targetTerminal.id()
+        };
+
+        // Restore condition if it exists
+        if (serializedEdge.condition) {
+            edgeData.condition = serializedEdge.condition;
+        }
+
         cy.add({
             group: 'edges',
-            data: {
-                source: sourceTerminal.id(),
-                target: targetTerminal.id()
-            }
+            data: edgeData
         });
     }
 

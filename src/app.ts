@@ -10,6 +10,7 @@ import { initializeLevelSelector, showLevelSelector, showGraphEditor, updateLeve
 import { Level } from './levels';
 import { downloadGraphAsJSON, loadGraphFromFile } from './graph_serialization';
 import { initializeConstantControls } from './constant_controls';
+import { initializeEdgeEditor } from './edge_editor';
 
 // Global reference to current editor context
 let currentEditor: GraphEditorContext | null = null;
@@ -43,6 +44,9 @@ function startLevel(level: Level): void {
 
     // Initialize constant node HTML labels
     initializeConstantControls();
+
+    // Initialize edge editor for conditions
+    initializeEdgeEditor(currentEditor.cy);
 
     // Show the graph editor
     showGraphEditor();

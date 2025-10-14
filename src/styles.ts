@@ -120,7 +120,14 @@ export function getCytoscapeStyles(): StylesheetJson {
                 'target-arrow-color': '#4fc3f7',
                 'target-arrow-shape': 'triangle',
                 'curve-style': 'bezier',
-                'arrow-scale': 1.5
+                'arrow-scale': 1.5,
+                'label': 'data(condition)',
+                'font-size': '10',
+                'text-background-color': '#2d2d30',
+                'text-background-opacity': 0.8,
+                'text-background-padding': '3',
+                'text-background-shape': 'roundrectangle',
+                'color': '#ffffff'
             }
         },
         // Temporary edge (during right-click drag)
