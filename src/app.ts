@@ -3,8 +3,7 @@
 
 import { setupAnimationControls } from './animation';
 import { setupEdgeCreation } from './edge_creation';
-import { setEditorContext } from './global_state';
-import { GraphEditorContext } from './editor_context';
+import { AnimationState, GraphEditorContext, LevelContext } from './editor_context';
 import { initializePreviews, setupNodeDeletion, setupSidebarDragDrop } from './sidebar';
 import { initializeLevelSelector, showLevelSelector, showGraphEditor, updateLevelInfo } from './level_selector';
 import { Level } from './levels';
@@ -12,8 +11,6 @@ import { downloadGraphAsJSON, loadGraphFromFile } from './graph_serialization';
 import { initializeConstantControls } from './constant_controls';
 import { initializeEdgeEditor } from './edge_editor';
 
-// Global reference to current editor context
-let currentEditor: GraphEditorContext | null = null;
 
 /**
  * Start a level - create editor context and set up the graph editor
@@ -21,14 +18,8 @@ let currentEditor: GraphEditorContext | null = null;
 function startLevel(level: Level): void {
     console.log(`Starting level: ${level.name}`);
 
-    // Clean up previous editor if it exists
-    if (currentEditor) {
-        currentEditor.destroy();
-    }
-
     // Create new editor context for this level
-    currentEditor = new GraphEditorContext(level);
-    setEditorContext(currentEditor);
+    const levelContext = new LevelContext(new GraphEditorContext(level), null);
 
     // Update level info display
     updateLevelInfo(level);
@@ -37,7 +28,7 @@ function startLevel(level: Level): void {
     initializePreviews(level.allowedNodes);
 
     // Set up interactions (only needs to be done once, but safe to call multiple times)
-    setupSidebarDragDrop(currentEditor);
+    setupSidebarDragDrop(levelContext.editorContex);
     setupNodeDeletion(currentEditor);
     setupEdgeCreation(currentEditor.cy);
     setupAnimationControls();
@@ -51,23 +42,20 @@ function startLevel(level: Level): void {
     // Show the graph editor
     showGraphEditor();
 
+    const menuBtn = document.getElementById('menuBtn');
+    if (menuBtn) {
+        menuBtn.addEventListener('click', () => returnToMenu(curre)));
+    }
+
     console.log('Level started successfully');
 }
 
 /**
  * Return to main menu
  */
-function returnToMenu(): void {
+function returnToMenu(currentContext: LevelContext): void {
     console.log('Returning to main menu');
-
-    // Clean up current editor
-    if (currentEditor) {
-        currentEditor.destroy();
-        currentEditor = null;
-        setEditorContext(null);
-    }
-
-    // Show level selector
+    currentContext.destroy();
     showLevelSelector();
 }
 
@@ -79,10 +67,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeLevelSelector(startLevel);
 
     // Set up menu button
-    const menuBtn = document.getElementById('menuBtn');
-    if (menuBtn) {
-        menuBtn.addEventListener('click', returnToMenu);
-    }
+
+    // How is this not on the level? Maybe we need to let this fail for now?
+
 
     // Set up save/load buttons
     setupSaveLoadButtons();

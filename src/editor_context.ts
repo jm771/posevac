@@ -12,13 +12,11 @@ if (typeof cytoscape !== 'undefined') {
     nodeHtmlLabel(cytoscape);
 }
 
-// Animation stage enum - exported for use in animation.ts
 export enum Stage {
     AdvanceCounter = 1,
     Evaluate
 }
 
-// Animation state interface
 export class AnimationState {
     programCounters: Map<string, ProgramCounter>;
     isAnimating: boolean;
@@ -31,6 +29,10 @@ export class AnimationState {
         this.stage = Stage.Evaluate;
         this.nodeAnimationState = new Map<string, any>();
         nodes.forEach((n: CompNode) => {this.nodeAnimationState.set(n.getNodeId(), n.makeCleanState()); })
+    }
+
+    destroy() {
+        this.programCounters.forEach(pc => pc.destroy());
     }
 }
 
@@ -100,17 +102,7 @@ export class GraphEditorContext implements NodeBuildContext {
         });
     }
 
-    /**
-     * Clean up and destroy this editor context
-     */
     destroy(): void {
-        // Destroy all program counters
-        // TODO - gunna need to put this somewhere
-        // for (const pc of this.animationState.programCounters.values()) {
-        //     pc.destroy();
-        // }
-        // this.animationState.programCounters.clear();
-
         if (this.cy) {
             this.cy.destroy();
         }
@@ -120,11 +112,16 @@ export class GraphEditorContext implements NodeBuildContext {
 export class LevelContext
 {
     editorContex: GraphEditorContext;
-    animationState: AnimationState;
+    animationState: AnimationState | null;
 
-    constructor(editorContex: GraphEditorContext, animationState: AnimationState)
+    constructor(editorContex: GraphEditorContext, animationState: AnimationState | null)
     {
         this.editorContex = editorContex;
         this.animationState = animationState;
+    }
+
+    destroy(): void {
+        this.animationState?.destroy();
+        this.editorContex.destroy();
     }
 }
