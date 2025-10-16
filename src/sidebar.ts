@@ -115,7 +115,7 @@ export function setupSidebarDragDrop(context: GraphEditorContext): void {
 
             // Create controls for constant nodes
             if (componentType === 'constant') {
-                createConstantControls(newNode.getNode());
+                createConstantControls(newNode.node);
             }
         }
     });

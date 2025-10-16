@@ -183,7 +183,7 @@ export function importGraph(context: GraphEditorContext, serializedGraph: Serial
                     serializedNode.constantRepeat ?? true
                 );
                 // Create UI controls for the constant node
-                createConstantControls(newNode.getNode());
+                createConstantControls(newNode.node);
                 break;
             default:
                 throw new Error(`Unknown node type: ${serializedNode.type}`);
@@ -212,8 +212,8 @@ export function importGraph(context: GraphEditorContext, serializedGraph: Serial
         }
 
         // Get the specific terminals using the indices
-        const sourceTerminal = sourceCompNode.getOutputTerminals()[serializedEdge.sourceTerminalIndex];
-        const targetTerminal = targetCompNode.getInputTerminals()[serializedEdge.targetTerminalIndex];
+        const sourceTerminal = sourceCompNode.outputTerminals[serializedEdge.sourceTerminalIndex];
+        const targetTerminal = targetCompNode.inputTerminals[serializedEdge.targetTerminalIndex];
 
         if (!sourceTerminal) {
             console.warn(`Source terminal ${serializedEdge.sourceTerminalIndex} not found on node ${serializedEdge.sourceNodeId}`);
@@ -277,7 +277,7 @@ export function clearUserCreatedElements(context: GraphEditorContext): void {
 
     // Update allNodes array to only include input/output nodes
     context.allNodes = context.allNodes.filter(node => {
-        const nodeType = node.getNode().data('type');
+        const nodeType = node.node.data('type');
         return nodeType === 'input' || nodeType === 'output';
     });
 }

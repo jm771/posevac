@@ -2,7 +2,7 @@ import { Core } from 'cytoscape';
 import { editorContext } from './global_state'
 import { ProgramCounter } from './program_counter';
 import { EvaluateOutput } from './nodes';
-import { GraphEditorContext, Stage } from './editor_context';
+import { AnimationState, GraphEditorContext, LevelContext, Stage } from './editor_context';
 
 // Helper to get cy from context
 function getCy(): Core {
@@ -39,17 +39,18 @@ function updatePCMarkerForViewportChange(): void {
     }
 }
 
-async function evaluateFunctions(context : GraphEditorContext): Promise<void> {
+async function evaluateFunctions(context : GraphEditorContext, animationState: AnimationState): Promise<void> {
 
-    const evaluations : Array<EvaluateOutput> = context.allNodes.map((node) => node.evaluate());
+    const evaluations : Array<EvaluateOutput> = context.allNodes.map(
+        (node) => node.evaluate(animationState.nodeAnimationState.get(node.getNodeId())));
 
     const moveInAnimations = [];
 
 
     for (let i = 0; i < evaluations.length; i++)
     {
-        evaluations[i].pcsDestroyed.forEach((pc: ProgramCounter) => {context.animationState.programCounters.delete(pc.id); });
-        moveInAnimations.push(...evaluations[i].pcsDestroyed.map(pc => pc.animateMoveToNode(pc.currentLocation, context.allNodes[i].getNode())));
+        evaluations[i].pcsDestroyed.forEach((pc: ProgramCounter) => {animationState.programCounters.delete(pc.id); });
+        moveInAnimations.push(...evaluations[i].pcsDestroyed.map(pc => pc.animateMoveToNode(pc.currentLocation, context.allNodes[i].node)));
     }
 
 
@@ -62,24 +63,24 @@ async function evaluateFunctions(context : GraphEditorContext): Promise<void> {
     for (let i = 0; i < evaluations.length; i++)
     {
         evaluations[i].pcsCreated.forEach( pc => {
-            const parentNode = context.allNodes[i].getNode()
+            const parentNode = context.allNodes[i].node
             pc.initializePositionAndShow(parentNode);
             moveOutAnimations.push(pc.animateMoveToNode(parentNode, pc.currentLocation));
-            context.animationState.programCounters.set(pc.id, pc);
+            animationState.programCounters.set(pc.id, pc);
         });
     }
 
     await Promise.all(moveOutAnimations);
 }
 
-async function advanceCounters(): Promise<void> {
+async function advanceCounters(animationState: AnimationState): Promise<void> {
     if (!editorContext) {
         throw new Error('Editor context not initialized');
     }
 
     // Advance each program counter that can move
     const movePromises: Array<Promise<void>> = []
-    editorContext.animationState.programCounters.forEach((pc, _) => {
+    animationState.programCounters.forEach((pc, _) => {
         const nextNode = pc.tryAdvance();
         if (nextNode != null) {
             movePromises.push(pc.animateMoveToNode(pc.currentLocation, nextNode, 600));
@@ -93,47 +94,36 @@ async function advanceCounters(): Promise<void> {
 }
 
 // Step forward in animation - advances all program counters
-async function stepForward(): Promise<void> {
-    if (!editorContext) {
-        throw new Error('Editor context not initialized');
-    }
-
-    if (editorContext.animationState.isAnimating) {
+async function stepForward(levelContext: LevelContext): Promise<void> {
+    const animationState = levelContext.animationState;
+    if (animationState.isAnimating) {
         console.log('Animation already in progress, ignoring');
         return;
     }
 
-    editorContext.animationState.isAnimating = true;
+    animationState.isAnimating = true;
 
     try {
-        switch (editorContext.animationState.stage) {
+        switch (animationState.stage) {
             case Stage.AdvanceCounter:
-                await advanceCounters();
+                await advanceCounters(animationState);
                 break;
             case Stage.Evaluate:
-                await evaluateFunctions(editorContext);
+                await evaluateFunctions(levelContext.editorContex, animationState);
                 break;
         }
 
-        editorContext.animationState.stage = nextStage(editorContext.animationState.stage);
+        animationState.stage = nextStage(animationState.stage);
     }
     finally
     {
-        editorContext.animationState.isAnimating = false;
+        animationState.isAnimating = false;
         updateButtonStates();
     }
-
-
-    // For each input - if nothing on output terminal - add the next value
-    // For each each program counter on an output terminal - if they can move to in input terminal - move them
-    // For each function cell - if all the input are there, and no outputs are there - move to the middle - 
-    // then create new program counters with output
-    // move them to output terminal
 }
 
-
-
 async function stepBackward(): Promise<void> {
+    // TODO implementOrBin
 }
 
 // Setup animation controls

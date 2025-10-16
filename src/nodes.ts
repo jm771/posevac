@@ -1,4 +1,4 @@
-import { Core, NodeSingular } from "cytoscape";
+import { CollectionData, Core, NodeSingular } from "cytoscape";
 import { ProgramCounter } from "./program_counter";
 import { editorContext } from "./global_state";
 import { NodeBuildContext } from "./editor_context";
@@ -15,76 +15,88 @@ export class EvaluateOutput {
     }
 }
 
-export interface Resetable {
-     reset() : void
+interface NodeFunction {
+    makeState(): any
+    evaluate(state: any, nodedata: CollectionData, args: Array<any>) : any
 }
 
-export class OutputChecker implements Resetable {
-    private i = 0;
-    private vals : Array<any>;
+class PureNodeFunction implements NodeFunction {
+    private func : Function
 
-    constructor(vals : Array<any>) {
-        this.i = 0;
-        this.vals = [...vals];
+    constructor(func : Function) {
+        this.func = func
     }
 
-    checkValue(val: any) : void {
-        val == this.vals[this.i++];
+    makeState() {
+        return null
     }
 
-    reset() : void {
-        this.i = 0;
+    evaluate(state: any, nodeData: CollectionData, args: Array<any>) {
+        return this.func(...args)
     }
+
 }
 
-export class InputProvider implements Resetable {
-    private i;
-    private vals : Array<any>;
+class InputNodeFunction implements NodeFunction {
+    private inputs: Array<any>
 
-    constructor(vals : Array<any>) {
-        this.i = 0;
-        this.vals = [...vals];
+    constructor(inputs: Array<any>) {
+        this.inputs = inputs
     }
 
-    getValue() : void {
-        if (this.i >= this.vals.length) {
-            return undefined
+    makeState() {
+        return {i: 0};
+    }
+
+    evaluate(state: any, nodeData: CollectionData, args: Array<any>) {
+        if (state.i < this.inputs.length) {
+            return this.inputs[state.i++];
         }
         else {
-            return this.vals[this.i++];
+            return null
         }
     }
 
-    reset() : void {
-        this.i = 0;
-    }
 }
 
-export class ConstantProvider implements Resetable {
-    private i;
-    private val : any
-    repeat : boolean;
+class OutputNodeFunction implements NodeFunction {
+    private outputs : Array<any>
 
-    constructor(val : any, repeat : boolean) {
-        this.i = false;
-        this.val = val;
-        this.repeat = repeat;
+    constructor(outputs: Array<any>) {
+        this.outputs = outputs
     }
 
-    getValue() : void {
-        if (this.repeat) {
-            return this.val;
+    makeState() {
+        return {i: 0};
+    }
+
+    evaluate(state: any, nodeData: CollectionData, args: Array<any>) {
+        if (state.i < this.outputs.length) {
+            console.log("expected: ", this.outputs[state.i], "actual: ", args[0], "match: ", this.outputs[state.i] === args[0]);
+            state.i++
+        } else {
+            console.log("Got more outputs than expected");
         }
-        else if (!this.i) {
-            this.i = true;
-            return this.val
+    }
+
+}
+
+class ConstantNodeFunction implements NodeFunction {
+    makeState() {
+        return {triggered: false}
+    }
+
+    evaluate(state: any, nodeData: CollectionData, args: Array<any>) {
+        if (nodeData.data("constantRepeat")) {
+            return nodeData.data("constantValue");
+        }
+        else if (!state.triggered) {
+            state.triggered = true;
+            return nodeData.data("constantValue")
         }
         else return undefined;
     }
 
-    reset() : void {
-        this.i = false
-    }
 }
 
 export function getTerminalProgramCounters(terminal: NodeSingular) : Map<string, ProgramCounter> {
@@ -138,40 +150,27 @@ function makeOutputTerminals(cy: Core, nodeId: string, x: number, y: number, n: 
 
 export class CompNode
 {
-    private inputTerminals: NodeSingular[];
-    private outputTerminals: NodeSingular[];
-    private node: NodeSingular;
-    private func: Function;
+    inputTerminals: NodeSingular[];
+    outputTerminals: NodeSingular[];
+    node: NodeSingular;
+    func: NodeFunction;
 
-    constructor(func: Function, node: NodeSingular, inputTerminals: NodeSingular[], outputTerminals: NodeSingular[]) {
+    constructor(func: NodeFunction, node: NodeSingular, inputTerminals: NodeSingular[], outputTerminals: NodeSingular[]) {
         this.inputTerminals = inputTerminals;
         this.outputTerminals = outputTerminals;
         this.node = node;
         this.func = func;
     }
 
-    getNode(): NodeSingular {
-        return this.node;
-    }
-
     getNodeId(): string {
         return this.node.id();
     }
 
-    getInputTerminals(): NodeSingular[] {
-        return this.inputTerminals;
+    makeCleanState() : any {
+        this.func.makeState();
     }
 
-    getOutputTerminals(): NodeSingular[] {
-        return this.outputTerminals;
-    }
-
-    getFunction(): Function {
-        return this.func;
-    }
-    
-
-    evaluate() : EvaluateOutput
+    evaluate(nodeAnimationState: any) : EvaluateOutput
     {
         for (const term of this.outputTerminals) {
             if (getTerminalProgramCounters(term).size != 0) {
@@ -188,7 +187,8 @@ export class CompNode
             }
         }
 
-        const result = (<any>this.func)(...(this.inputTerminals.map(t => getTerminalProgramCounters(t).values().next().value?.contents)));
+        const funcArgs = this.inputTerminals.map(t => getTerminalProgramCounters(t).values().next().value?.contents)
+        const result = this.func.evaluate(nodeAnimationState, this.node, funcArgs);
         let newPcs : Array<ProgramCounter> = []
 
         if(result != undefined)
@@ -213,8 +213,8 @@ export class CompNode
                     if (edge.data("condition") === '') {
                         return true;
                     }
-                    const func = eval(edge.data("condition"));
-                    return func(resultArray[i]);
+                    const conditionFunc = eval(edge.data("condition"));
+                    return conditionFunc(resultArray[i]);
                 })
 
                 for (let edge of filteredEdges)
@@ -239,7 +239,7 @@ export class CompNode
     }
 }
 
-function createNode(context: NodeBuildContext, x: number, y: number, label: string, type: string, inTerminals: number, outTerminals: number, func: Function): CompNode {
+function createNode(context: NodeBuildContext, x: number, y: number, label: string, type: string, inTerminals: number, outTerminals: number, func: NodeFunction): CompNode {
     const nodeId = `node-${context.nodeIdCounter++}`;
     context.cy.add({
         group: 'nodes',
@@ -259,32 +259,32 @@ function createNode(context: NodeBuildContext, x: number, y: number, label: stri
     return new CompNode(func, node, inputTerminals, outputTerminals);
 }
 
-export function createInputNode(context: NodeBuildContext, x: number, y: number, inputs: InputProvider): CompNode {
-    return createNode(context, x, y, "input", "input", 0, 1, () => inputs.getValue());
+export function createInputNode(context: NodeBuildContext, x: number, y: number, inputs: Array<any>): CompNode {
+    return createNode(context, x, y, "input", "input", 0, 1, new InputNodeFunction(inputs));
 }
 
-export function createOutputNode(context: NodeBuildContext, x: number, y: number, outputs: OutputChecker): CompNode {
-    return createNode(context, x, y, "output", "output", 1, 0, (v: any) => outputs.checkValue(v));
+export function createOutputNode(context: NodeBuildContext, x: number, y: number, outputs: Array<any>): CompNode {
+    return createNode(context, x, y, "output", "output", 1, 0, new OutputNodeFunction(outputs));
 }
 
 export function createPlusNode(context: NodeBuildContext, x: number, y: number): CompNode {
-    return createNode(context, x, y, "+", "compound", 2, 1, (a: any, b: any)=>a+b);
+    return createNode(context, x, y, "+", "compound", 2, 1, new PureNodeFunction((a: any, b: any)=>a+b));
 }
 
 export function createMultiplyNode(context: NodeBuildContext, x: number, y: number): CompNode {
-    return createNode(context, x, y, "×", "compound", 2, 1, (a: any, b: any)=>a*b);
+    return createNode(context, x, y, "×", "compound", 2, 1, new PureNodeFunction((a: any, b: any)=>a*b));
 }
 
 export function createCombineNode(context: NodeBuildContext, x: number, y: number): CompNode {
-    return createNode(context, x, y, "combine", "compound", 2, 1, (a: any, b: any)=>[a, b]);
+    return createNode(context, x, y, "combine", "compound", 2, 1, new PureNodeFunction((a: any, b: any)=>[a, b]));
 }
 
 export function createSplitNode(context: NodeBuildContext, x: number, y: number): CompNode {
-    return createNode(context, x, y, "split", "compound", 1, 2, (a: any)=>a);
+    return createNode(context, x, y, "split", "compound", 1, 2, new PureNodeFunction((a: any)=>a));
 }
 
 export function createNopNode(context: NodeBuildContext, x: number, y: number): CompNode {
-    return createNode(context, x, y, "+", "compound", 1, 1, (a: any)=>a);
+    return createNode(context, x, y, "+", "compound", 1, 1, new PureNodeFunction((a: any)=>a));
 }
 
 export function createConstantNode(context: NodeBuildContext, x: number, y: number, initialValue: any = 0, initialRepeat: boolean = true): CompNode {
@@ -306,20 +306,5 @@ export function createConstantNode(context: NodeBuildContext, x: number, y: numb
     const inputTerminals = makeInputTerminals(context.cy, nodeId, x, y, 0);
     const outputTerminals = makeOutputTerminals(context.cy, nodeId, x, y, 1);
 
-    // Create the constant provider that reads from node data
-    const constantProvider = new ConstantProvider(initialValue, initialRepeat);
-    context.resetables.set(nodeId, constantProvider);
-
-    // Update the provider when node data changes
-    const updateProvider = () => {
-        constantProvider.repeat = node.data('constantRepeat');
-        (constantProvider as any).val = node.data('constantValue');
-    };
-
-    const compNode = new CompNode(() => {
-        updateProvider();
-        return constantProvider.getValue();
-    }, node, inputTerminals, outputTerminals);
-
-    return compNode;
+    return new CompNode(new ConstantNodeFunction(), node, inputTerminals, outputTerminals);
 }

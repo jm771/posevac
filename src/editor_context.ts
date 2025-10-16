@@ -4,7 +4,7 @@ import cytoscape, { Core } from 'cytoscape';
 import nodeHtmlLabel from 'cytoscape-node-html-label';
 import { getCytoscapeStyles } from './styles';
 import { Level } from './levels';
-import { createInputNode, createOutputNode, CompNode, InputProvider, OutputChecker, Resetable } from './nodes';
+import { createInputNode, createOutputNode, CompNode } from './nodes';
 import { ProgramCounter } from './program_counter';
 
 // Register the node-html-label extension
@@ -23,43 +23,20 @@ export class AnimationState {
     programCounters: Map<string, ProgramCounter>;
     isAnimating: boolean;
     stage: Stage;
+    nodeAnimationState: Map<string, any>
 
-    inputProviders : Array<InputProvider>
-    outputCheckers : Array<OutputChecker>
-    // This just leaks for now :blush"
-    resetables : Map<string, Resetable>
-
-    constructor(inputs : Array<Array<any>>, outputs : Array<Array<any>>){
-        this.inputProviders = inputs.map(x => new InputProvider(x));
-        this.outputCheckers = outputs.map(x => new OutputChecker(x));
-        this.resetables = new Map<string, Resetable>();
+    constructor(nodes: Array<CompNode>){
         this.programCounters = new Map<string, ProgramCounter>();
         this.isAnimating = false;
         this.stage = Stage.Evaluate;
-        this.resetState();
-    }
-
-    resetState() {
-        // Destroy old program counters if they exist
-        for (const pc of this.programCounters.values()) {
-            pc.destroy();
-        }
-
-        // Create a program counter for each input node
-        this.programCounters = new Map<string, ProgramCounter>();
-        this.stage = Stage.Evaluate;
-        this.inputProviders.forEach(p => p.reset());
-        this.outputCheckers.forEach(c => c.reset());
-        this.resetables.forEach((r, _) => r.reset());
-
-        return true;
+        this.nodeAnimationState = new Map<string, any>();
+        nodes.forEach((n: CompNode) => {this.nodeAnimationState.set(n.getNodeId(), n.makeCleanState()); })
     }
 }
 
 export interface NodeBuildContext {
     cy: Core;
     nodeIdCounter: number;
-    resetables: Map<string, Resetable>
 }
 
 export class GraphEditorContext implements NodeBuildContext {
@@ -68,17 +45,11 @@ export class GraphEditorContext implements NodeBuildContext {
     public inputNodes: CompNode[] = [];
     public outputNodes: CompNode[] = [];
     public allNodes: CompNode[] = [];
-    public animationState: AnimationState;
     public nodeIdCounter = 0;
-    public resetables: Map<string, Resetable> // eeeew
 
     constructor(level: Level) {
         this.level = level;
 
-        // Initialize animation state
-        this.animationState = new AnimationState(level.inputs, level.expectedOutputs);
-        this.resetables = this.animationState.resetables; // eeeew
-        // Initialize Cytoscape
         const container = document.getElementById('cy');
         if (!container) {
             throw new Error('Cytoscape container element not found');
@@ -90,48 +61,39 @@ export class GraphEditorContext implements NodeBuildContext {
             layout: {
                 name: 'preset'
             },
-            // Interaction settings
             minZoom: 0.5,
             maxZoom: 2,
-            // Disable default behaviors we'll implement custom
             autoungrabify: false,
             userPanningEnabled: true,
             userZoomingEnabled: true,
             boxSelectionEnabled: false
         });
 
-        // Create input and output nodes
-        this.initializeInputOutputNodes();
+        this.initializeInputOutputNodes(level);
     }
 
-    /**
-     * Create input and output nodes based on level configuration
-     */
-    private initializeInputOutputNodes(): void {
+    private initializeInputOutputNodes(level: Level): void {
         const spacing = 150;
         const startY = 100;
 
-        // Create input nodes
-        this.animationState.inputProviders.forEach((inputData, index) => {
+        level.inputs.forEach((inputData: Array<any>, index: number) => {
             const x = 100;
             const y = startY + (index * spacing);
             const inputNode = createInputNode(this, x, y, inputData);
 
-            // Mark as non-deletable
-            inputNode.getNode().data('deletable', false);
+            inputNode.node.data('deletable', false);
 
             this.inputNodes.push(inputNode);
             this.allNodes.push(inputNode);
         });
 
         // Create output nodes
-        this.animationState.outputCheckers.forEach((outputs, index) => {
+        level.expectedOutputs.forEach((outputs: Array<any>, index: number) => {
             const x = 700;
             const y = startY + (index * spacing);
             const outputNode = createOutputNode(this, x, y, outputs);
 
-            // Mark as non-deletable
-            outputNode.getNode().data('deletable', false);
+            outputNode.node.data('deletable', false);
 
             this.outputNodes.push(outputNode);
             this.allNodes.push(outputNode);
@@ -143,13 +105,26 @@ export class GraphEditorContext implements NodeBuildContext {
      */
     destroy(): void {
         // Destroy all program counters
-        for (const pc of this.animationState.programCounters.values()) {
-            pc.destroy();
-        }
-        this.animationState.programCounters.clear();
+        // TODO - gunna need to put this somewhere
+        // for (const pc of this.animationState.programCounters.values()) {
+        //     pc.destroy();
+        // }
+        // this.animationState.programCounters.clear();
 
         if (this.cy) {
             this.cy.destroy();
         }
+    }
+}
+
+export class LevelContext
+{
+    editorContex: GraphEditorContext;
+    animationState: AnimationState;
+
+    constructor(editorContex: GraphEditorContext, animationState: AnimationState)
+    {
+        this.editorContex = editorContex;
+        this.animationState = animationState;
     }
 }
