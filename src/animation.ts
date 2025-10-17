@@ -1,16 +1,6 @@
-import { Core } from 'cytoscape';
-import { editorContext } from './global_state'
 import { ProgramCounter } from './program_counter';
 import { EvaluateOutput } from './nodes';
 import { AnimationState, GraphEditorContext, LevelContext, Stage } from './editor_context';
-
-// Helper to get cy from context
-function getCy(): Core {
-    if (!editorContext) {
-        throw new Error('Editor context not initialized');
-    }
-    return editorContext.cy;
-}
 
 function nextStage(stage : Stage) : Stage
 {
@@ -23,18 +13,20 @@ function nextStage(stage : Stage) : Stage
 }
 
 // Update PC marker positions when viewport changes (pan/zoom) or nodes move
-function updatePCMarkerForViewportChange(): void {
-    if (!editorContext) {
-        return;
+function updatePCMarkerForViewportChange(levelContext: LevelContext): void {
+    if (levelContext.animationState === null) {
+        throw Error("Null level context");
     }
 
+    const animationState : AnimationState = levelContext.animationState;
+
     // Only update if animation is initialized and not currently animating
-    if (editorContext.animationState.programCounters.size === 0 || editorContext.animationState.isAnimating) {
+    if (animationState.programCounters.size === 0 || animationState.isAnimating) {
         return;
     }
 
     // Update all program counters
-    for (const pc of editorContext.animationState.programCounters.values()) {
+    for (const pc of animationState.programCounters.values()) {
         pc.updateForViewportChange();
     }
 }
@@ -74,10 +66,6 @@ async function evaluateFunctions(context : GraphEditorContext, animationState: A
 }
 
 async function advanceCounters(animationState: AnimationState): Promise<void> {
-    if (!editorContext) {
-        throw new Error('Editor context not initialized');
-    }
-
     // Advance each program counter that can move
     const movePromises: Array<Promise<void>> = []
     animationState.programCounters.forEach((pc, _) => {
@@ -95,7 +83,10 @@ async function advanceCounters(animationState: AnimationState): Promise<void> {
 
 // Step forward in animation - advances all program counters
 async function stepForward(levelContext: LevelContext): Promise<void> {
-    const animationState = levelContext.animationState;
+    if (levelContext.animationState == null) {
+        throw Error("step called without animation context")
+    }
+    const animationState : AnimationState = levelContext.animationState;
     if (animationState.isAnimating) {
         console.log('Animation already in progress, ignoring');
         return;
@@ -118,54 +109,31 @@ async function stepForward(levelContext: LevelContext): Promise<void> {
     finally
     {
         animationState.isAnimating = false;
-        updateButtonStates();
     }
-}
-
-async function stepBackward(): Promise<void> {
-    // TODO implementOrBin
 }
 
 // Setup animation controls
-export function setupAnimationControls(): void {
+export function setupAnimationControls(levelContext : LevelContext): void {
     const forwardBtn = document.getElementById('forwardBtn');
-    const backBtn = document.getElementById('backBtn');
     const resetBtn = document.getElementById('resetBtn');
 
-    if (!forwardBtn || !backBtn || !resetBtn) return;
+    if (!forwardBtn || !resetBtn) return;
 
-    forwardBtn.addEventListener('click', stepForward);
-    backBtn.addEventListener('click', stepBackward);
-    resetBtn.addEventListener('click', resetAnimation);
+    forwardBtn.addEventListener('click', () => stepForward(levelContext));
+    resetBtn.addEventListener('click', () => resetAnimation(levelContext));
 
-    // Listen for viewport changes (pan/zoom)
-    getCy().on('pan zoom', updatePCMarkerForViewportChange);
-
-    // Listen for node position changes (when user drags nodes)
-    getCy().on('position', 'node', updatePCMarkerForViewportChange);
-
-    // Don't initialize until user clicks - they need to add nodes first
-    // Initialize will happen automatically on first forward click
+    
+    levelContext.editorContex.cy.on('pan zoom', () => updatePCMarkerForViewportChange(levelContext));
+    levelContext.editorContex.cy.on('position', 'node', () => updatePCMarkerForViewportChange(levelContext));
 }
 
-// Update button states based on current positions of all program counters
-function updateButtonStates(): void {
-    const forwardBtn = document.getElementById('forwardBtn') as HTMLButtonElement | null;
-    const backBtn = document.getElementById('backBtn') as HTMLButtonElement | null;
+function resetAnimation(levelContext : LevelContext): void {
+    if (levelContext.animationState?.isAnimating) return;
 
-    if (!forwardBtn || !backBtn) return;
-}
+    levelContext.animationState?.destroy();
 
+    levelContext.animationState = new AnimationState(levelContext.editorContex.allNodes);
 
-// Reset animation to start
-function resetAnimation(): void {
-    if (!editorContext) {
-        throw new Error('Editor context not initialized');
-    }
-
-    if (editorContext.animationState.isAnimating) return;
-
-    editorContext.animationState.resetState();
 }
 
 
