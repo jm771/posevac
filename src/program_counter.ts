@@ -1,14 +1,6 @@
 import { EdgeSingular, NodeSingular } from 'cytoscape';
-import { editorContext } from './global_state';
 import { getTerminalProgramCounters } from './nodes';
 
-// Helper to get cy from context
-function getCy() {
-    if (!editorContext) {
-        throw new Error('Editor context not initialized');
-    }
-    return editorContext.cy;
-}
 
 interface Position {
     x: number;
@@ -216,12 +208,13 @@ export class ProgramCounter {
         this.arrowHead.setAttribute('points', `${x1},${y1} ${x2},${y2} ${x3},${y3}`);
     }
 
-    /**
-     * Convert model coordinates to screen coordinates
-     */
     private modelToScreen(modelX: number, modelY: number): Position {
-        const pan = getCy().pan();
-        const zoom = getCy().zoom();
+        if (this.currentLocation === null) {
+            throw Error("no current location");
+        }
+        const cy = this.currentLocation.cy();
+        const pan = cy.pan();
+        const zoom = cy.zoom();
 
         const renderedX = modelX * zoom + pan.x;
         const renderedY = modelY * zoom + pan.y;
@@ -295,9 +288,6 @@ export class ProgramCounter {
         });
     }
 
-    /**
-     * Update position based on current location (for viewport changes)
-     */
     updateForViewportChange(): void {
         if (!this._currentLocation || this.isAnimating) {
             return;
@@ -311,7 +301,7 @@ export class ProgramCounter {
     tryAdvance() : NodeSingular | null {
         if (this._currentEdge != null)
         {
-            const dest = getCy().getElementById(this._currentEdge.data('target'));
+            const dest = this._currentEdge.target();
             if (getTerminalProgramCounters(dest).size === 0) {
                 getTerminalProgramCounters(dest).set(this.id, this);
 

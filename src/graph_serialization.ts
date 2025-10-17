@@ -2,7 +2,7 @@
 import { NodeSingular } from 'cytoscape';
 import { GraphEditorContext } from './editor_context';
 import { createPlusNode, createMultiplyNode, createCombineNode, createSplitNode, createNopNode, createConstantNode, CompNode } from './nodes';
-import { createConstantControls, removeConstantControls, initializeConstantControls } from './constant_controls';
+import { createConstantControls, initializeConstantControls } from './constant_controls';
 
 /**
  * Serializable graph structure - excludes animation state
@@ -146,7 +146,9 @@ export function importGraph(context: GraphEditorContext, serializedGraph: Serial
     }
 
     // Clear existing user-created nodes and edges
-    clearUserCreatedElements(context);
+
+    // TODO Jack - need to recreate stuff or sth
+    // clearUserCreatedElements(context);
 
     // Create a mapping from old node IDs to new CompNode instances
     const nodeIdMap = new Map<string, CompNode>();
@@ -183,7 +185,7 @@ export function importGraph(context: GraphEditorContext, serializedGraph: Serial
                     serializedNode.constantRepeat ?? true
                 );
                 // Create UI controls for the constant node
-                createConstantControls(newNode.node);
+                createConstantControls(newNode.node, context.cy);
                 break;
             default:
                 throw new Error(`Unknown node type: ${serializedNode.type}`);
@@ -246,41 +248,41 @@ export function importGraph(context: GraphEditorContext, serializedGraph: Serial
     console.log(`Imported ${serializedGraph.nodes.length} nodes and ${serializedGraph.edges.length} edges`);
 
     // Refresh constant node labels if any were loaded
-    initializeConstantControls();
+    initializeConstantControls(context);
 }
 
 /**
  * Clear all user-created nodes and edges (keep input/output nodes)
  */
-export function clearUserCreatedElements(context: GraphEditorContext): void {
-    context.animationState.resetState();
-    const cy = context.cy;
+// export function clearUserCreatedElements(context: GraphEditorContext): void {
+//     context.animationState.resetState();
+//     const cy = context.cy;
 
-    cy.remove(cy.edges());
+//     cy.remove(cy.edges());
 
-    // Remove user-created nodes (and their edges automatically)
-    const userNodes = cy.nodes().filter(node => {
-        const nodeType = node.data('type');
-        const parent = node.data('parent');
-        // Keep input/output nodes and their terminals
-        return (nodeType === 'compound' || nodeType === 'constant') && !parent;
-    });
+//     // Remove user-created nodes (and their edges automatically)
+//     const userNodes = cy.nodes().filter(node => {
+//         const nodeType = node.data('type');
+//         const parent = node.data('parent');
+//         // Keep input/output nodes and their terminals
+//         return (nodeType === 'compound' || nodeType === 'constant') && !parent;
+//     });
 
-    // Clean up constant controls before removing nodes
-    userNodes.forEach(node => {
-        if (node.data('type') === 'constant') {
-            removeConstantControls(node.id());
-        }
-    });
+//     // Clean up constant controls before removing nodes
+//     // userNodes.forEach(node => {
+//     //     if (node.data('type') === 'constant') {
+//     //         removeConstantControls(node.id());
+//     //     }
+//     // });
 
-    cy.remove(userNodes);
+//     cy.remove(userNodes);
 
-    // Update allNodes array to only include input/output nodes
-    context.allNodes = context.allNodes.filter(node => {
-        const nodeType = node.node.data('type');
-        return nodeType === 'input' || nodeType === 'output';
-    });
-}
+//     // Update allNodes array to only include input/output nodes
+//     context.allNodes = context.allNodes.filter(node => {
+//         const nodeType = node.node.data('type');
+//         return nodeType === 'input' || nodeType === 'output';
+//     });
+// }
 
 /**
  * Download graph as JSON file

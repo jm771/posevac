@@ -20,7 +20,7 @@ function startLevel(level: Level): void {
     setupNodeDeletion(levelContext);
     setupEdgeCreation(levelContext);
     setupAnimationControls(levelContext);
-    initializeConstantControls();
+    initializeConstantControls(levelContext.editorContex);
     initializeEdgeEditor(levelContext.editorContex.cy);
     setupSaveLoadButtons(levelContext);
 

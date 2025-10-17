@@ -1,40 +1,31 @@
-// Edge Editor - allows editing edge properties like conditions
 import { EdgeSingular, Core } from 'cytoscape';
-import { editorContext } from './global_state';
 
+// TODO remove this too
 let currentEdgeInput: HTMLInputElement | null = null;
 
-/**
- * Initialize edge editing functionality
- */
 export function initializeEdgeEditor(cy: Core): void {
     // Click on edge to edit condition
     cy.on('tap', 'edge', (evt) => {
         const edge = evt.target as EdgeSingular;
-        showEdgeConditionInput(edge);
+        showEdgeConditionInput(cy, edge);
     });
 
     // Click on background to close any open editor
     cy.on('tap', (evt) => {
         if (evt.target === cy) {
-            closeEdgeConditionInput();
+            closeEdgeConditionInput(cy);
         }
     });
 
     // Also close when clicking on nodes
     cy.on('tap', 'node', () => {
-        closeEdgeConditionInput();
+        closeEdgeConditionInput(cy);
     });
 }
 
-/**
- * Show input field for editing edge condition
- */
-function showEdgeConditionInput(edge: EdgeSingular): void {
-    if (!editorContext) return;
-
+function showEdgeConditionInput(cy: Core, edge: EdgeSingular): void {
     // Close any existing input
-    closeEdgeConditionInput();
+    closeEdgeConditionInput(cy);
 
     // Get current condition value
     const currentCondition = edge.data('condition') || '';
@@ -58,7 +49,7 @@ function showEdgeConditionInput(edge: EdgeSingular): void {
     input.style.minWidth = '100px';
 
     // Position the input at the edge midpoint
-    updateInputPosition(input, edge);
+    updateInputPosition(cy, input, edge);
 
     // Add to DOM
     const cyContainer = document.getElementById('cy');
@@ -76,7 +67,7 @@ function showEdgeConditionInput(edge: EdgeSingular): void {
 
     // Handle blur - close the input
     input.addEventListener('blur', () => {
-        setTimeout(() => closeEdgeConditionInput(), 100);
+        setTimeout(() => closeEdgeConditionInput(cy), 100);
     });
 
     // Handle Enter key - close the input
@@ -95,21 +86,15 @@ function showEdgeConditionInput(edge: EdgeSingular): void {
     input.addEventListener('click', (e) => e.stopPropagation());
 
     // Update position on zoom/pan
-    const updateHandler = () => updateInputPosition(input, edge);
-    editorContext.cy.on('zoom pan viewport', updateHandler);
+    const updateHandler = () => updateInputPosition(cy, input, edge);
+    cy.on('zoom pan viewport', updateHandler);
 
     // Store handler for cleanup
     (input as any)._updateHandler = updateHandler;
 }
 
-/**
- * Update input position to match edge midpoint
- */
-function updateInputPosition(input: HTMLInputElement, edge: EdgeSingular): void {
-    if (!editorContext) return;
 
-    const cy = editorContext.cy;
-
+function updateInputPosition(cy: Core, input: HTMLInputElement, edge: EdgeSingular): void {
     // Get edge midpoint in model coordinates
     const sourcePos = edge.source().position();
     const targetPos = edge.target().position();
@@ -128,14 +113,11 @@ function updateInputPosition(input: HTMLInputElement, edge: EdgeSingular): void 
     input.style.transform = 'translate(-50%, -50%)';
 }
 
-/**
- * Close the edge condition input
- */
-function closeEdgeConditionInput(): void {
+function closeEdgeConditionInput(cy: Core): void {
     if (currentEdgeInput) {
         // Remove zoom/pan listener
-        if (editorContext && (currentEdgeInput as any)._updateHandler) {
-            editorContext.cy.off('zoom pan viewport', (currentEdgeInput as any)._updateHandler);
+        if ((currentEdgeInput as any)._updateHandler) {
+            cy.off('zoom pan viewport', (currentEdgeInput as any)._updateHandler);
         }
 
         // Remove from DOM
@@ -144,11 +126,4 @@ function closeEdgeConditionInput(): void {
         }
         currentEdgeInput = null;
     }
-}
-
-/**
- * Clean up edge editor
- */
-export function destroyEdgeEditor(): void {
-    closeEdgeConditionInput();
 }

@@ -1,9 +1,9 @@
 import cytoscape from 'cytoscape';
 import { getCytoscapeStyles } from './styles';
-import { CompNode, createPlusNode, createMultiplyNode, createCombineNode, createSplitNode, createNopNode, createConstantNode, Resetable } from './nodes';
+import { CompNode, createPlusNode, createMultiplyNode, createCombineNode, createSplitNode, createNopNode, createConstantNode } from './nodes';
 import { ComponentType } from './levels';
 import { GraphEditorContext, LevelContext, NodeBuildContext } from './editor_context';
-import { createConstantControls, removeConstantControls } from './constant_controls';
+import { createConstantControls } from './constant_controls';
 
 
 function addComponentToSidebar(type: ComponentType, func: (context: NodeBuildContext, x: number, y: number) => CompNode) : void {
@@ -30,7 +30,7 @@ function addComponentToSidebar(type: ComponentType, func: (context: NodeBuildCon
             autoungrabify: true
         });
 
-        let context : NodeBuildContext = {cy : previewCy, nodeIdCounter : 0, resetables : new Map<string, Resetable>()};
+        let context : NodeBuildContext = {cy : previewCy, nodeIdCounter : 0};
 
         func(context, 0, 0);
 
@@ -114,8 +114,9 @@ export function setupSidebarDragDrop(context: GraphEditorContext): void {
             context.allNodes.push(newNode);
 
             // Create controls for constant nodes
+            // TODO: This seems silly
             if (componentType === 'constant') {
-                createConstantControls(newNode.node);
+                createConstantControls(newNode.node, context.cy);
             }
         }
     });
@@ -169,10 +170,11 @@ export function setupNodeDeletion(levelContext : LevelContext): void {
 
             const nodeId = node.id();
 
+            // Hopefully not needed with proper usage patterns - constant controls should all be children of the node
             // Remove constant controls if it's a constant node
-            if (nodeType === 'constant') {
-                removeConstantControls(nodeId);
-            }
+            // if (nodeType === 'constant') {
+            //     removeConstantControls(nodeId);
+            // }
 
             // Remove from userNodes array
             const nodeIndex = context.allNodes.findIndex(n => n.getNodeId() === nodeId);

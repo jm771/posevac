@@ -1,12 +1,10 @@
-import { NodeSingular } from 'cytoscape';
+import { Core, NodeSingular } from 'cytoscape';
 import { GraphEditorContext } from './editor_context';
 
 // let currentConstantInput: HTMLInputElement | null = null;
 // let currentEditingNode: NodeSingular | null = null;
 
-/**
- * Initialize constant node editing functionality
- */
+
 export function initializeConstantControls(editorContext : GraphEditorContext): void {
     const cy = editorContext.cy;
 
@@ -55,23 +53,25 @@ export function initializeConstantControls(editorContext : GraphEditorContext): 
     // Click on constant node to edit
     cy.on('tap', 'node[type="constant"]', (evt) => {
         const node = evt.target as NodeSingular;
-        showConstantEditor(node);
+        showConstantEditor(editorContext, node);
     });
 
+    // Hopefully covered by focus loss?
     // Click on background to close any open editor
-    cy.on('tap', (evt) => {
-        if (evt.target === cy) {
-            closeConstantEditor();
-        }
-    });
+    // cy.on('tap', (evt) => {
+    //     if (evt.target === cy) {
+    //         closeConstantEditor(editorContext, node);
+    //     }
+    // });
 
-    // Click on other nodes to close editor
-    cy.on('tap', 'node', (evt) => {
-        const node = evt.target as NodeSingular;
-        if (node.data('type') !== 'constant') {
-            closeConstantEditor();
-        }
-    });
+    // Hopefully covered by focus loss?
+    // // Click on other nodes to close editor
+    // cy.on('tap', 'node', (evt) => {
+    //     const node = evt.target as NodeSingular;
+    //     if (node.data('type') !== 'constant') {
+    //         closeConstantEditor();
+    //     }
+    // });
 
     // Refresh HTML labels when data changes
     cy.on('data', 'node[type="constant"]', () => {
@@ -80,15 +80,7 @@ export function initializeConstantControls(editorContext : GraphEditorContext): 
     });
 }
 
-/**
- * Show editor for constant node (input + toggle button)
- */
-function showConstantEditor(node: NodeSingular): void {
-    // Close any existing editor
-    closeConstantEditor();
-
-    // const currentEditingNode = node;
-
+function showConstantEditor(editorContext: GraphEditorContext, node: NodeSingular): void {
     // Get current values
     const currentValue = node.data('constantValue') !== undefined ? node.data('constantValue') : 0;
     const currentRepeat = node.data('constantRepeat') !== undefined ? node.data('constantRepeat') : true;
@@ -137,7 +129,7 @@ function showConstantEditor(node: NodeSingular): void {
     container.appendChild(toggle);
 
     // Position the editor over the node
-    updateEditorPosition(container, node);
+    updateEditorPosition(editorContext.cy, container, node);
 
     // Add to DOM
     const cyContainer = document.getElementById('cy');
@@ -172,7 +164,7 @@ function showConstantEditor(node: NodeSingular): void {
         setTimeout(() => {
             // Only close if we're not clicking the toggle button
             if (document.activeElement !== toggle) {
-                closeConstantEditor();
+                closeConstantEditor(editorContext.cy, input);
             }
         }, 100);
     });
@@ -180,12 +172,12 @@ function showConstantEditor(node: NodeSingular): void {
     // Handle Enter key - close the editor
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
-            closeConstantEditor();
+            closeConstantEditor(editorContext.cy, input);
         } else if (e.key === 'Escape') {
             // Restore original values on Escape
             node.data('constantValue', currentValue);
             node.data('constantRepeat', currentRepeat);
-            closeConstantEditor();
+            closeConstantEditor(editorContext.cy, input);
         }
     });
 
@@ -194,7 +186,7 @@ function showConstantEditor(node: NodeSingular): void {
     container.addEventListener('click', (e) => e.stopPropagation());
 
     // Update position on zoom/pan/drag
-    const updateHandler = () => updateEditorPosition(container, node);
+    const updateHandler = () => updateEditorPosition(editorContext.cy, container, node);
     editorContext.cy.on('zoom pan viewport drag', updateHandler);
 
     // Store handler for cleanup
@@ -204,11 +196,7 @@ function showConstantEditor(node: NodeSingular): void {
 /**
  * Update editor position to match node position
  */
-function updateEditorPosition(container: HTMLElement, node: NodeSingular): void {
-    if (!editorContext) return;
-
-    const cy = editorContext.cy;
-
+function updateEditorPosition(cy : Core, container: HTMLElement, node: NodeSingular): void {
     // Get node position in model coordinates
     const nodePos = node.position();
 
@@ -224,16 +212,13 @@ function updateEditorPosition(container: HTMLElement, node: NodeSingular): void 
     container.style.transform = 'translate(-50%, -50%)';
 }
 
-/**
- * Close the constant editor
- */
-function closeConstantEditor(): void {
-    if (currentConstantInput && currentConstantInput.parentElement) {
-        const container = currentConstantInput.parentElement;
+function closeConstantEditor(cy : Core, constantInput : HTMLInputElement): void {
+    if (constantInput.parentElement) {
+        const container = constantInput.parentElement;
 
         // Remove zoom/pan listener
-        if (editorContext && (container as any)._updateHandler) {
-            editorContext.cy.off('zoom pan viewport drag', (container as any)._updateHandler);
+        if ((container as any)._updateHandler) {
+            cy.off('zoom pan viewport drag', (container as any)._updateHandler);
         }
 
         // Remove from DOM
@@ -241,35 +226,21 @@ function closeConstantEditor(): void {
             container.parentElement.removeChild(container);
         }
     }
-
-    currentConstantInput = null;
-    currentEditingNode = null;
 }
 
-/**
- * Create/update controls for a specific constant node
- */
-export function createConstantControls(_node: NodeSingular): void {
+
+export function createConstantControls(_node: NodeSingular, cy: Core): void {
     // Refresh HTML labels to show the new node
-    if (editorContext) {
-        // @ts-ignore
-        editorContext.cy.nodeHtmlLabel('refresh');
-    }
+    // @ts-ignore
+    cy.nodeHtmlLabel('refresh');
 }
 
 /**
  * Remove controls for a specific node
  */
-export function removeConstantControls(_nodeId: string): void {
-    // Close editor if this node is being edited
-    if (currentEditingNode && currentEditingNode.id() === _nodeId) {
-        closeConstantEditor();
-    }
-}
-
-/**
- * Clean up all constant controls
- */
-export function destroyAllConstantControls(): void {
-    closeConstantEditor();
-}
+// export function removeConstantControls(_nodeId: string): void {
+//     // Close editor if this node is being edited
+//     if (currentEditingNode && currentEditingNode.id() === _nodeId) {
+//         closeConstantEditor();
+//     }
+// }

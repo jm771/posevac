@@ -1,6 +1,5 @@
 import { CollectionData, Core, NodeSingular } from "cytoscape";
 import { ProgramCounter } from "./program_counter";
-import { editorContext } from "./global_state";
 import { NodeBuildContext } from "./editor_context";
 
 export type ComponentType = 'input' | 'output' | 'plus' | 'multiply' | 'combine' | 'split' | 'nop' | 'constant';
@@ -31,7 +30,7 @@ class PureNodeFunction implements NodeFunction {
         return null
     }
 
-    evaluate(state: any, nodeData: CollectionData, args: Array<any>) {
+    evaluate(_: any, __: CollectionData, args: Array<any>) {
         return this.func(...args)
     }
 
@@ -48,7 +47,7 @@ class InputNodeFunction implements NodeFunction {
         return {i: 0};
     }
 
-    evaluate(state: any, nodeData: CollectionData, args: Array<any>) {
+    evaluate(state: any, _: CollectionData, __: Array<any>) {
         if (state.i < this.inputs.length) {
             return this.inputs[state.i++];
         }
@@ -70,7 +69,7 @@ class OutputNodeFunction implements NodeFunction {
         return {i: 0};
     }
 
-    evaluate(state: any, nodeData: CollectionData, args: Array<any>) {
+    evaluate(state: any, _: CollectionData, args: Array<any>) {
         if (state.i < this.outputs.length) {
             console.log("expected: ", this.outputs[state.i], "actual: ", args[0], "match: ", this.outputs[state.i] === args[0]);
             state.i++
@@ -86,7 +85,7 @@ class ConstantNodeFunction implements NodeFunction {
         return {triggered: false}
     }
 
-    evaluate(state: any, nodeData: CollectionData, args: Array<any>) {
+    evaluate(state: any, nodeData: CollectionData, _: Array<any>) {
         if (nodeData.data("constantRepeat")) {
             return nodeData.data("constantValue");
         }
@@ -208,7 +207,9 @@ export class CompNode
 
             for (let i = 0; i < resultArray.length; i++)
             {
-                const edges = editorContext!.cy.edges(`[source="${this.outputTerminals[i].id()}"]`).toArray()
+                // TODO - does this work?
+                const edges = this.node.edgesTo("").toArray()
+                // const edges =  cy.edges(`[source="${this.outputTerminals[i].id()}"]`).toArray()
                 const filteredEdges = edges.filter(edge => {
                     if (edge.data("condition") === '') {
                         return true;

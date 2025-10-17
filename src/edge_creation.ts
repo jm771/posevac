@@ -1,4 +1,4 @@
-import { Core, EdgeSingular, NodeSingular, Position } from "cytoscape";
+import { EdgeSingular, NodeSingular, Position } from "cytoscape";
 import { LevelContext } from "./editor_context";
 
 let edgeIdCounter = 0;
