@@ -1,16 +1,13 @@
-// UI controls for constant nodes - HTML labels + click-to-edit popup
 import { NodeSingular } from 'cytoscape';
-import { editorContext } from './global_state';
+import { GraphEditorContext } from './editor_context';
 
-let currentConstantInput: HTMLInputElement | null = null;
-let currentEditingNode: NodeSingular | null = null;
+// let currentConstantInput: HTMLInputElement | null = null;
+// let currentEditingNode: NodeSingular | null = null;
 
 /**
  * Initialize constant node editing functionality
  */
-export function initializeConstantControls(): void {
-    if (!editorContext) return;
-
+export function initializeConstantControls(editorContext : GraphEditorContext): void {
     const cy = editorContext.cy;
 
     // Set up HTML labels for constant nodes using cytoscape-node-html-label
@@ -87,12 +84,10 @@ export function initializeConstantControls(): void {
  * Show editor for constant node (input + toggle button)
  */
 function showConstantEditor(node: NodeSingular): void {
-    if (!editorContext) return;
-
     // Close any existing editor
     closeConstantEditor();
 
-    currentEditingNode = node;
+    // const currentEditingNode = node;
 
     // Get current values
     const currentValue = node.data('constantValue') !== undefined ? node.data('constantValue') : 0;
@@ -108,6 +103,7 @@ function showConstantEditor(node: NodeSingular): void {
     container.style.alignItems = 'center';
     container.style.zIndex = '1000';
 
+    // Dude really? Need to css this thing
     // Create input element for value
     const input = document.createElement('input');
     input.type = 'text';
@@ -147,7 +143,7 @@ function showConstantEditor(node: NodeSingular): void {
     const cyContainer = document.getElementById('cy');
     if (cyContainer) {
         cyContainer.appendChild(container);
-        currentConstantInput = input;
+        // currentConstantInput = input;
         input.focus();
         input.select();
     }
