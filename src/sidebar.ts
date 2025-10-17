@@ -2,7 +2,7 @@ import cytoscape from 'cytoscape';
 import { getCytoscapeStyles } from './styles';
 import { CompNode, createPlusNode, createMultiplyNode, createCombineNode, createSplitNode, createNopNode, createConstantNode, Resetable } from './nodes';
 import { ComponentType } from './levels';
-import { GraphEditorContext, NodeBuildContext } from './editor_context';
+import { GraphEditorContext, LevelContext, NodeBuildContext } from './editor_context';
 import { createConstantControls, removeConstantControls } from './constant_controls';
 
 
@@ -122,7 +122,8 @@ export function setupSidebarDragDrop(context: GraphEditorContext): void {
 }
 
 // Setup node dragging to delete
-export function setupNodeDeletion(context: GraphEditorContext): void {
+export function setupNodeDeletion(levelContext : LevelContext): void {
+    const context = levelContext.editorContex
     const sidebar = document.getElementById('sidebar');
     const deleteZone = document.getElementById('deleteZone');
     const cyContainer = document.getElementById('cy');

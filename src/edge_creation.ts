@@ -1,11 +1,14 @@
 import { Core, EdgeSingular, NodeSingular, Position } from "cytoscape";
+import { LevelContext } from "./editor_context";
 
 let edgeIdCounter = 0;
 let tempEdge: EdgeSingular | null = null;
 
 
 // Setup right-click edge creation/deletion
-export function setupEdgeCreation(cy: Core): void {
+export function setupEdgeCreation(levelContext : LevelContext): void {
+    const cy = levelContext.editorContex.cy;
+
     let isRightDragging = false;
     let sourceNode: NodeSingular | null = null;
     let mousePos: Position = { x: 0, y: 0 };

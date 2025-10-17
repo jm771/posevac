@@ -1,9 +1,6 @@
-// Interactive Graph Tool with Cytoscape.js
-// Main application logic - Level-based game mode
-
 import { setupAnimationControls } from './animation';
 import { setupEdgeCreation } from './edge_creation';
-import { AnimationState, GraphEditorContext, LevelContext } from './editor_context';
+import { GraphEditorContext, LevelContext } from './editor_context';
 import { initializePreviews, setupNodeDeletion, setupSidebarDragDrop } from './sidebar';
 import { initializeLevelSelector, showLevelSelector, showGraphEditor, updateLevelInfo } from './level_selector';
 import { Level } from './levels';
@@ -12,78 +9,48 @@ import { initializeConstantControls } from './constant_controls';
 import { initializeEdgeEditor } from './edge_editor';
 
 
-/**
- * Start a level - create editor context and set up the graph editor
- */
 function startLevel(level: Level): void {
     console.log(`Starting level: ${level.name}`);
 
-    // Create new editor context for this level
     const levelContext = new LevelContext(new GraphEditorContext(level), null);
 
-    // Update level info display
     updateLevelInfo(level);
-
-    // Initialize sidebar with level's allowed nodes
     initializePreviews(level.allowedNodes);
-
-    // Set up interactions (only needs to be done once, but safe to call multiple times)
     setupSidebarDragDrop(levelContext.editorContex);
-    setupNodeDeletion(currentEditor);
-    setupEdgeCreation(currentEditor.cy);
-    setupAnimationControls();
-
-    // Initialize constant node HTML labels
+    setupNodeDeletion(levelContext);
+    setupEdgeCreation(levelContext);
+    setupAnimationControls(levelContext);
     initializeConstantControls();
+    initializeEdgeEditor(levelContext.editorContex.cy);
+    setupSaveLoadButtons(levelContext);
 
-    // Initialize edge editor for conditions
-    initializeEdgeEditor(currentEditor.cy);
-
-    // Show the graph editor
     showGraphEditor();
 
     const menuBtn = document.getElementById('menuBtn');
     if (menuBtn) {
-        menuBtn.addEventListener('click', () => returnToMenu(curre)));
+        menuBtn.addEventListener('click', () => returnToMenu(levelContext));
     }
 
     console.log('Level started successfully');
 }
 
-/**
- * Return to main menu
- */
 function returnToMenu(currentContext: LevelContext): void {
     console.log('Returning to main menu');
     currentContext.destroy();
     showLevelSelector();
 }
 
-// Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Interactive Graph Tool - Game Mode');
 
-    // Initialize level selector
     initializeLevelSelector(startLevel);
-
-    // Set up menu button
-
-    // How is this not on the level? Maybe we need to let this fail for now?
-
-
-    // Set up save/load buttons
-    setupSaveLoadButtons();
-
-    // Show level selector (initial screen)
     showLevelSelector();
 
     console.log('Application initialized - Select a level to begin');
 });
 
-/**
- * Set up save and load button event listeners
- */
-function setupSaveLoadButtons(): void {
+function setupSaveLoadButtons(levelContext: LevelContext): void {
+    const currentEditor = levelContext.editorContex;
     const saveBtn = document.getElementById('saveBtn');
     const loadBtn = document.getElementById('loadBtn');
     const fileInput = document.getElementById('fileInput') as HTMLInputElement;
