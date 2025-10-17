@@ -75,16 +75,13 @@ async function advanceCounters(animationState: AnimationState): Promise<void> {
         }
     });
 
-
-    // is this fine is some are none?
-    // Wait for all program counters to complete their moves
     await Promise.all(movePromises);
 }
 
-// Step forward in animation - advances all program counters
 async function stepForward(levelContext: LevelContext): Promise<void> {
     if (levelContext.animationState == null) {
-        throw Error("step called without animation context")
+        // Doesn't feel amazing - but I guess I do want to start the animation with the foward button.
+        levelContext.animationState = new AnimationState(levelContext.editorContex.allNodes);
     }
     const animationState : AnimationState = levelContext.animationState;
     if (animationState.isAnimating) {
@@ -132,7 +129,7 @@ function resetAnimation(levelContext : LevelContext): void {
 
     levelContext.animationState?.destroy();
 
-    levelContext.animationState = new AnimationState(levelContext.editorContex.allNodes);
+    levelContext.animationState = null //new AnimationState(levelContext.editorContex.allNodes);
 
 }
 

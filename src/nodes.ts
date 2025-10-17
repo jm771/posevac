@@ -166,7 +166,7 @@ export class CompNode
     }
 
     makeCleanState() : any {
-        this.func.makeState();
+        return this.func.makeState();
     }
 
     evaluate(nodeAnimationState: any) : EvaluateOutput
@@ -208,7 +208,7 @@ export class CompNode
             for (let i = 0; i < resultArray.length; i++)
             {
                 // TODO - does this work?
-                const edges = this.node.edgesTo("").toArray()
+                const edges = this.outputTerminals[i].edgesTo("").toArray()
                 // const edges =  cy.edges(`[source="${this.outputTerminals[i].id()}"]`).toArray()
                 const filteredEdges = edges.filter(edge => {
                     if (edge.data("condition") === '') {
