@@ -2,7 +2,7 @@ import { setupAnimationControls } from './animation';
 import { setupEdgeCreation } from './edge_creation';
 import { GraphEditorContext, LevelContext } from './editor_context';
 import { initializePreviews, setupNodeDeletion, setupSidebarDragDrop } from './sidebar';
-import { showLevelSelector, showGraphEditor, updateLevelInfo } from './level_selector';
+import { showGraphEditor, updateLevelInfo } from './level_selector';
 import { Level } from './levels';
 import { downloadGraphAsJSON, loadGraphFromFile } from './graph_serialization';
 import { initializeConstantControls } from './constant_controls';
@@ -37,7 +37,7 @@ export function startLevel(level: Level): void {
 function returnToMenu(currentContext: LevelContext): void {
     console.log('Returning to main menu');
     currentContext.destroy();
-    showLevelSelector();
+    // showLevelSelector();
 }
 
 document.addEventListener('DOMContentLoaded', () => {

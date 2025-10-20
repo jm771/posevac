@@ -11,46 +11,7 @@
 <body>
     <div id="root"></div>
     <!-- Graph Editor Screen -->
-    <div class="container" id="graphEditor" style="display: none;">
-        <!-- Sidebar with component palette -->
-        <aside class="sidebar" id="sidebar">
-            <div class="level-info">
-                <h2 id="levelName">Level Name</h2>
-                <p id="levelDescription">Level description</p>
-            </div>
-            <h3>Components</h3>
-            <div class="components-list">
-                <!-- Component templates are dynamically created by TypeScript -->
-            </div>
 
-            <!-- Delete zone indicator -->
-            <div class="delete-zone" id="deleteZone">
-                <span>Drop here to delete</span>
-            </div>
-        </aside>
-
-        <!-- Main canvas area -->
-        <main class="canvas-container">
-            <div id="cy"></div>
-            <!-- PC Markers are dynamically created by the ProgramCounter class -->
-        </main>
-
-        <!-- Animation Controls Panel -->
-        <aside class="controls-panel" id="controlsPanel">
-            <h3>Animation</h3>
-            <div class="controls">
-                <button id="resetBtn" class="control-btn">⟲ Reset</button>
-                <button id="forwardBtn" class="control-btn">► Forward</button>
-                <button id="menuBtn" class="control-btn menu-btn">◄ Menu</button>
-            </div>
-            <h3>Graph</h3>
-            <div class="controls">
-                <button id="saveBtn" class="control-btn">💾 Save</button>
-                <button id="loadBtn" class="control-btn">📂 Load</button>
-                <input type="file" id="fileInput" accept=".json" style="display: none;">
-            </div>
-        </aside>
-    </div>
 
     <!-- TypeScript source is in src/app.ts, compiled to js/app.js -->
     <script type="module" src="/src/main.tsx"></script>
