@@ -2,14 +2,14 @@ import { setupAnimationControls } from './animation';
 import { setupEdgeCreation } from './edge_creation';
 import { GraphEditorContext, LevelContext } from './editor_context';
 import { initializePreviews, setupNodeDeletion, setupSidebarDragDrop } from './sidebar';
-import { initializeLevelSelector, showLevelSelector, showGraphEditor, updateLevelInfo } from './level_selector';
+import { showLevelSelector, showGraphEditor, updateLevelInfo } from './level_selector';
 import { Level } from './levels';
 import { downloadGraphAsJSON, loadGraphFromFile } from './graph_serialization';
 import { initializeConstantControls } from './constant_controls';
 import { initializeEdgeEditor } from './edge_editor';
 
 
-function startLevel(level: Level): void {
+export function startLevel(level: Level): void {
     console.log(`Starting level: ${level.name}`);
 
     const levelContext = new LevelContext(new GraphEditorContext(level), null);
@@ -41,15 +41,10 @@ function returnToMenu(currentContext: LevelContext): void {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Interactive Graph Tool - Game Mode');
 
-    initializeLevelSelector(startLevel);
-    showLevelSelector();
-
-    console.log('Application initialized - Select a level to begin');
 });
 
-function setupSaveLoadButtons(levelContext: LevelContext): void {
+export function setupSaveLoadButtons(levelContext: LevelContext): void {
     const currentEditor = levelContext.editorContex;
     const saveBtn = document.getElementById('saveBtn');
     const loadBtn = document.getElementById('loadBtn');

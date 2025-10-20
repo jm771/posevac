@@ -1,6 +1,16 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { initializeLevelSelector, showLevelSelector } from "./level_selector";
+import { startLevel } from "./app";
 
-export default function MyApp() {
+export default function App() {
+useEffect(() => {
+        console.log('Interactive Graph Tool - Game Mode');
+
+    initializeLevelSelector(startLevel);
+    showLevelSelector();
+
+    console.log('Application initialized - Select a level to begin');
+}, [])
   return (
     <div className="level-selector" id="levelSelector">
         <div className="level-selector-content">
