@@ -9,16 +9,7 @@
     <script src="https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
 </head>
 <body>
-    <!-- Level Selector Screen -->
-    <div class="level-selector" id="levelSelector">
-        <div class="level-selector-content">
-            <h1>Graph Esolang</h1>
-            <p class="subtitle">Programming Challenges</p>
-            <div class="levels-grid" id="levelsGrid">
-            </div>
-        </div>
-    </div>
-
+    <div id="root"></div>
     <!-- Graph Editor Screen -->
     <div class="container" id="graphEditor" style="display: none;">
         <!-- Sidebar with component palette -->
@@ -62,6 +53,6 @@
     </div>
 
     <!-- TypeScript source is in src/app.ts, compiled to js/app.js -->
-    <script type="module" src="js/app.js"></script>
+    <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
