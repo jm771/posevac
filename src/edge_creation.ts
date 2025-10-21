@@ -7,7 +7,7 @@ let tempEdge: EdgeSingular | null = null;
 
 // Setup right-click edge creation/deletion
 export function setupEdgeCreation(levelContext : LevelContext): void {
-    const cy = levelContext.editorContex.cy;
+    const cy = levelContext.editorContext.cy;
 
     let isRightDragging = false;
     let sourceNode: NodeSingular | null = null;

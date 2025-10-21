@@ -111,17 +111,17 @@ export class GraphEditorContext implements NodeBuildContext {
 
 export class LevelContext
 {
-    editorContex: GraphEditorContext;
+    editorContext: GraphEditorContext;
     animationState: AnimationState | null;
 
     constructor(editorContex: GraphEditorContext, animationState: AnimationState | null)
     {
-        this.editorContex = editorContex;
+        this.editorContext = editorContex;
         this.animationState = animationState;
     }
 
     destroy(): void {
         this.animationState?.destroy();
-        this.editorContex.destroy();
+        this.editorContext.destroy();
     }
 }

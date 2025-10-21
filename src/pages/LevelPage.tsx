@@ -5,6 +5,7 @@ import { startLevel } from "../app";
 import { EditorSidebar } from "../components/Sidebar";
 import { AnimationControls } from "../components/AnimationControls";
 import { SaveLoadControls } from "../components/SaveLoadControls";
+import { GraphEditorContext, LevelContext } from "../editor_context";
 
 
 export function LevelPage() {
@@ -12,10 +13,11 @@ export function LevelPage() {
     if (levelId === undefined) {
         throw Error("missing level id");
     }
-    const level = getLevelById(levelId);
-    console.log(level);
 
-    useEffect(() => {const levelContext = startLevel(level); return () => levelContext.destroy();}, []);
+    const level = getLevelById(levelId);
+    const levelContext = new LevelContext(new GraphEditorContext(level), null);
+
+    useEffect(() => {startLevel(levelContext); return () => levelContext.destroy();}, []);
 
     return (
         <div className="container" id="graphEditor">
@@ -37,7 +39,7 @@ export function LevelPage() {
 
         <aside className="controls-panel" id="controlsPanel">
             <AnimationControls/>
-            <SaveLoadControls/>
+            <SaveLoadControls context={levelContext}/>
         </aside>
     </div>
     )

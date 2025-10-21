@@ -105,7 +105,7 @@ export function setupSidebarDragDrop(context: GraphEditorContext): void {
 
 // Setup node dragging to delete
 export function setupNodeDeletion(levelContext : LevelContext): void {
-    const context = levelContext.editorContex
+    const context = levelContext.editorContext
     const sidebar = document.getElementById('sidebar');
     const deleteZone = document.getElementById('deleteZone');
     const cyContainer = document.getElementById('cy');

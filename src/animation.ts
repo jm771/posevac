@@ -81,7 +81,7 @@ async function advanceCounters(animationState: AnimationState): Promise<void> {
 async function stepForward(levelContext: LevelContext): Promise<void> {
     if (levelContext.animationState == null) {
         // Doesn't feel amazing - but I guess I do want to start the animation with the foward button.
-        levelContext.animationState = new AnimationState(levelContext.editorContex.allNodes);
+        levelContext.animationState = new AnimationState(levelContext.editorContext.allNodes);
     }
     const animationState : AnimationState = levelContext.animationState;
     if (animationState.isAnimating) {
@@ -97,7 +97,7 @@ async function stepForward(levelContext: LevelContext): Promise<void> {
                 await advanceCounters(animationState);
                 break;
             case Stage.Evaluate:
-                await evaluateFunctions(levelContext.editorContex, animationState);
+                await evaluateFunctions(levelContext.editorContext, animationState);
                 break;
         }
 
@@ -120,8 +120,8 @@ export function setupAnimationControls(levelContext : LevelContext): void {
     resetBtn.addEventListener('click', () => resetAnimation(levelContext));
 
     
-    levelContext.editorContex.cy.on('pan zoom', () => updatePCMarkerForViewportChange(levelContext));
-    levelContext.editorContex.cy.on('position', 'node', () => updatePCMarkerForViewportChange(levelContext));
+    levelContext.editorContext.cy.on('pan zoom', () => updatePCMarkerForViewportChange(levelContext));
+    levelContext.editorContext.cy.on('position', 'node', () => updatePCMarkerForViewportChange(levelContext));
 }
 
 function resetAnimation(levelContext : LevelContext): void {
