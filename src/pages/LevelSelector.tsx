@@ -1,5 +1,5 @@
 import React from 'react';
-import { LEVELS, Level } from './levels';
+import { LEVELS, Level } from '../levels';
 import { useNavigate } from 'react-router';
 
 function LevelCard({level}: {level: Level}) {

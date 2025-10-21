@@ -1,7 +1,7 @@
 import { setupAnimationControls } from './animation';
 import { setupEdgeCreation } from './edge_creation';
 import { GraphEditorContext, LevelContext } from './editor_context';
-import { setupNodeDeletion, setupSidebarDragDrop } from './Sidebar';
+import { setupNodeDeletion, setupSidebarDragDrop } from './components/Sidebar';
 import { Level } from './levels';
 import { downloadGraphAsJSON, loadGraphFromFile } from './graph_serialization';
 import { initializeConstantControls } from './constant_controls';

@@ -1,9 +1,9 @@
 import cytoscape from 'cytoscape';
-import { getCytoscapeStyles } from './styles';
-import { CompNode, createPlusNode, createMultiplyNode, createCombineNode, createSplitNode, createNopNode, createConstantNode } from './nodes';
-import { ComponentType, Level } from './levels';
-import { GraphEditorContext, LevelContext, NodeBuildContext } from './editor_context';
-import { createConstantControls } from './constant_controls';
+import { getCytoscapeStyles } from '../styles';
+import { CompNode, createPlusNode, createMultiplyNode, createCombineNode, createSplitNode, createNopNode, createConstantNode } from '../nodes';
+import { ComponentType, Level } from '../levels';
+import { GraphEditorContext, LevelContext, NodeBuildContext } from '../editor_context';
+import { createConstantControls } from '../constant_controls';
 import React, { useEffect, useRef } from 'react';
 
 export function SidebarElement({type, func}: {type: ComponentType, func: (context: NodeBuildContext, x: number, y: number) => CompNode}) {
@@ -40,8 +40,6 @@ export function EditorSidebar({level} : {level : Level}) {
     );
 }
 
-// Component registry - single source of truth for all component types
-// Note: input/output nodes are NOT in this registry - they are auto-created per level
 const COMPONENT_REGISTRY: { type: ComponentType, createFunc: (context: NodeBuildContext, x: number, y: number) => CompNode }[] = [
     { type: 'plus', createFunc: createPlusNode },
     { type: 'multiply', createFunc: createMultiplyNode },
@@ -51,7 +49,6 @@ const COMPONENT_REGISTRY: { type: ComponentType, createFunc: (context: NodeBuild
     { type: 'constant', createFunc: createConstantNode },
 ];
 
-// Setup sidebar drag and drop
 export function setupSidebarDragDrop(context: GraphEditorContext): void {
     const componentTemplates = document.querySelectorAll<HTMLElement>('.component-template');
 

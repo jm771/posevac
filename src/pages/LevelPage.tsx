@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
-import { getLevelById } from "./levels";
+import { getLevelById } from "../levels";
 import { useNavigate, useParams } from "react-router";
-import { startLevel } from "./app";
-import { EditorSidebar } from "./Sidebar";
+import { startLevel } from "../app";
+import { EditorSidebar } from "../components/Sidebar";
 
 
 export function LevelPage() {
@@ -40,7 +40,7 @@ export function LevelPage() {
             <div className="controls">
                 <button id="resetBtn" className="control-btn">⟲ Reset</button>
                 <button id="forwardBtn" className="control-btn">► Forward</button>
-                <button id="menuBtn" className="control-btn menu-btn" onClick={() => navigate(`/level/${level.id}`)}>◄ Menu</button>
+                <button id="menuBtn" className="control-btn menu-btn" onClick={() => navigate("/")}>◄ Menu</button>
             </div>
             <h3>Graph</h3>
             <div className="controls">
