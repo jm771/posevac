@@ -1,28 +1,17 @@
 import cytoscape from 'cytoscape';
 import { getCytoscapeStyles } from './styles';
 import { CompNode, createPlusNode, createMultiplyNode, createCombineNode, createSplitNode, createNopNode, createConstantNode } from './nodes';
-import { ComponentType } from './levels';
+import { ComponentType, Level } from './levels';
 import { GraphEditorContext, LevelContext, NodeBuildContext } from './editor_context';
 import { createConstantControls } from './constant_controls';
+import React, { useEffect, useRef } from 'react';
 
+export function SidebarElement({type, func}: {type: ComponentType, func: (context: NodeBuildContext, x: number, y: number) => CompNode}) {
+    const divRef = useRef<HTMLDivElement>(null);
 
-function addComponentToSidebar(type: ComponentType, func: (context: NodeBuildContext, x: number, y: number) => CompNode) : void {
-    const componentsList = document.querySelector('.components-list');
-    if (componentsList == null) {
-            throw new Error("components-list missing from html");
-    }
-
-    const div = document.createElement('div');
-    div.className = 'component-template';
-    div.setAttribute('data-component-type', type);
-    div.id = `preview-${type}`;
-    div.draggable = true;
-    componentsList.appendChild(div);
-
-    // Wait for the div to be rendered and have dimensions before initializing cytoscape
-    requestAnimationFrame(() => {
+    useEffect(() => {
         const previewCy = cytoscape({
-            container: div,
+            container: divRef.current,
             style: getCytoscapeStyles(),
             userPanningEnabled: false,
             userZoomingEnabled: false,
@@ -35,25 +24,20 @@ function addComponentToSidebar(type: ComponentType, func: (context: NodeBuildCon
         func(context, 0, 0);
 
         previewCy.fit(undefined, 10);
-    });
+    }, []);
+
+    return (
+        <div ref={divRef} className='component-template' data-component-type={type} id = {`preview-${type}`} draggable='true'>
+        </div>
+    );
 }
 
-// Create preview Cytoscape instances in sidebar
-export function initializePreviews(allowedNodes?: ComponentType[]): void {
-    // Clear existing components
-    const componentsList = document.querySelector('.components-list');
-    if (componentsList) {
-        componentsList.innerHTML = '';
-    }
-
-    // Filter registry by allowed nodes if specified
-    const componentsToShow = allowedNodes
-        ? COMPONENT_REGISTRY.filter(({ type }) => allowedNodes.includes(type))
-        : COMPONENT_REGISTRY;
-
-    componentsToShow.forEach(({ type, createFunc }) => {
-        addComponentToSidebar(type, createFunc);
-    });
+export function EditorSidebar({level} : {level : Level}) {
+    return (
+            <div className="components-list">
+                {COMPONENT_REGISTRY.filter(({ type }) => level.allowedNodes.includes(type)).map((entry) => (<SidebarElement type={entry.type} func={entry.createFunc}/>))}
+            </div>
+    );
 }
 
 // Component registry - single source of truth for all component types

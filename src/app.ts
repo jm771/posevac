@@ -1,7 +1,7 @@
 import { setupAnimationControls } from './animation';
 import { setupEdgeCreation } from './edge_creation';
 import { GraphEditorContext, LevelContext } from './editor_context';
-import { initializePreviews, setupNodeDeletion, setupSidebarDragDrop } from './sidebar';
+import { setupNodeDeletion, setupSidebarDragDrop } from './Sidebar';
 import { Level } from './levels';
 import { downloadGraphAsJSON, loadGraphFromFile } from './graph_serialization';
 import { initializeConstantControls } from './constant_controls';
@@ -13,7 +13,7 @@ export function startLevel(level: Level): LevelContext {
 
     const levelContext = new LevelContext(new GraphEditorContext(level), null);
 
-    initializePreviews(level.allowedNodes);
+    // initializePreviews(level.allowedNodes);
     setupSidebarDragDrop(levelContext.editorContex);
     setupNodeDeletion(levelContext);
     setupEdgeCreation(levelContext);
