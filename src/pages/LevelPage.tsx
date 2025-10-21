@@ -24,7 +24,7 @@ export function LevelPage() {
   }, []);
 
   return (
-    <div className="container" id="graphEditor">
+    <div className="container">
       {levelContext !== null && (
         <aside className="sidebar" id="sidebar">
           <div className="level-info">
@@ -32,7 +32,7 @@ export function LevelPage() {
             <p id="levelDescription">{level.description}</p>
           </div>
           <h3>Components</h3>
-          <EditorSidebar level={level} />
+          <EditorSidebar levelContext={levelContext} />
           <div className="delete-zone" id="deleteZone">
             <span>Drop here to delete</span>
           </div>

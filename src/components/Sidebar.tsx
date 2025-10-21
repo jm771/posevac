@@ -9,7 +9,7 @@ import {
   createNopNode,
   createConstantNode,
 } from "../nodes";
-import { ComponentType, Level } from "../levels";
+import { ComponentType } from "../levels";
 import {
   GraphEditorContext,
   LevelContext,
@@ -18,12 +18,30 @@ import {
 import { createConstantControls } from "../constant_controls";
 import React, { useEffect, useRef } from "react";
 
+// export function setupSidebarDragDrop(context: GraphEditorContext): void {
+//   const componentTemplates = document.querySelectorAll<HTMLElement>(
+//     ".component-template"
+//   );
+
+//   componentTemplates.forEach((template) => {
+//     template.addEventListener("dragstart",
+//   });
+
+//   // Canvas drop zone
+//   const cyContainer = document.getElementById("cy");
+//   if (!cyContainer) return;
+
+//   cyContainer.addEventListener("drop");
+// }
+
 export function SidebarElement({
   type,
   func,
+  context,
 }: {
   type: ComponentType;
   func: (context: NodeBuildContext, x: number, y: number) => CompNode;
+  context: GraphEditorContext;
 }) {
   const divRef = useRef<HTMLDivElement>(null);
 
@@ -42,26 +60,84 @@ export function SidebarElement({
     func(context, 0, 0);
 
     previewCy.fit(undefined, 10);
-  }, []);
+  }, [divRef]);
 
   return (
     <div
       ref={divRef}
       className="component-template"
-      data-component-type={type}
+      //   data-component-type={type}
       id={`preview-${type}`}
       draggable="true"
-    ></div>
+        onDragStart={(e: React.DragEvent<HTMLDivElement>) => {
+        console.log("drag start");
+        // if (e.dataTransfer) {
+        e.dataTransfer.setData("component-type", type);
+        e.dataTransfer.effectAllowed = "copy";
+        // }
+      }}
+    //   onDragOver={(e: React.DragEvent<HTMLDivElement>) => {
+    //     console.log("drag over");
+    //     e.preventDefault();
+    //     // if (e.dataTransfer) {
+    //     e.dataTransfer.dropEffect = "copy";
+    //     // }
+    //   }}
+
+    //   onDrop={(e: React.DragEvent<HTMLDivElement>) => {
+    //     console.log("drop start");
+    //     e.preventDefault();
+    //     if (!e.dataTransfer) return;
+
+    //     const componentType = e.dataTransfer.getData(
+    //       "component-type"
+    //     ) as ComponentType;
+    //     if (!componentType) return;
+
+    //     // TODO is this right?
+    //     const cyBounds = e.currentTarget.getBoundingClientRect();
+    //     const renderedX = e.clientX - cyBounds.left;
+    //     const renderedY = e.clientY - cyBounds.top;
+
+    //     const pan = context.cy.pan();
+    //     const zoom = context.cy.zoom();
+    //     const modelX = (renderedX - pan.x) / zoom;
+    //     const modelY = (renderedY - pan.y) / zoom;
+
+    //     const component = COMPONENT_REGISTRY.find(
+    //       (c) => c.type === componentType
+    //     );
+    //     if (component) {
+    //       const newNode = component.createFunc(context, modelX, modelY);
+    //       context.allNodes.push(newNode);
+
+    //       // Create controls for constant nodes
+    //       // TODO: This seems silly
+    //       if (componentType === "constant") {
+    //         createConstantControls(newNode.node, context.cy);
+    //       }
+    //     }
+    //   }}
+    />
   );
 }
 
-export function EditorSidebar({ level }: { level: Level }) {
+export function EditorSidebar({
+  levelContext,
+}: {
+  levelContext: LevelContext;
+}) {
   return (
     <div className="components-list">
       {COMPONENT_REGISTRY.filter(({ type }) =>
-        level.allowedNodes.includes(type),
+        levelContext.editorContext.level.allowedNodes.includes(type)
       ).map((entry) => (
-        <SidebarElement type={entry.type} func={entry.createFunc} />
+        <SidebarElement
+          key={entry.type}
+          type={entry.type}
+          func={entry.createFunc}
+          context={levelContext.editorContext}
+        />
       ))}
     </div>
   );
@@ -78,64 +154,6 @@ const COMPONENT_REGISTRY: {
   { type: "nop", createFunc: createNopNode },
   { type: "constant", createFunc: createConstantNode },
 ];
-
-export function setupSidebarDragDrop(context: GraphEditorContext): void {
-  const componentTemplates = document.querySelectorAll<HTMLElement>(
-    ".component-template",
-  );
-
-  componentTemplates.forEach((template) => {
-    template.addEventListener("dragstart", (e: DragEvent) => {
-      const componentType = template.getAttribute("data-component-type");
-      if (e.dataTransfer && componentType) {
-        e.dataTransfer.setData("component-type", componentType);
-        e.dataTransfer.effectAllowed = "copy";
-      }
-    });
-  });
-
-  // Canvas drop zone
-  const cyContainer = document.getElementById("cy");
-  if (!cyContainer) return;
-
-  cyContainer.addEventListener("dragover", (e: DragEvent) => {
-    e.preventDefault();
-    if (e.dataTransfer) {
-      e.dataTransfer.dropEffect = "copy";
-    }
-  });
-
-  cyContainer.addEventListener("drop", (e: DragEvent) => {
-    e.preventDefault();
-    if (!e.dataTransfer) return;
-
-    const componentType = e.dataTransfer.getData(
-      "component-type",
-    ) as ComponentType;
-    if (!componentType) return;
-
-    const cyBounds = cyContainer.getBoundingClientRect();
-    const renderedX = e.clientX - cyBounds.left;
-    const renderedY = e.clientY - cyBounds.top;
-
-    const pan = context.cy.pan();
-    const zoom = context.cy.zoom();
-    const modelX = (renderedX - pan.x) / zoom;
-    const modelY = (renderedY - pan.y) / zoom;
-
-    const component = COMPONENT_REGISTRY.find((c) => c.type === componentType);
-    if (component) {
-      const newNode = component.createFunc(context, modelX, modelY);
-      context.allNodes.push(newNode);
-
-      // Create controls for constant nodes
-      // TODO: This seems silly
-      if (componentType === "constant") {
-        createConstantControls(newNode.node, context.cy);
-      }
-    }
-  });
-}
 
 // Setup node dragging to delete
 export function setupNodeDeletion(levelContext: LevelContext): void {
@@ -193,12 +211,12 @@ export function setupNodeDeletion(levelContext: LevelContext): void {
 
       // Remove from userNodes array
       const nodeIndex = context.allNodes.findIndex(
-        (n) => n.getNodeId() === nodeId,
+        (n) => n.getNodeId() === nodeId
       );
       if (nodeIndex !== -1) {
         context.allNodes.splice(nodeIndex, 1);
         console.log(
-          `Removed node from context. Total user nodes: ${context.allNodes.length}`,
+          `Removed node from context. Total user nodes: ${context.allNodes.length}`
         );
       }
 
@@ -219,12 +237,12 @@ export function setupNodeDeletion(levelContext: LevelContext): void {
 
         // Remove parent from userNodes array
         const parentIndex = context.allNodes.findIndex(
-          (n) => n.getNodeId() === parentId,
+          (n) => n.getNodeId() === parentId
         );
         if (parentIndex !== -1) {
           context.allNodes.splice(parentIndex, 1);
           console.log(
-            `Removed parent node from context. Total user nodes: ${context.allNodes.length}`,
+            `Removed parent node from context. Total user nodes: ${context.allNodes.length}`
           );
         }
 
