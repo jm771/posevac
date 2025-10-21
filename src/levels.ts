@@ -1,5 +1,3 @@
-// Level data structure for the graph editing game
-
 export type ComponentType = 'plus' | 'multiply' | 'combine' | 'split' | 'nop' | 'constant';
 
 export interface Level {
@@ -11,7 +9,6 @@ export interface Level {
     allowedNodes: ComponentType[];
 }
 
-// Level definitions
 export const LEVELS: Level[] = [
     {
         id: 'addition',
@@ -39,7 +36,10 @@ export const LEVELS: Level[] = [
     }
 ];
 
-// Get level by ID
-export function getLevelById(id: string): Level | undefined {
-    return LEVELS.find(level => level.id === id);
+export function getLevelById(id: string): Level {
+    const ret = LEVELS.find(level => level.id === id);
+    if (ret === undefined) {
+        throw Error(`Level Id ${id} not found`);
+    }
+    return ret;
 }
