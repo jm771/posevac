@@ -133,10 +133,6 @@ export function exportGraph(context: GraphEditorContext): SerializedGraph {
     };
 }
 
-/**
- * Import a graph from serialized format
- * Recreates user nodes and edges in the current context
- */
 export function importGraph(context: GraphEditorContext, serializedGraph: SerializedGraph): void {
     const cy = context.cy;
 
@@ -144,11 +140,6 @@ export function importGraph(context: GraphEditorContext, serializedGraph: Serial
     if (serializedGraph.levelId !== context.level.id) {
         throw new Error(`Graph is for level "${serializedGraph.levelId}" but current level is "${context.level.id}"`);
     }
-
-    // Clear existing user-created nodes and edges
-
-    // TODO Jack - need to recreate stuff or sth
-    // clearUserCreatedElements(context);
 
     // Create a mapping from old node IDs to new CompNode instances
     const nodeIdMap = new Map<string, CompNode>();
@@ -251,42 +242,6 @@ export function importGraph(context: GraphEditorContext, serializedGraph: Serial
     initializeConstantControls(context);
 }
 
-/**
- * Clear all user-created nodes and edges (keep input/output nodes)
- */
-// export function clearUserCreatedElements(context: GraphEditorContext): void {
-//     context.animationState.resetState();
-//     const cy = context.cy;
-
-//     cy.remove(cy.edges());
-
-//     // Remove user-created nodes (and their edges automatically)
-//     const userNodes = cy.nodes().filter(node => {
-//         const nodeType = node.data('type');
-//         const parent = node.data('parent');
-//         // Keep input/output nodes and their terminals
-//         return (nodeType === 'compound' || nodeType === 'constant') && !parent;
-//     });
-
-//     // Clean up constant controls before removing nodes
-//     // userNodes.forEach(node => {
-//     //     if (node.data('type') === 'constant') {
-//     //         removeConstantControls(node.id());
-//     //     }
-//     // });
-
-//     cy.remove(userNodes);
-
-//     // Update allNodes array to only include input/output nodes
-//     context.allNodes = context.allNodes.filter(node => {
-//         const nodeType = node.node.data('type');
-//         return nodeType === 'input' || nodeType === 'output';
-//     });
-// }
-
-/**
- * Download graph as JSON file
- */
 export function downloadGraphAsJSON(context: GraphEditorContext, filename?: string): void {
     const serialized = exportGraph(context);
     const json = JSON.stringify(serialized, null, 2);
