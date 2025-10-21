@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { getLevelById } from "../levels";
 import { useParams } from "react-router";
 import { startLevel } from "../app";
@@ -15,12 +15,18 @@ export function LevelPage() {
     }
 
     const level = getLevelById(levelId);
-    const levelContext = new LevelContext(new GraphEditorContext(level), null);
+    const [levelContext, setLevelContext] = useState<LevelContext | null>(null);
 
-    useEffect(() => {startLevel(levelContext); return () => levelContext.destroy();}, []);
 
-    return (
-        <div className="container" id="graphEditor">
+    useEffect(() => {const levelContext = new LevelContext(new GraphEditorContext(level), null);
+        setLevelContext(levelContext);
+         startLevel(levelContext); return () => levelContext.destroy();}, []);
+
+
+    return (<div className="container" id="graphEditor">
+        {
+            (levelContext !== null) && (
+        
         <aside className="sidebar" id="sidebar">
             <div className="level-info">
                 <h2 id="levelName">{level.name}</h2>
@@ -31,16 +37,23 @@ export function LevelPage() {
             <div className="delete-zone" id="deleteZone">
                 <span>Drop here to delete</span>
             </div>
-        </aside>
+        </aside> )
+        }
+        
 
         <main className="canvas-container">
             <div id="cy"></div>
         </main>
 
+      {
+            (levelContext !== null) && (
         <aside className="controls-panel" id="controlsPanel">
             <AnimationControls/>
             <SaveLoadControls context={levelContext}/>
         </aside>
+            )
+        }
     </div>
+
     )
 }
