@@ -76,48 +76,6 @@ export function SidebarElement({
         e.dataTransfer.effectAllowed = "copy";
         // }
       }}
-    //   onDragOver={(e: React.DragEvent<HTMLDivElement>) => {
-    //     console.log("drag over");
-    //     e.preventDefault();
-    //     // if (e.dataTransfer) {
-    //     e.dataTransfer.dropEffect = "copy";
-    //     // }
-    //   }}
-
-    //   onDrop={(e: React.DragEvent<HTMLDivElement>) => {
-    //     console.log("drop start");
-    //     e.preventDefault();
-    //     if (!e.dataTransfer) return;
-
-    //     const componentType = e.dataTransfer.getData(
-    //       "component-type"
-    //     ) as ComponentType;
-    //     if (!componentType) return;
-
-    //     // TODO is this right?
-    //     const cyBounds = e.currentTarget.getBoundingClientRect();
-    //     const renderedX = e.clientX - cyBounds.left;
-    //     const renderedY = e.clientY - cyBounds.top;
-
-    //     const pan = context.cy.pan();
-    //     const zoom = context.cy.zoom();
-    //     const modelX = (renderedX - pan.x) / zoom;
-    //     const modelY = (renderedY - pan.y) / zoom;
-
-    //     const component = COMPONENT_REGISTRY.find(
-    //       (c) => c.type === componentType
-    //     );
-    //     if (component) {
-    //       const newNode = component.createFunc(context, modelX, modelY);
-    //       context.allNodes.push(newNode);
-
-    //       // Create controls for constant nodes
-    //       // TODO: This seems silly
-    //       if (componentType === "constant") {
-    //         createConstantControls(newNode.node, context.cy);
-    //       }
-    //     }
-    //   }}
     />
   );
 }
@@ -143,7 +101,7 @@ export function EditorSidebar({
   );
 }
 
-const COMPONENT_REGISTRY: {
+export const COMPONENT_REGISTRY: {
   type: ComponentType;
   createFunc: (context: NodeBuildContext, x: number, y: number) => CompNode;
 }[] = [
