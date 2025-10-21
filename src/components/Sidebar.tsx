@@ -1,195 +1,240 @@
-import cytoscape from 'cytoscape';
-import { getCytoscapeStyles } from '../styles';
-import { CompNode, createPlusNode, createMultiplyNode, createCombineNode, createSplitNode, createNopNode, createConstantNode } from '../nodes';
-import { ComponentType, Level } from '../levels';
-import { GraphEditorContext, LevelContext, NodeBuildContext } from '../editor_context';
-import { createConstantControls } from '../constant_controls';
-import React, { useEffect, useRef } from 'react';
+import cytoscape from "cytoscape";
+import { getCytoscapeStyles } from "../styles";
+import {
+  CompNode,
+  createPlusNode,
+  createMultiplyNode,
+  createCombineNode,
+  createSplitNode,
+  createNopNode,
+  createConstantNode,
+} from "../nodes";
+import { ComponentType, Level } from "../levels";
+import {
+  GraphEditorContext,
+  LevelContext,
+  NodeBuildContext,
+} from "../editor_context";
+import { createConstantControls } from "../constant_controls";
+import React, { useEffect, useRef } from "react";
 
-export function SidebarElement({type, func}: {type: ComponentType, func: (context: NodeBuildContext, x: number, y: number) => CompNode}) {
-    const divRef = useRef<HTMLDivElement>(null);
+export function SidebarElement({
+  type,
+  func,
+}: {
+  type: ComponentType;
+  func: (context: NodeBuildContext, x: number, y: number) => CompNode;
+}) {
+  const divRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        const previewCy = cytoscape({
-            container: divRef.current,
-            style: getCytoscapeStyles(),
-            userPanningEnabled: false,
-            userZoomingEnabled: false,
-            boxSelectionEnabled: false,
-            autoungrabify: true
-        });
+  useEffect(() => {
+    const previewCy = cytoscape({
+      container: divRef.current,
+      style: getCytoscapeStyles(),
+      userPanningEnabled: false,
+      userZoomingEnabled: false,
+      boxSelectionEnabled: false,
+      autoungrabify: true,
+    });
 
-        let context : NodeBuildContext = {cy : previewCy, nodeIdCounter : 0};
+    let context: NodeBuildContext = { cy: previewCy, nodeIdCounter: 0 };
 
-        func(context, 0, 0);
+    func(context, 0, 0);
 
-        previewCy.fit(undefined, 10);
-    }, []);
+    previewCy.fit(undefined, 10);
+  }, []);
 
-    return (
-        <div ref={divRef} className='component-template' data-component-type={type} id = {`preview-${type}`} draggable='true'>
-        </div>
-    );
+  return (
+    <div
+      ref={divRef}
+      className="component-template"
+      data-component-type={type}
+      id={`preview-${type}`}
+      draggable="true"
+    ></div>
+  );
 }
 
-export function EditorSidebar({level} : {level : Level}) {
-    return (
-            <div className="components-list">
-                {COMPONENT_REGISTRY.filter(({ type }) => level.allowedNodes.includes(type)).map((entry) => (<SidebarElement type={entry.type} func={entry.createFunc}/>))}
-            </div>
-    );
+export function EditorSidebar({ level }: { level: Level }) {
+  return (
+    <div className="components-list">
+      {COMPONENT_REGISTRY.filter(({ type }) =>
+        level.allowedNodes.includes(type),
+      ).map((entry) => (
+        <SidebarElement type={entry.type} func={entry.createFunc} />
+      ))}
+    </div>
+  );
 }
 
-const COMPONENT_REGISTRY: { type: ComponentType, createFunc: (context: NodeBuildContext, x: number, y: number) => CompNode }[] = [
-    { type: 'plus', createFunc: createPlusNode },
-    { type: 'multiply', createFunc: createMultiplyNode },
-    { type: 'combine', createFunc: createCombineNode },
-    { type: 'split', createFunc: createSplitNode },
-    { type: 'nop', createFunc: createNopNode },
-    { type: 'constant', createFunc: createConstantNode },
+const COMPONENT_REGISTRY: {
+  type: ComponentType;
+  createFunc: (context: NodeBuildContext, x: number, y: number) => CompNode;
+}[] = [
+  { type: "plus", createFunc: createPlusNode },
+  { type: "multiply", createFunc: createMultiplyNode },
+  { type: "combine", createFunc: createCombineNode },
+  { type: "split", createFunc: createSplitNode },
+  { type: "nop", createFunc: createNopNode },
+  { type: "constant", createFunc: createConstantNode },
 ];
 
 export function setupSidebarDragDrop(context: GraphEditorContext): void {
-    const componentTemplates = document.querySelectorAll<HTMLElement>('.component-template');
+  const componentTemplates = document.querySelectorAll<HTMLElement>(
+    ".component-template",
+  );
 
-    componentTemplates.forEach(template => {
-        template.addEventListener('dragstart', (e: DragEvent) => {
-            const componentType = template.getAttribute('data-component-type');
-            if (e.dataTransfer && componentType) {
-                e.dataTransfer.setData('component-type', componentType);
-                e.dataTransfer.effectAllowed = 'copy';
-            }
-        });
+  componentTemplates.forEach((template) => {
+    template.addEventListener("dragstart", (e: DragEvent) => {
+      const componentType = template.getAttribute("data-component-type");
+      if (e.dataTransfer && componentType) {
+        e.dataTransfer.setData("component-type", componentType);
+        e.dataTransfer.effectAllowed = "copy";
+      }
     });
+  });
 
-    // Canvas drop zone
-    const cyContainer = document.getElementById('cy');
-    if (!cyContainer) return;
+  // Canvas drop zone
+  const cyContainer = document.getElementById("cy");
+  if (!cyContainer) return;
 
-    cyContainer.addEventListener('dragover', (e: DragEvent) => {
-        e.preventDefault();
-        if (e.dataTransfer) {
-            e.dataTransfer.dropEffect = 'copy';
-        }
-    });
+  cyContainer.addEventListener("dragover", (e: DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = "copy";
+    }
+  });
 
-    cyContainer.addEventListener('drop', (e: DragEvent) => {
-        e.preventDefault();
-        if (!e.dataTransfer) return;
+  cyContainer.addEventListener("drop", (e: DragEvent) => {
+    e.preventDefault();
+    if (!e.dataTransfer) return;
 
-        const componentType = e.dataTransfer.getData('component-type') as ComponentType;
-        if (!componentType) return;
+    const componentType = e.dataTransfer.getData(
+      "component-type",
+    ) as ComponentType;
+    if (!componentType) return;
 
-        const cyBounds = cyContainer.getBoundingClientRect();
-        const renderedX = e.clientX - cyBounds.left;
-        const renderedY = e.clientY - cyBounds.top;
+    const cyBounds = cyContainer.getBoundingClientRect();
+    const renderedX = e.clientX - cyBounds.left;
+    const renderedY = e.clientY - cyBounds.top;
 
-        const pan = context.cy.pan();
-        const zoom = context.cy.zoom();
-        const modelX = (renderedX - pan.x) / zoom;
-        const modelY = (renderedY - pan.y) / zoom;
+    const pan = context.cy.pan();
+    const zoom = context.cy.zoom();
+    const modelX = (renderedX - pan.x) / zoom;
+    const modelY = (renderedY - pan.y) / zoom;
 
-        const component = COMPONENT_REGISTRY.find(c => c.type === componentType);
-        if (component) {
-            const newNode = component.createFunc(context, modelX, modelY);
-            context.allNodes.push(newNode);
+    const component = COMPONENT_REGISTRY.find((c) => c.type === componentType);
+    if (component) {
+      const newNode = component.createFunc(context, modelX, modelY);
+      context.allNodes.push(newNode);
 
-            // Create controls for constant nodes
-            // TODO: This seems silly
-            if (componentType === 'constant') {
-                createConstantControls(newNode.node, context.cy);
-            }
-        }
-    });
+      // Create controls for constant nodes
+      // TODO: This seems silly
+      if (componentType === "constant") {
+        createConstantControls(newNode.node, context.cy);
+      }
+    }
+  });
 }
 
 // Setup node dragging to delete
-export function setupNodeDeletion(levelContext : LevelContext): void {
-    const context = levelContext.editorContext
-    const sidebar = document.getElementById('sidebar');
-    const deleteZone = document.getElementById('deleteZone');
-    const cyContainer = document.getElementById('cy');
-    if (!sidebar || !deleteZone || !cyContainer) return;
+export function setupNodeDeletion(levelContext: LevelContext): void {
+  const context = levelContext.editorContext;
+  const sidebar = document.getElementById("sidebar");
+  const deleteZone = document.getElementById("deleteZone");
+  const cyContainer = document.getElementById("cy");
+  if (!sidebar || !deleteZone || !cyContainer) return;
 
-    context.cy.on('drag', 'node', function(evt) {
-        const node = evt.target;
-        const renderedPos = node.renderedPosition();
-        const sidebarBounds = sidebar.getBoundingClientRect();
-        const cyBounds = cyContainer.getBoundingClientRect();
+  context.cy.on("drag", "node", function (evt) {
+    const node = evt.target;
+    const renderedPos = node.renderedPosition();
+    const sidebarBounds = sidebar.getBoundingClientRect();
+    const cyBounds = cyContainer.getBoundingClientRect();
 
-        // Convert node position to viewport coordinates
-        const nodeScreenX = cyBounds.left + renderedPos.x;
+    // Convert node position to viewport coordinates
+    const nodeScreenX = cyBounds.left + renderedPos.x;
 
-        // Check if node is over sidebar (sidebar is on the left)
-        if (nodeScreenX < sidebarBounds.right) {
-            deleteZone.classList.add('active');
-        } else {
-            deleteZone.classList.remove('active');
+    // Check if node is over sidebar (sidebar is on the left)
+    if (nodeScreenX < sidebarBounds.right) {
+      deleteZone.classList.add("active");
+    } else {
+      deleteZone.classList.remove("active");
+    }
+  });
+
+  context.cy.on("free", "node", function (evt) {
+    const node = evt.target;
+    const renderedPos = node.renderedPosition();
+    const sidebarBounds = sidebar.getBoundingClientRect();
+    const cyBounds = cyContainer.getBoundingClientRect();
+
+    // Convert node position to viewport coordinates
+    const nodeScreenX = cyBounds.left + renderedPos.x;
+
+    // Delete node if dropped in sidebar
+    if (nodeScreenX < sidebarBounds.right) {
+      const nodeType = node.data("type");
+      // Check if node is deletable (input/output nodes are not deletable)
+      const isDeletable = node.data("deletable") !== false;
+
+      if (!isDeletable) {
+        console.log("This node cannot be deleted");
+        deleteZone.classList.remove("active");
+        return;
+      }
+
+      const nodeId = node.id();
+
+      // Hopefully not needed with proper usage patterns - constant controls should all be children of the node
+      // Remove constant controls if it's a constant node
+      // if (nodeType === 'constant') {
+      //     removeConstantControls(nodeId);
+      // }
+
+      // Remove from userNodes array
+      const nodeIndex = context.allNodes.findIndex(
+        (n) => n.getNodeId() === nodeId,
+      );
+      if (nodeIndex !== -1) {
+        context.allNodes.splice(nodeIndex, 1);
+        console.log(
+          `Removed node from context. Total user nodes: ${context.allNodes.length}`,
+        );
+      }
+
+      // If it's a compound node or input/output node or constant node, remove all children first
+      if (
+        nodeType === "compound" ||
+        nodeType === "input" ||
+        nodeType === "output" ||
+        nodeType === "constant"
+      ) {
+        node.children().remove();
+        node.remove();
+      }
+      // If it's a child node (terminal), remove parent too
+      else if (node.parent().length > 0) {
+        const parent = node.parent();
+        const parentId = parent.id();
+
+        // Remove parent from userNodes array
+        const parentIndex = context.allNodes.findIndex(
+          (n) => n.getNodeId() === parentId,
+        );
+        if (parentIndex !== -1) {
+          context.allNodes.splice(parentIndex, 1);
+          console.log(
+            `Removed parent node from context. Total user nodes: ${context.allNodes.length}`,
+          );
         }
-    });
 
-    context.cy.on('free', 'node', function(evt) {
-        const node = evt.target;
-        const renderedPos = node.renderedPosition();
-        const sidebarBounds = sidebar.getBoundingClientRect();
-        const cyBounds = cyContainer.getBoundingClientRect();
+        parent.children().remove();
+        parent.remove();
+      } else {
+        node.remove();
+      }
+    }
 
-        // Convert node position to viewport coordinates
-        const nodeScreenX = cyBounds.left + renderedPos.x;
-
-        // Delete node if dropped in sidebar
-        if (nodeScreenX < sidebarBounds.right) {
-            const nodeType = node.data('type');
-            // Check if node is deletable (input/output nodes are not deletable)
-            const isDeletable = node.data('deletable') !== false;
-
-            if (!isDeletable) {
-                console.log('This node cannot be deleted');
-                deleteZone.classList.remove('active');
-                return;
-            }
-
-            const nodeId = node.id();
-
-            // Hopefully not needed with proper usage patterns - constant controls should all be children of the node
-            // Remove constant controls if it's a constant node
-            // if (nodeType === 'constant') {
-            //     removeConstantControls(nodeId);
-            // }
-
-            // Remove from userNodes array
-            const nodeIndex = context.allNodes.findIndex(n => n.getNodeId() === nodeId);
-            if (nodeIndex !== -1) {
-                context.allNodes.splice(nodeIndex, 1);
-                console.log(`Removed node from context. Total user nodes: ${context.allNodes.length}`);
-            }
-
-            // If it's a compound node or input/output node or constant node, remove all children first
-            if (nodeType === 'compound' || nodeType === 'input' || nodeType === 'output' || nodeType === 'constant') {
-                node.children().remove();
-                node.remove();
-            }
-            // If it's a child node (terminal), remove parent too
-            else if (node.parent().length > 0) {
-                const parent = node.parent();
-                const parentId = parent.id();
-
-                // Remove parent from userNodes array
-                const parentIndex = context.allNodes.findIndex(n => n.getNodeId() === parentId);
-                if (parentIndex !== -1) {
-                    context.allNodes.splice(parentIndex, 1);
-                    console.log(`Removed parent node from context. Total user nodes: ${context.allNodes.length}`);
-                }
-
-                parent.children().remove();
-                parent.remove();
-            } else {
-                node.remove();
-            }
-        }
-
-        deleteZone.classList.remove('active');
-    });
+    deleteZone.classList.remove("active");
+  });
 }
-
-

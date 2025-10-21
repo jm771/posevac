@@ -1,127 +1,130 @@
 // Graph Editor Context - encapsulates all editor state for a level
-import cytoscape, { Core } from 'cytoscape';
+import cytoscape, { Core } from "cytoscape";
 // @ts-ignore - no types available
-import nodeHtmlLabel from 'cytoscape-node-html-label';
-import { getCytoscapeStyles } from './styles';
-import { Level } from './levels';
-import { createInputNode, createOutputNode, CompNode } from './nodes';
-import { ProgramCounter } from './program_counter';
+import nodeHtmlLabel from "cytoscape-node-html-label";
+import { getCytoscapeStyles } from "./styles";
+import { Level } from "./levels";
+import { createInputNode, createOutputNode, CompNode } from "./nodes";
+import { ProgramCounter } from "./program_counter";
 
 // Register the node-html-label extension
-if (typeof cytoscape !== 'undefined') {
-    nodeHtmlLabel(cytoscape);
+if (typeof cytoscape !== "undefined") {
+  nodeHtmlLabel(cytoscape);
 }
 
 export enum Stage {
-    AdvanceCounter = 1,
-    Evaluate
+  AdvanceCounter = 1,
+  Evaluate,
 }
 
 export class AnimationState {
-    programCounters: Map<string, ProgramCounter>;
-    isAnimating: boolean;
-    stage: Stage;
-    nodeAnimationState: Map<string, any>
+  programCounters: Map<string, ProgramCounter>;
+  isAnimating: boolean;
+  stage: Stage;
+  nodeAnimationState: Map<string, any>;
 
-    constructor(nodes: Array<CompNode>){
-        this.programCounters = new Map<string, ProgramCounter>();
-        this.isAnimating = false;
-        this.stage = Stage.Evaluate;
-        this.nodeAnimationState = new Map<string, any>();
-        nodes.forEach((n: CompNode) => {this.nodeAnimationState.set(n.getNodeId(), n.makeCleanState()); })
-    }
+  constructor(nodes: Array<CompNode>) {
+    this.programCounters = new Map<string, ProgramCounter>();
+    this.isAnimating = false;
+    this.stage = Stage.Evaluate;
+    this.nodeAnimationState = new Map<string, any>();
+    nodes.forEach((n: CompNode) => {
+      this.nodeAnimationState.set(n.getNodeId(), n.makeCleanState());
+    });
+  }
 
-    destroy() {
-        this.programCounters.forEach(pc => pc.destroy());
-    }
+  destroy() {
+    this.programCounters.forEach((pc) => pc.destroy());
+  }
 }
 
 export interface NodeBuildContext {
-    cy: Core;
-    nodeIdCounter: number;
+  cy: Core;
+  nodeIdCounter: number;
 }
 
 export class GraphEditorContext implements NodeBuildContext {
-    public cy: Core;
-    public level: Level;
-    public inputNodes: CompNode[] = [];
-    public outputNodes: CompNode[] = [];
-    public allNodes: CompNode[] = [];
-    public nodeIdCounter = 0;
+  public cy: Core;
+  public level: Level;
+  public inputNodes: CompNode[] = [];
+  public outputNodes: CompNode[] = [];
+  public allNodes: CompNode[] = [];
+  public nodeIdCounter = 0;
 
-    constructor(level: Level) {
-        this.level = level;
+  constructor(level: Level) {
+    this.level = level;
 
-        const container = document.getElementById('cy');
-        if (!container) {
-            throw new Error('Cytoscape container element not found');
-        }
-
-        this.cy = cytoscape({
-            container: container,
-            style: getCytoscapeStyles(),
-            layout: {
-                name: 'preset'
-            },
-            minZoom: 0.5,
-            maxZoom: 2,
-            autoungrabify: false,
-            userPanningEnabled: true,
-            userZoomingEnabled: true,
-            boxSelectionEnabled: false
-        });
-
-        this.initializeInputOutputNodes(level);
+    const container = document.getElementById("cy");
+    if (!container) {
+      throw new Error("Cytoscape container element not found");
     }
 
-    private initializeInputOutputNodes(level: Level): void {
-        const spacing = 150;
-        const startY = 100;
+    this.cy = cytoscape({
+      container: container,
+      style: getCytoscapeStyles(),
+      layout: {
+        name: "preset",
+      },
+      minZoom: 0.5,
+      maxZoom: 2,
+      autoungrabify: false,
+      userPanningEnabled: true,
+      userZoomingEnabled: true,
+      boxSelectionEnabled: false,
+    });
 
-        level.inputs.forEach((inputData: Array<any>, index: number) => {
-            const x = 100;
-            const y = startY + (index * spacing);
-            const inputNode = createInputNode(this, x, y, inputData);
+    this.initializeInputOutputNodes(level);
+  }
 
-            inputNode.node.data('deletable', false);
+  private initializeInputOutputNodes(level: Level): void {
+    const spacing = 150;
+    const startY = 100;
 
-            this.inputNodes.push(inputNode);
-            this.allNodes.push(inputNode);
-        });
+    level.inputs.forEach((inputData: Array<any>, index: number) => {
+      const x = 100;
+      const y = startY + index * spacing;
+      const inputNode = createInputNode(this, x, y, inputData);
 
-        // Create output nodes
-        level.expectedOutputs.forEach((outputs: Array<any>, index: number) => {
-            const x = 700;
-            const y = startY + (index * spacing);
-            const outputNode = createOutputNode(this, x, y, outputs);
+      inputNode.node.data("deletable", false);
 
-            outputNode.node.data('deletable', false);
+      this.inputNodes.push(inputNode);
+      this.allNodes.push(inputNode);
+    });
 
-            this.outputNodes.push(outputNode);
-            this.allNodes.push(outputNode);
-        });
+    // Create output nodes
+    level.expectedOutputs.forEach((outputs: Array<any>, index: number) => {
+      const x = 700;
+      const y = startY + index * spacing;
+      const outputNode = createOutputNode(this, x, y, outputs);
+
+      outputNode.node.data("deletable", false);
+
+      this.outputNodes.push(outputNode);
+      this.allNodes.push(outputNode);
+    });
+  }
+
+  destroy(): void {
+    if (this.cy) {
+      this.cy.destroy();
     }
-
-    destroy(): void {
-        if (this.cy) {
-            this.cy.destroy();
-        }
-    }
+  }
 }
 
-export class LevelContext
-{
-    editorContext: GraphEditorContext;
-    animationState: AnimationState | null;
+export class LevelContext {
+  editorContext: GraphEditorContext;
+  animationState: AnimationState | null;
 
-    constructor(editorContex: GraphEditorContext, animationState: AnimationState | null)
-    {
-        this.editorContext = editorContex;
-        this.animationState = animationState;
-    }
+  constructor(
+    editorContex: GraphEditorContext,
+    animationState: AnimationState | null,
+  ) {
+    this.editorContext = editorContex;
+    this.animationState = animationState;
+  }
 
-    destroy(): void {
-        this.animationState?.destroy();
-        this.editorContext.destroy();
-    }
+  destroy(): void {
+    this.animationState?.destroy();
+    this.editorContext.destroy();
+  }
 }
