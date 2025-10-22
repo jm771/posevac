@@ -8,6 +8,7 @@ import { SaveLoadControls } from "../components/SaveLoadControls";
 import { GraphEditorContext, LevelContext } from "../editor_context";
 import { createConstantControls } from "../constant_controls";
 import { ComponentType, createNodeFromName } from "../nodes";
+import { EdgeConditionOverlay } from "../components/EdgeConditionOverlay";
 
 function handleDrop(
   levelContext: LevelContext | null,
@@ -87,7 +88,11 @@ export function LevelPage() {
           onDrop={(e: React.DragEvent<HTMLDivElement>) =>
             handleDrop(levelContext, e)
           }
-        ></div>
+        >
+          {levelContext !== null && (
+            <EdgeConditionOverlay cy={levelContext.editorContext.cy} />
+          )}
+        </div>
       </main>
 
       {levelContext !== null && (
