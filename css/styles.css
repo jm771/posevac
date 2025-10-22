@@ -405,3 +405,16 @@ body {
     background-color: #f59600;
     border-color: var(--accent-orange);
 }
+
+.edge-condition-input {
+position: absolute;
+  padding: 4px 8px;
+  fontSize: 12px;
+  border: 2px solid #4fc3f7;
+  borderRadius: 3px;
+  background: #fff;
+  boxShadow: 0 2px 4px rgba(0,0,0,0.3);
+  zIndex: 1000;
+  minWidth: 100px;
+
+}

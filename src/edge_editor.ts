@@ -37,17 +37,6 @@ function showEdgeConditionInput(cy: Core, edge: EdgeSingular): void {
   input.placeholder = "condition...";
   input.className = "edge-condition-input";
 
-  // Styling
-  input.style.position = "absolute";
-  input.style.padding = "4px 8px";
-  input.style.fontSize = "12px";
-  input.style.border = "2px solid #4fc3f7";
-  input.style.borderRadius = "3px";
-  input.style.background = "#fff";
-  input.style.boxShadow = "0 2px 4px rgba(0,0,0,0.3)";
-  input.style.zIndex = "1000";
-  input.style.minWidth = "100px";
-
   // Position the input at the edge midpoint
   updateInputPosition(cy, input, edge);
 
@@ -96,7 +85,7 @@ function showEdgeConditionInput(cy: Core, edge: EdgeSingular): void {
 function updateInputPosition(
   cy: Core,
   input: HTMLInputElement,
-  edge: EdgeSingular,
+  edge: EdgeSingular
 ): void {
   // Get edge midpoint in model coordinates
   const sourcePos = edge.source().position();

@@ -9,6 +9,45 @@ import { GraphEditorContext, LevelContext } from "../editor_context";
 import { createConstantControls } from "../constant_controls";
 import { ComponentType, createNodeFromName } from "../nodes";
 
+function handleDrop(
+  levelContext: LevelContext | null,
+  e: React.DragEvent<HTMLDivElement>
+) {
+  e.preventDefault();
+  if (!e.dataTransfer) return;
+  if (!levelContext) return;
+  const context = levelContext.editorContext;
+
+  const componentType = e.dataTransfer.getData(
+    "component-type"
+  ) as ComponentType;
+  if (!componentType) return;
+
+  const cyBounds = e.currentTarget.getBoundingClientRect();
+  const renderedX = e.clientX - cyBounds.left;
+  const renderedY = e.clientY - cyBounds.top;
+
+  const pan = context.cy.pan();
+  const zoom = context.cy.zoom();
+  const modelX = (renderedX - pan.x) / zoom;
+  const modelY = (renderedY - pan.y) / zoom;
+
+  const newNode = createNodeFromName(context, componentType, modelX, modelY);
+
+  context.allNodes.push(newNode);
+
+  // Create controls for constant nodes
+  // TODO: This seems silly
+  if (componentType === "constant") {
+    createConstantControls(newNode.node, context.cy);
+  }
+}
+
+function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "copy";
+}
+
 export function LevelPage() {
   const { levelId } = useParams<{ levelId: string }>();
   if (levelId === undefined) {
@@ -44,49 +83,10 @@ export function LevelPage() {
       <main className="canvas-container">
         <div
           id="cy"
-          onDragOver={(e: React.DragEvent<HTMLDivElement>) => {
-            console.log("drag over");
-            e.preventDefault();
-            // if (e.dataTransfer) {
-            e.dataTransfer.dropEffect = "copy";
-            // }
-          }}
-          onDrop={(e: React.DragEvent<HTMLDivElement>) => {
-            console.log("drop start");
-            e.preventDefault();
-            if (!e.dataTransfer) return;
-            if (!levelContext) return;
-            const context = levelContext.editorContext;
-
-            const componentType = e.dataTransfer.getData(
-              "component-type"
-            ) as ComponentType;
-            if (!componentType) return;
-
-            const cyBounds = e.currentTarget.getBoundingClientRect();
-            const renderedX = e.clientX - cyBounds.left;
-            const renderedY = e.clientY - cyBounds.top;
-
-            const pan = context.cy.pan();
-            const zoom = context.cy.zoom();
-            const modelX = (renderedX - pan.x) / zoom;
-            const modelY = (renderedY - pan.y) / zoom;
-
-            const newNode = createNodeFromName(
-              context,
-              componentType,
-              modelX,
-              modelY
-            );
-
-            context.allNodes.push(newNode);
-
-            // Create controls for constant nodes
-            // TODO: This seems silly
-            if (componentType === "constant") {
-              createConstantControls(newNode.node, context.cy);
-            }
-          }}
+          onDragOver={handleDragOver}
+          onDrop={(e: React.DragEvent<HTMLDivElement>) =>
+            handleDrop(levelContext, e)
+          }
         ></div>
       </main>
 
