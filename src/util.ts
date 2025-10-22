@@ -5,3 +5,9 @@ export function getOrThrow<K, V>(map: Map<K, V>, key: K): V {
   }
   return value;
 }
+
+export function Assert(condition: boolean, message: string = "") {
+  if (!condition) {
+    throw Error(message);
+  }
+}

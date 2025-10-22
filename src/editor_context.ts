@@ -6,6 +6,10 @@ import { getCytoscapeStyles } from "./styles";
 import { Level } from "./levels";
 import { createInputNode, createOutputNode, CompNode } from "./nodes";
 import { ProgramCounter } from "./program_counter";
+import {
+  makePanZoomState,
+  PanZoomState,
+} from "./components/EdgeConditionOverlay";
 
 // Register the node-html-label extension
 if (typeof cytoscape !== "undefined") {
@@ -115,11 +119,15 @@ export class LevelContext {
   editorContext: GraphEditorContext;
   animationState: AnimationState | null;
 
+  // Hmm - mixing business with UI a bit here:
+  panZoom: PanZoomState;
+
   constructor(
     editorContex: GraphEditorContext,
-    animationState: AnimationState | null,
+    animationState: AnimationState | null
   ) {
     this.editorContext = editorContex;
+    this.panZoom = makePanZoomState(editorContex.cy);
     this.animationState = animationState;
   }
 

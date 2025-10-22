@@ -114,6 +114,7 @@ export function setupEdgeCreation(levelContext: LevelContext): void {
           id: "temp-edge",
           source: sourceNode.id(),
           target: tempTargetId,
+          condition: "",
         },
         classes: "temp",
       }) as EdgeSingular;
@@ -173,7 +174,7 @@ export function setupEdgeCreation(levelContext: LevelContext): void {
         if (sourceType === "output" && targetType === "input") {
           // Check if edge already exists
           const existingEdge = cy.edges(
-            `[source="${sourceNode.id()}"][target="${targetNode.id()}"]`,
+            `[source="${sourceNode.id()}"][target="${targetNode.id()}"]`
           );
 
           if (existingEdge.length > 0) {
@@ -194,7 +195,7 @@ export function setupEdgeCreation(levelContext: LevelContext): void {
         } else {
           // Invalid connection direction
           console.log(
-            "Edges can only go from output terminals to input terminals",
+            "Edges can only go from output terminals to input terminals"
           );
         }
       }

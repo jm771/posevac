@@ -90,7 +90,10 @@ export function LevelPage() {
           }
         >
           {levelContext !== null && (
-            <EdgeConditionOverlay cy={levelContext.editorContext.cy} />
+            <EdgeConditionOverlay
+              cy={levelContext.editorContext.cy}
+              panZoom={levelContext.panZoom}
+            />
           )}
         </div>
       </main>

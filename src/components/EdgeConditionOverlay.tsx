@@ -1,8 +1,7 @@
-import { Core, EdgeSingular, NodeSingular } from "cytoscape";
+import cytoscape, { Core, EdgeSingular } from "cytoscape";
 import React, { useEffect, useRef } from "react";
 import { useState } from "react";
-import assert from "assert";
-
+import { Assert } from "../util";
 // TODO this can get moved somewhere more shared
 class RenderedPosition {
   x: number;
@@ -13,26 +12,64 @@ class RenderedPosition {
   }
 }
 
-function getRenderedPosition(node: NodeSingular): RenderedPosition {
-  const zoom = node.cy().zoom();
-  const pan = node.cy().pan();
-  const renderedX = node.position().x * zoom + pan.x;
-  const renderedY = node.position().y * zoom + pan.y;
+function getRenderedPosition(
+  position: cytoscape.Position,
+  panZoom: PanZoomState
+): RenderedPosition {
+  const renderedX = position.x * panZoom.zoom + panZoom.pan.x;
+  const renderedY = position.y * panZoom.zoom + panZoom.pan.y;
   return new RenderedPosition(renderedX, renderedY);
 }
 
-function midpoint(p1: RenderedPosition, p2: RenderedPosition) {
-  return new RenderedPosition((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
+function midpoint(
+  p1: cytoscape.Position,
+  p2: cytoscape.Position
+): cytoscape.Position {
+  return { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
 }
 
-function getEdgeCenter(edge: EdgeSingular): RenderedPosition {
-  return midpoint(
-    getRenderedPosition(edge.source()),
-    getRenderedPosition(edge.target())
-  );
+function getEdgeCenter(edge: EdgeSingular): cytoscape.Position {
+  return midpoint(edge.source().position(), edge.target().position());
 }
 
-export function EdgeConditionOverlay({ cy }: { cy: Core }) {
+export class PanZoomState {
+  pan: cytoscape.Position;
+  zoom: number;
+
+  constructor(pan = { x: 0, y: 0 }, zoom = 1) {
+    this.pan = pan;
+    this.zoom = zoom;
+  }
+}
+
+export function makePanZoomState(cy: Core): PanZoomState {
+  const [state, setState] = useState<PanZoomState>(new PanZoomState());
+  const updateState = () => {
+    setState(new PanZoomState(cy.pan(), cy.zoom()));
+  };
+
+  updateState();
+  cy.on("zoom pan viewport", updateState);
+
+  return state;
+}
+
+function styleForPosition(position: cytoscape.Position, panZoom: PanZoomState) {
+  const renderedPos = getRenderedPosition(position, panZoom);
+  return {
+    left: renderedPos.x,
+    top: renderedPos.y,
+    transform: `translate(-50%, -50%) scale(${panZoom.zoom})`,
+  };
+}
+
+export function EdgeConditionOverlay({
+  cy,
+  panZoom,
+}: {
+  cy: Core;
+  panZoom: PanZoomState;
+}) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [textValue, setTextValue] = useState<string>("");
   const [selectedEdge, setSelectedEdge] = useState<EdgeSingular | null>(null);
@@ -59,23 +96,27 @@ export function EdgeConditionOverlay({ cy }: { cy: Core }) {
     setSelectedEdge(null);
   });
 
-  cy.on("zoom pan viewport", () => {
-    setSelectedEdge(selectedEdge); // Force update hopefully. Really I should set zoom and pan as dependencies
-  });
+  let updateCommited = false;
 
-  const pos = selectedEdge && getEdgeCenter(selectedEdge);
+  function commitUpdate() {
+    if (updateCommited) return;
+    updateCommited = true;
+    selectedEdge?.data("condition", textValue);
+  }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    assert(inputRef.current);
+    Assert(inputRef.current !== null);
     const input = inputRef.current as HTMLInputElement;
 
     if (e.key === "Enter") {
       input.blur();
     } else if (e.key === "Escape") {
-      setTextValue(selectedEdge?.data("condition"));
+      updateCommited = true;
       input.blur();
     }
   }
+
+  const pos = selectedEdge && getEdgeCenter(selectedEdge);
 
   return (
     selectedEdge && (
@@ -84,20 +125,19 @@ export function EdgeConditionOverlay({ cy }: { cy: Core }) {
         type="text"
         className="edge-condition-input"
         value={textValue}
+        onChange={(e) => setTextValue(e.target.value)}
         placeholder="condition..."
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
-        onInput={() => selectedEdge?.data("condition", inputRef.current?.value)}
+        onFocus={() => {
+          updateCommited = false;
+        }}
         onBlur={() => {
-          selectedEdge?.data("condition", textValue);
+          commitUpdate();
           setTimeout(() => setSelectedEdge(null), 100);
         }}
         onKeyDown={handleKeyDown}
-        style={{
-          left: pos?.x,
-          right: pos?.y,
-          transform: "translate(-50%, -50%)",
-        }}
+        style={styleForPosition(pos!, panZoom)}
       />
     )
   );
