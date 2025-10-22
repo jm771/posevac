@@ -1,10 +1,4 @@
-export type ComponentType =
-  | "plus"
-  | "multiply"
-  | "combine"
-  | "split"
-  | "nop"
-  | "constant";
+import { ComponentType } from "./nodes";
 
 export interface Level {
   id: string;

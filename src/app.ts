@@ -6,7 +6,6 @@ import { initializeConstantControls } from "./constant_controls";
 import { initializeEdgeEditor } from "./edge_editor";
 
 export function startLevel(levelContext: LevelContext): LevelContext {
-//   setupSidebarDragDrop(levelContext.editorContext);
   setupNodeDeletion(levelContext);
   setupEdgeCreation(levelContext);
   setupAnimationControls(levelContext);

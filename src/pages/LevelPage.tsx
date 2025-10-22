@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ComponentType, getLevelById } from "../levels";
 import { useParams } from "react-router";
 import { startLevel } from "../app";
-import { COMPONENT_REGISTRY, EditorSidebar } from "../components/Sidebar";
+import { COMPONENT_REGISTRY, createNode, EditorSidebar } from "../components/Sidebar";
 import { AnimationControls } from "../components/AnimationControls";
 import { SaveLoadControls } from "../components/SaveLoadControls";
 import { GraphEditorContext, LevelContext } from "../editor_context";
@@ -53,7 +53,6 @@ export function LevelPage() {
               onDrop={(e: React.DragEvent<HTMLDivElement>) => {
                 console.log("drop start");
                 e.preventDefault();
-                
                 if (!e.dataTransfer) return;
                 if (!levelContext) return;
                 const context = levelContext.editorContext;
@@ -63,7 +62,6 @@ export function LevelPage() {
                 ) as ComponentType;
                 if (!componentType) return;
         
-                // TODO is this right?
                 const cyBounds = e.currentTarget.getBoundingClientRect();
                 const renderedX = e.clientX - cyBounds.left;
                 const renderedY = e.clientY - cyBounds.top;
@@ -73,6 +71,7 @@ export function LevelPage() {
                 const modelX = (renderedX - pan.x) / zoom;
                 const modelY = (renderedY - pan.y) / zoom;
         
+                context.allNodes.push(createNode(context, modelX, modelY));
                 const component = COMPONENT_REGISTRY.find(
                   (c) => c.type === componentType
                 );

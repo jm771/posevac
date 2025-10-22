@@ -1,6 +1,7 @@
 import { CollectionData, Core, NodeSingular } from "cytoscape";
 import { ProgramCounter } from "./program_counter";
 import { NodeBuildContext } from "./editor_context";
+import { getOrThrow } from "./util";
 
 export type ComponentType =
   | "input"
@@ -469,4 +470,18 @@ export function createConstantNode(
     inputTerminals,
     outputTerminals,
   );
+}
+
+
+export const COMPONENT_REGISTRY: Map<ComponentType, (context: NodeBuildContext, x: number, y: number) => CompNode> = new Map([
+  [ "plus", createPlusNode ],
+  [ "multiply", createMultiplyNode],
+  [ "combine", createCombineNode ],
+  [ "split", createSplitNode ],
+  [ "nop",  createNopNode ],
+  [ "constant",  createConstantNode ],
+]);
+
+export function createNodeFromName(context: NodeBuildContext, type: ComponentType, x: number, y: number) : CompNode {
+    return getOrThrow(COMPONENT_REGISTRY, type)(context, x, y);
 }

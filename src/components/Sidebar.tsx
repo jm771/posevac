@@ -1,48 +1,14 @@
 import cytoscape from "cytoscape";
 import { getCytoscapeStyles } from "../styles";
 import {
-  CompNode,
-  createPlusNode,
-  createMultiplyNode,
-  createCombineNode,
-  createSplitNode,
-  createNopNode,
-  createConstantNode,
+  COMPONENT_REGISTRY,
+  ComponentType,
+  createNodeFromName,
 } from "../nodes";
-import { ComponentType } from "../levels";
-import {
-  GraphEditorContext,
-  LevelContext,
-  NodeBuildContext,
-} from "../editor_context";
-import { createConstantControls } from "../constant_controls";
+import { LevelContext, NodeBuildContext } from "../editor_context";
 import React, { useEffect, useRef } from "react";
 
-// export function setupSidebarDragDrop(context: GraphEditorContext): void {
-//   const componentTemplates = document.querySelectorAll<HTMLElement>(
-//     ".component-template"
-//   );
-
-//   componentTemplates.forEach((template) => {
-//     template.addEventListener("dragstart",
-//   });
-
-//   // Canvas drop zone
-//   const cyContainer = document.getElementById("cy");
-//   if (!cyContainer) return;
-
-//   cyContainer.addEventListener("drop");
-// }
-
-export function SidebarElement({
-  type,
-  func,
-  context,
-}: {
-  type: ComponentType;
-  func: (context: NodeBuildContext, x: number, y: number) => CompNode;
-  context: GraphEditorContext;
-}) {
+export function SidebarElement({ type }: { type: ComponentType }) {
   const divRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -57,7 +23,7 @@ export function SidebarElement({
 
     let context: NodeBuildContext = { cy: previewCy, nodeIdCounter: 0 };
 
-    func(context, 0, 0);
+    createNodeFromName(context, type, 0, 0);
 
     previewCy.fit(undefined, 10);
   }, [divRef]);
@@ -66,15 +32,11 @@ export function SidebarElement({
     <div
       ref={divRef}
       className="component-template"
-      //   data-component-type={type}
       id={`preview-${type}`}
       draggable="true"
-        onDragStart={(e: React.DragEvent<HTMLDivElement>) => {
-        console.log("drag start");
-        // if (e.dataTransfer) {
+      onDragStart={(e: React.DragEvent<HTMLDivElement>) => {
         e.dataTransfer.setData("component-type", type);
         e.dataTransfer.effectAllowed = "copy";
-        // }
       }}
     />
   );
@@ -87,31 +49,16 @@ export function EditorSidebar({
 }) {
   return (
     <div className="components-list">
-      {COMPONENT_REGISTRY.filter(({ type }) =>
-        levelContext.editorContext.level.allowedNodes.includes(type)
-      ).map((entry) => (
-        <SidebarElement
-          key={entry.type}
-          type={entry.type}
-          func={entry.createFunc}
-          context={levelContext.editorContext}
-        />
-      ))}
+      {Array.from(COMPONENT_REGISTRY.keys())
+        .filter((type) =>
+          levelContext.editorContext.level.allowedNodes.includes(type)
+        )
+        .map((type) => (
+          <SidebarElement key={type} type={type} />
+        ))}
     </div>
   );
 }
-
-export const COMPONENT_REGISTRY: {
-  type: ComponentType;
-  createFunc: (context: NodeBuildContext, x: number, y: number) => CompNode;
-}[] = [
-  { type: "plus", createFunc: createPlusNode },
-  { type: "multiply", createFunc: createMultiplyNode },
-  { type: "combine", createFunc: createCombineNode },
-  { type: "split", createFunc: createSplitNode },
-  { type: "nop", createFunc: createNopNode },
-  { type: "constant", createFunc: createConstantNode },
-];
 
 // Setup node dragging to delete
 export function setupNodeDeletion(levelContext: LevelContext): void {
