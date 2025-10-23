@@ -33,7 +33,6 @@ export function LevelSidebar({ levelContext }: { levelContext: LevelContext }) {
       if (node?.deletable) {
         setNodeIsOverBar((isOver) => {
           if (isOver) {
-            console.log("removing");
             context.removeNode(node.getNodeId());
           }
 

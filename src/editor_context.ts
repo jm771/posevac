@@ -43,8 +43,6 @@ export interface NodeBuildContext {
   nodeIdCounter: number;
 }
 
-let i = 0;
-
 export class GraphEditorContext implements NodeBuildContext {
   public cy: Core;
   public level: Level;
@@ -52,13 +50,9 @@ export class GraphEditorContext implements NodeBuildContext {
   public outputNodes: CompNode[] = [];
   public allNodes: CompNode[] = [];
   public nodeIdCounter = 0;
-  id: number;
 
   constructor(level: Level) {
-    console.log("editor context being constructed");
-
     this.level = level;
-    this.id = i++;
 
     const container = document.getElementById("cy");
     if (!container) {
@@ -84,13 +78,6 @@ export class GraphEditorContext implements NodeBuildContext {
 
   private getNodeIndexForNodeId(nodeId: string): number {
     const nodeIndex = this.allNodes.findIndex((n) => n.getNodeId() === nodeId);
-
-    // Assert(
-    //   nodeIndex !== -1,
-    //   `could not find node for id ${nodeId}. MyId=${
-    //     this.id
-    //   } Available were ${this.allNodes.map((x) => x.getNodeId())}`
-    // );
     return nodeIndex;
   }
 
@@ -128,7 +115,6 @@ export class GraphEditorContext implements NodeBuildContext {
       this.allNodes.push(inputNode);
     });
 
-    // Create output nodes
     level.expectedOutputs.forEach((outputs: Array<any>, index: number) => {
       const x = 700;
       const y = startY + index * spacing;

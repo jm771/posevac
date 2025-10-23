@@ -96,7 +96,6 @@ async function advanceCounters(animationState: AnimationState): Promise<void> {
 }
 
 export async function stepForward(levelContext: LevelContext): Promise<void> {
-  console.log("stepping forward");
   if (levelContext.animationState == null) {
     // Doesn't feel amazing - but I guess I do want to start the animation with the foward button.
     levelContext.animationState = new AnimationState(

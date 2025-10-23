@@ -36,12 +36,7 @@ function handleDrop(
 
   const newNode = createNodeFromName(context, componentType, modelX, modelY);
 
-  console.log(
-    `Adding new node with id ${newNode.getNodeId()} to context id ${context.id}`
-  );
   context.allNodes.push(newNode);
-
-  console.log(context.allNodes.map((x) => x.getNodeId()));
 }
 
 function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
