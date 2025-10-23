@@ -12,7 +12,7 @@ import {
   ConstantNodeOverlay,
   initializeNodeLabelStyling,
 } from "../components/ConstantNodeOverlay";
-import { setupEdgeCreation } from "../edge_creation";
+// import { setupEdgeCreation } from "../edge_creation";
 import { CyContainer } from "../components/CyContainer";
 
 function handleDrop(
@@ -73,7 +73,7 @@ export function LevelPage() {
       setPanZoom(new PanZoomState(cy.pan(), cy.zoom()));
     };
     updateState();
-    setupEdgeCreation(newLevelContext);
+    // setupEdgeCreation(newLevelContext);
 
     cy.on("zoom pan viewport", updateState);
 
@@ -88,7 +88,7 @@ export function LevelPage() {
       <div className="container">
         {levelContext !== null && <LevelSidebar levelContext={levelContext} />}
 
-        <CyContainer>
+        <CyContainer levelContext={levelContext}>
           <div
             id="cy"
             onDragOver={handleDragOver}

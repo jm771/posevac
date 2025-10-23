@@ -12,7 +12,8 @@ export function Assert(condition: boolean, message: string = "") {
   }
 }
 
-export function NotNull<T>(val: T | null): T {
+export function NotNull<T>(val: T | null | undefined): T {
   Assert(val !== null, "unexpected null value");
+  Assert(val !== undefined, "unexpected null value");
   return val!;
 }
