@@ -51,3 +51,16 @@ export class PanZoomState {
     this.zoom = zoom;
   }
 }
+
+export function styleForPosition(
+  position: cytoscape.Position,
+  panZoom: PanZoomState
+) {
+  // .renderedPosition() might be the more sane thing  here...
+  const renderedPos = getRenderedPosition(position, panZoom);
+  return {
+    left: renderedPos.x,
+    top: renderedPos.y,
+    transform: `translate(-50%, -50%) scale(${panZoom.zoom})`,
+  };
+}

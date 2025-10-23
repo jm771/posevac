@@ -1,22 +1,12 @@
-import cytoscape, { Core, EdgeSingular } from "cytoscape";
+import { Core, EdgeSingular } from "cytoscape";
 import React, { useEffect, useRef } from "react";
 import { useState } from "react";
 import { Assert } from "../util";
 import {
   getEdgeCenter,
-  getRenderedPosition,
   PanZoomState,
+  styleForPosition,
 } from "../rendered_position";
-
-function styleForPosition(position: cytoscape.Position, panZoom: PanZoomState) {
-  // .renderedPosition() might be the more sandthing here...
-  const renderedPos = getRenderedPosition(position, panZoom);
-  return {
-    left: renderedPos.x,
-    top: renderedPos.y,
-    transform: `translate(-50%, -50%) scale(${panZoom.zoom})`,
-  };
-}
 
 export function EdgeConditionOverlay({
   cy,
