@@ -6,8 +6,6 @@ let tempEdge: EdgeSingular | null = null;
 
 // Setup right-click edge creation/deletion
 export function setupEdgeCreation(levelContext: LevelContext): void {
-  const cy = levelContext.editorContext.cy;
-
   let isRightDragging = false;
   let sourceNode: NodeSingular | null = null;
   let mousePos: Position = { x: 0, y: 0 };
@@ -22,6 +20,7 @@ export function setupEdgeCreation(levelContext: LevelContext): void {
 
   // Track right mouse button down on node using DOM event
   cyContainer.addEventListener("mousedown", function (e: MouseEvent) {
+    const cy = levelContext.editorContext.cy;
     if (e.button === 2) {
       // Right click
       // Get mouse position and check if we're on a node
@@ -77,6 +76,7 @@ export function setupEdgeCreation(levelContext: LevelContext): void {
 
   // Track mouse movement with DOM event
   cyContainer.addEventListener("mousemove", function (e: MouseEvent) {
+    const cy = levelContext.editorContext.cy;
     if (isRightDragging && sourceNode) {
       // Convert screen position to model position
       const cyBounds = cyContainer.getBoundingClientRect();
@@ -123,6 +123,7 @@ export function setupEdgeCreation(levelContext: LevelContext): void {
 
   // Handle mouse up with DOM event
   cyContainer.addEventListener("mouseup", function (e: MouseEvent) {
+    const cy = levelContext.editorContext.cy;
     if (e.button === 2 && isRightDragging) {
       // Right button
       // Clean up temp edge

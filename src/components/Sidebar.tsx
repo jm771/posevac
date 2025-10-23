@@ -7,11 +7,13 @@ import {
 } from "../nodes";
 import { LevelContext, NodeBuildContext } from "../editor_context";
 import React, { useEffect, useRef } from "react";
+import { Assert } from "../util";
 
 export function SidebarElement({ type }: { type: ComponentType }) {
   const divRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    Assert(divRef.current !== null);
     const previewCy = cytoscape({
       container: divRef.current,
       style: getCytoscapeStyles(),
@@ -21,12 +23,12 @@ export function SidebarElement({ type }: { type: ComponentType }) {
       autoungrabify: true,
     });
 
-    let context: NodeBuildContext = { cy: previewCy, nodeIdCounter: 0 };
+    const context: NodeBuildContext = { cy: previewCy, nodeIdCounter: 0 };
 
     createNodeFromName(context, type, 0, 0);
 
     previewCy.fit(undefined, 10);
-  }, [divRef]);
+  }, [divRef, type]);
 
   return (
     <div

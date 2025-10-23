@@ -42,18 +42,6 @@ export class PanZoomState {
   }
 }
 
-export function makePanZoomState(cy: Core): PanZoomState {
-  const [state, setState] = useState<PanZoomState>(new PanZoomState());
-  const updateState = () => {
-    setState(new PanZoomState(cy.pan(), cy.zoom()));
-  };
-
-  updateState();
-  cy.on("zoom pan viewport", updateState);
-
-  return state;
-}
-
 function styleForPosition(position: cytoscape.Position, panZoom: PanZoomState) {
   const renderedPos = getRenderedPosition(position, panZoom);
   return {

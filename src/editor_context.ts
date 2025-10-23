@@ -1,4 +1,4 @@
-// Graph Editor Context - encapsulates all editor state for a level
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import cytoscape, { Core } from "cytoscape";
 // @ts-ignore - no types available
 import nodeHtmlLabel from "cytoscape-node-html-label";
@@ -6,10 +6,6 @@ import { getCytoscapeStyles } from "./styles";
 import { Level } from "./levels";
 import { createInputNode, createOutputNode, CompNode } from "./nodes";
 import { ProgramCounter } from "./program_counter";
-import {
-  makePanZoomState,
-  PanZoomState,
-} from "./components/EdgeConditionOverlay";
 
 // Register the node-html-label extension
 if (typeof cytoscape !== "undefined") {
@@ -66,9 +62,9 @@ export class GraphEditorContext implements NodeBuildContext {
     this.cy = cytoscape({
       container: container,
       style: getCytoscapeStyles(),
-      layout: {
-        name: "preset",
-      },
+      // layout: {
+      //   name: "preset",
+      // },
       minZoom: 0.5,
       maxZoom: 2,
       autoungrabify: false,
@@ -118,16 +114,11 @@ export class GraphEditorContext implements NodeBuildContext {
 export class LevelContext {
   editorContext: GraphEditorContext;
   animationState: AnimationState | null;
-
-  // Hmm - mixing business with UI a bit here:
-  panZoom: PanZoomState;
-
   constructor(
     editorContex: GraphEditorContext,
     animationState: AnimationState | null
   ) {
     this.editorContext = editorContex;
-    this.panZoom = makePanZoomState(editorContex.cy);
     this.animationState = animationState;
   }
 

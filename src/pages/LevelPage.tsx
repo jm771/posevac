@@ -8,7 +8,10 @@ import { SaveLoadControls } from "../components/SaveLoadControls";
 import { GraphEditorContext, LevelContext } from "../editor_context";
 import { createConstantControls } from "../constant_controls";
 import { ComponentType, createNodeFromName } from "../nodes";
-import { EdgeConditionOverlay } from "../components/EdgeConditionOverlay";
+import {
+  EdgeConditionOverlay,
+  PanZoomState,
+} from "../components/EdgeConditionOverlay";
 
 function handleDrop(
   levelContext: LevelContext | null,
@@ -58,12 +61,24 @@ export function LevelPage() {
   const level = getLevelById(levelId);
   const [levelContext, setLevelContext] = useState<LevelContext | null>(null);
 
+  const [panZoom, setPanZoom] = useState<PanZoomState>(new PanZoomState());
+
   useEffect(() => {
-    const levelContext = new LevelContext(new GraphEditorContext(level), null);
-    setLevelContext(levelContext);
-    startLevel(levelContext);
-    return () => levelContext.destroy();
-  }, []);
+    const newLevelContext = new LevelContext(
+      new GraphEditorContext(level),
+      null
+    );
+    setLevelContext(newLevelContext);
+    startLevel(newLevelContext);
+    const cy = newLevelContext.editorContext.cy;
+    const updateState = () => {
+      setPanZoom(new PanZoomState(cy.pan(), cy.zoom()));
+    };
+    updateState();
+    cy.on("zoom pan viewport", updateState);
+
+    return () => newLevelContext.destroy();
+  }, [level]);
 
   return (
     <div className="container">
@@ -92,7 +107,7 @@ export function LevelPage() {
           {levelContext !== null && (
             <EdgeConditionOverlay
               cy={levelContext.editorContext.cy}
-              panZoom={levelContext.panZoom}
+              panZoom={panZoom}
             />
           )}
         </div>
