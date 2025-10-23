@@ -61,7 +61,7 @@ export function EdgeConditionOverlay({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [textValue, setTextValue] = useState<string>("");
   const [selectedEdge, setSelectedEdge] = useState<EdgeSingular | null>(null);
-  const [updateCommited, setUpdateCommitted] = useState<boolean>(false);
+  const [, setUpdateCommitted] = useState<boolean>(false);
 
   useEffect(() => {
     if (selectedEdge) {
