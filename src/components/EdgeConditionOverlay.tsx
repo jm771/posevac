@@ -1,24 +1,19 @@
 import { Core, EdgeSingular, EventObject } from "cytoscape";
-import React, { useEffect, useRef } from "react";
+import React, { useContext, useEffect, useRef } from "react";
 import { useState } from "react";
 import { Assert } from "../util";
 import {
   getEdgeCenter,
-  PanZoomState,
+  PanZoomContext,
   styleForPosition,
 } from "../rendered_position";
 
-export function EdgeConditionOverlay({
-  cy,
-  panZoom,
-}: {
-  cy: Core;
-  panZoom: PanZoomState;
-}) {
+export function EdgeConditionOverlay({ cy }: { cy: Core }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [textValue, setTextValue] = useState<string>("");
   const [selectedEdge, setSelectedEdge] = useState<EdgeSingular | null>(null);
   const [, setUpdateCommitted] = useState<boolean>(false);
+  const panZoom = useContext(PanZoomContext);
 
   function nodeTapHandler() {
     setSelectedEdge(null);

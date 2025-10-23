@@ -1,16 +1,16 @@
-import React from "react";
-import { PanZoomState, styleForPosition } from "../rendered_position";
+import React, { useContext } from "react";
+import { PanZoomContext, styleForPosition } from "../rendered_position";
 import cytoscape from "cytoscape";
 
 export function ProgramCounterComponent({
   position,
   text,
-  panZoom,
 }: {
   position: cytoscape.Position;
   text: string;
-  panZoom: PanZoomState;
 }) {
+  const panZoom = useContext(PanZoomContext);
+
   return (
     <span
       className="pc-box"

@@ -1,5 +1,6 @@
 import cytoscape, { EdgeSingular, NodeSingular } from "cytoscape";
 import { Assert } from "./util";
+import { createContext } from "react";
 
 export class RenderedPosition {
   x: number;
@@ -64,3 +65,5 @@ export function styleForPosition(
     transform: `translate(-50%, -50%) scale(${panZoom.zoom})`,
   };
 }
+
+export const PanZoomContext = createContext<PanZoomState>(new PanZoomState());

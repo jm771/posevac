@@ -9,7 +9,7 @@ import { GraphEditorContext, LevelContext } from "../editor_context";
 import { createConstantControls } from "../constant_controls";
 import { ComponentType, createNodeFromName } from "../nodes";
 import { EdgeConditionOverlay } from "../components/EdgeConditionOverlay";
-import { PanZoomState } from "../rendered_position";
+import { PanZoomContext, PanZoomState } from "../rendered_position";
 
 function handleDrop(
   levelContext: LevelContext | null,
@@ -88,32 +88,31 @@ export function LevelPage() {
   }, [level]);
 
   return (
-    <div className="container">
-      {levelContext !== null && <LevelSidebar levelContext={levelContext} />}
+    <PanZoomContext value={panZoom}>
+      <div className="container">
+        {levelContext !== null && <LevelSidebar levelContext={levelContext} />}
 
-      <main className="canvas-container">
-        <div
-          id="cy"
-          onDragOver={handleDragOver}
-          onDrop={(e: React.DragEvent<HTMLDivElement>) =>
-            handleDrop(levelContext, e)
-          }
-        >
-          {levelContext !== null && (
-            <EdgeConditionOverlay
-              cy={levelContext.editorContext.cy}
-              panZoom={panZoom}
-            />
-          )}
-        </div>
-      </main>
+        <main className="canvas-container">
+          <div
+            id="cy"
+            onDragOver={handleDragOver}
+            onDrop={(e: React.DragEvent<HTMLDivElement>) =>
+              handleDrop(levelContext, e)
+            }
+          >
+            {levelContext !== null && (
+              <EdgeConditionOverlay cy={levelContext.editorContext.cy} />
+            )}
+          </div>
+        </main>
 
-      {levelContext !== null && (
-        <aside className="controls-panel" id="controlsPanel">
-          <AnimationControls levelContext={levelContext} />
-          <SaveLoadControls context={levelContext} />
-        </aside>
-      )}
-    </div>
+        {levelContext !== null && (
+          <aside className="controls-panel" id="controlsPanel">
+            <AnimationControls levelContext={levelContext} />
+            <SaveLoadControls context={levelContext} />
+          </aside>
+        )}
+      </div>
+    </PanZoomContext>
   );
 }
