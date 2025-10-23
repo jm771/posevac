@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import cytoscape, { Core } from "cytoscape";
 // @ts-ignore - no types available
 import nodeHtmlLabel from "cytoscape-node-html-label";
@@ -85,8 +84,6 @@ export class GraphEditorContext implements NodeBuildContext {
       const y = startY + index * spacing;
       const inputNode = createInputNode(this, x, y, inputData);
 
-      inputNode.node.data("deletable", false);
-
       this.inputNodes.push(inputNode);
       this.allNodes.push(inputNode);
     });
@@ -96,8 +93,6 @@ export class GraphEditorContext implements NodeBuildContext {
       const x = 700;
       const y = startY + index * spacing;
       const outputNode = createOutputNode(this, x, y, outputs);
-
-      outputNode.node.data("deletable", false);
 
       this.outputNodes.push(outputNode);
       this.allNodes.push(outputNode);

@@ -1,4 +1,4 @@
-import cytoscape from "cytoscape";
+import cytoscape, { NodeSingular } from "cytoscape";
 import { getCytoscapeStyles } from "../styles";
 import {
   COMPONENT_REGISTRY,
@@ -88,75 +88,27 @@ export function setupNodeDeletion(levelContext: LevelContext): void {
   });
 
   context.cy.on("free", "node", function (evt) {
-    const node = evt.target;
+    const node: NodeSingular = evt.target;
     const renderedPos = node.renderedPosition();
     const sidebarBounds = sidebar.getBoundingClientRect();
     const cyBounds = cyContainer.getBoundingClientRect();
-
-    // Convert node position to viewport coordinates
     const nodeScreenX = cyBounds.left + renderedPos.x;
 
     // Delete node if dropped in sidebar
     if (nodeScreenX < sidebarBounds.right) {
-      const nodeType = node.data("type");
-      // Check if node is deletable (input/output nodes are not deletable)
-      const isDeletable = node.data("deletable") !== false;
-
-      if (!isDeletable) {
-        console.log("This node cannot be deleted");
-        deleteZone.classList.remove("active");
-        return;
-      }
-
-      const nodeId = node.id();
-
-      // Hopefully not needed with proper usage patterns - constant controls should all be children of the node
-      // Remove constant controls if it's a constant node
-      // if (nodeType === 'constant') {
-      //     removeConstantControls(nodeId);
-      // }
-
-      // Remove from userNodes array
+      // Cy will potentially? trigger for the terminals too
+      // we'll just ignore the event if the node isn't in our
+      // compNodes list
       const nodeIndex = context.allNodes.findIndex(
-        (n) => n.getNodeId() === nodeId
+        (n) => n.getNodeId() === node.id()
       );
+
       if (nodeIndex !== -1) {
-        context.allNodes.splice(nodeIndex, 1);
-        console.log(
-          `Removed node from context. Total user nodes: ${context.allNodes.length}`
-        );
-      }
-
-      // If it's a compound node or input/output node or constant node, remove all children first
-      if (
-        nodeType === "compound" ||
-        nodeType === "input" ||
-        nodeType === "output" ||
-        nodeType === "constant"
-      ) {
-        node.children().remove();
-        node.remove();
-      }
-      // If it's a child node (terminal), remove parent too
-      else if (node.parent().length > 0) {
-        const parent = node.parent();
-        const parentId = parent.id();
-
-        // Remove parent from userNodes array
-        const parentIndex = context.allNodes.findIndex(
-          (n) => n.getNodeId() === parentId
-        );
-        if (parentIndex !== -1) {
-          context.allNodes.splice(parentIndex, 1);
-          console.log(
-            `Removed parent node from context. Total user nodes: ${context.allNodes.length}`
-          );
+        const compNode = context.allNodes[nodeIndex];
+        if (compNode.deletable) {
+          compNode.destroy();
+          context.allNodes.splice(nodeIndex, 1);
         }
-
-        parent.children().remove();
-        parent.remove();
-      } else {
-        node.remove();
       }
     }
 

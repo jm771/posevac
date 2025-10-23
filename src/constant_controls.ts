@@ -5,7 +5,7 @@ import { GraphEditorContext } from "./editor_context";
 // let currentEditingNode: NodeSingular | null = null;
 
 export function initializeConstantControls(
-  editorContext: GraphEditorContext,
+  editorContext: GraphEditorContext
 ): void {
   const cy = editorContext.cy;
 
@@ -86,7 +86,7 @@ export function initializeConstantControls(
 
 function showConstantEditor(
   editorContext: GraphEditorContext,
-  node: NodeSingular,
+  node: NodeSingular
 ): void {
   // Get current values
   const currentValue =
@@ -211,7 +211,7 @@ function showConstantEditor(
 function updateEditorPosition(
   cy: Core,
   container: HTMLElement,
-  node: NodeSingular,
+  node: NodeSingular
 ): void {
   // Get node position in model coordinates
   const nodePos = node.position();

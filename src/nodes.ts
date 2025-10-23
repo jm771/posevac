@@ -13,13 +13,16 @@ export type ComponentType =
   | "nop"
   | "constant";
 
+// Honestly this should not exist - will remove later
+export type NodeType = "compound" | "input" | "output" | "constant";
+
 export class EvaluateOutput {
   pcsDestroyed: Array<ProgramCounter>;
   pcsCreated: Array<ProgramCounter>;
 
   constructor(
     pcsDestroyed: Array<ProgramCounter>,
-    pcsCreated: Array<ProgramCounter>,
+    pcsCreated: Array<ProgramCounter>
   ) {
     this.pcsCreated = pcsCreated;
     this.pcsDestroyed = pcsDestroyed;
@@ -86,7 +89,7 @@ class OutputNodeFunction implements NodeFunction {
         "actual: ",
         args[0],
         "match: ",
-        this.outputs[state.i] === args[0],
+        this.outputs[state.i] === args[0]
       );
       state.i++;
     } else {
@@ -111,7 +114,7 @@ class ConstantNodeFunction implements NodeFunction {
 }
 
 export function getTerminalProgramCounters(
-  terminal: NodeSingular,
+  terminal: NodeSingular
 ): Map<string, ProgramCounter> {
   return terminal.data("program_counters");
 }
@@ -122,12 +125,10 @@ function makeTerminals(
   x: number,
   y: number,
   n: number,
-  type: string,
-): NodeSingular[] {
+  type: string
+): NodeSingular[][] {
   if (n == 0) {
-    // Warning - this is "leaked" - probably fine?
-    makeTerminals(cy, nodeId, x, y, 1, "invisible");
-    return [];
+    return [[], makeTerminals(cy, nodeId, x, y, 1, "invisible")[0]];
   }
 
   const minY = -60;
@@ -154,7 +155,7 @@ function makeTerminals(
     terminals.push(terminal);
   }
 
-  return terminals;
+  return [terminals, []];
 }
 
 function makeInputTerminals(
@@ -162,8 +163,8 @@ function makeInputTerminals(
   nodeId: string,
   x: number,
   y: number,
-  n: number,
-): NodeSingular[] {
+  n: number
+): NodeSingular[][] {
   return makeTerminals(cy, nodeId, x - 50, y, n, "input");
 }
 
@@ -172,27 +173,33 @@ function makeOutputTerminals(
   nodeId: string,
   x: number,
   y: number,
-  n: number,
-): NodeSingular[] {
+  n: number
+): NodeSingular[][] {
   return makeTerminals(cy, nodeId, x + 50, y, n, "output");
 }
 
 export class CompNode {
   inputTerminals: NodeSingular[];
   outputTerminals: NodeSingular[];
+  invisibleTerminals: NodeSingular[];
   node: NodeSingular;
   func: NodeFunction;
+  deletable: boolean;
 
   constructor(
     func: NodeFunction,
     node: NodeSingular,
     inputTerminals: NodeSingular[],
     outputTerminals: NodeSingular[],
+    invisibleTerminals: NodeSingular[],
+    deletable: boolean
   ) {
     this.inputTerminals = inputTerminals;
     this.outputTerminals = outputTerminals;
+    this.invisibleTerminals = invisibleTerminals;
     this.node = node;
     this.func = func;
+    this.deletable = deletable;
   }
 
   getNodeId(): string {
@@ -201,6 +208,13 @@ export class CompNode {
 
   makeCleanState(): any {
     return this.func.makeState();
+  }
+
+  destroy() {
+    this.inputTerminals.forEach((n) => n.remove());
+    this.outputTerminals.forEach((n) => n.remove());
+    this.invisibleTerminals.forEach((n) => n.remove());
+    this.node.remove();
   }
 
   evaluate(nodeAnimationState: any): EvaluateOutput {
@@ -220,10 +234,10 @@ export class CompNode {
     }
 
     const funcArgs = this.inputTerminals.map(
-      (t) => getTerminalProgramCounters(t).values().next().value?.contents,
+      (t) => getTerminalProgramCounters(t).values().next().value?.contents
     );
     const result = this.func.evaluate(nodeAnimationState, this.node, funcArgs);
-    let newPcs: Array<ProgramCounter> = [];
+    const newPcs: Array<ProgramCounter> = [];
 
     if (result != undefined) {
       let resultArray;
@@ -249,26 +263,25 @@ export class CompNode {
           return conditionFunc(resultArray[i]);
         });
 
-        for (let edge of filteredEdges) {
-          let newPc = new ProgramCounter(
+        for (const edge of filteredEdges) {
+          const newPc = new ProgramCounter(
             this.outputTerminals[i],
             edge,
-            resultArray[i],
+            resultArray[i]
           );
           getTerminalProgramCounters(this.outputTerminals[i]).set(
             newPc.id,
-            newPc,
+            newPc
           );
           newPcs.push(newPc);
         }
       }
     }
 
-    let rmedPcs: Array<ProgramCounter> = [];
+    const rmedPcs: Array<ProgramCounter> = [];
     this.inputTerminals.forEach((term) => {
       rmedPcs.push(
-        getTerminalProgramCounters(term).values().next()
-          .value as ProgramCounter,
+        getTerminalProgramCounters(term).values().next().value as ProgramCounter
       );
       getTerminalProgramCounters(term).clear();
     });
@@ -282,10 +295,10 @@ function createNode(
   x: number,
   y: number,
   label: string,
-  type: string,
+  type: NodeType,
   inTerminals: number,
   outTerminals: number,
-  func: NodeFunction,
+  func: NodeFunction
 ): CompNode {
   const nodeId = `node-${context.nodeIdCounter++}`;
   context.cy.add({
@@ -300,29 +313,38 @@ function createNode(
 
   const node = context.cy.$(`#${nodeId}`) as NodeSingular;
 
-  const inputTerminals = makeInputTerminals(
+  const [inputTerminals, invisibleIn] = makeInputTerminals(
     context.cy,
     nodeId,
     x,
     y,
-    inTerminals,
+    inTerminals
   );
-  const outputTerminals = makeOutputTerminals(
+  const [outputTerminals, invisibleOut] = makeOutputTerminals(
     context.cy,
     nodeId,
     x,
     y,
-    outTerminals,
+    outTerminals
   );
 
-  return new CompNode(func, node, inputTerminals, outputTerminals);
+  const isDeleteable = !(type == "input" || type == "output");
+
+  return new CompNode(
+    func,
+    node,
+    inputTerminals,
+    outputTerminals,
+    invisibleIn.concat(invisibleOut),
+    isDeleteable
+  );
 }
 
 export function createInputNode(
   context: NodeBuildContext,
   x: number,
   y: number,
-  inputs: Array<any>,
+  inputs: Array<any>
 ): CompNode {
   return createNode(
     context,
@@ -332,7 +354,7 @@ export function createInputNode(
     "input",
     0,
     1,
-    new InputNodeFunction(inputs),
+    new InputNodeFunction(inputs)
   );
 }
 
@@ -340,7 +362,7 @@ export function createOutputNode(
   context: NodeBuildContext,
   x: number,
   y: number,
-  outputs: Array<any>,
+  outputs: Array<any>
 ): CompNode {
   return createNode(
     context,
@@ -350,14 +372,14 @@ export function createOutputNode(
     "output",
     1,
     0,
-    new OutputNodeFunction(outputs),
+    new OutputNodeFunction(outputs)
   );
 }
 
 export function createPlusNode(
   context: NodeBuildContext,
   x: number,
-  y: number,
+  y: number
 ): CompNode {
   return createNode(
     context,
@@ -367,14 +389,14 @@ export function createPlusNode(
     "compound",
     2,
     1,
-    new PureNodeFunction((a: any, b: any) => a + b),
+    new PureNodeFunction((a: any, b: any) => a + b)
   );
 }
 
 export function createMultiplyNode(
   context: NodeBuildContext,
   x: number,
-  y: number,
+  y: number
 ): CompNode {
   return createNode(
     context,
@@ -384,14 +406,14 @@ export function createMultiplyNode(
     "compound",
     2,
     1,
-    new PureNodeFunction((a: any, b: any) => a * b),
+    new PureNodeFunction((a: any, b: any) => a * b)
   );
 }
 
 export function createCombineNode(
   context: NodeBuildContext,
   x: number,
-  y: number,
+  y: number
 ): CompNode {
   return createNode(
     context,
@@ -401,14 +423,14 @@ export function createCombineNode(
     "compound",
     2,
     1,
-    new PureNodeFunction((a: any, b: any) => [a, b]),
+    new PureNodeFunction((a: any, b: any) => [a, b])
   );
 }
 
 export function createSplitNode(
   context: NodeBuildContext,
   x: number,
-  y: number,
+  y: number
 ): CompNode {
   return createNode(
     context,
@@ -418,14 +440,14 @@ export function createSplitNode(
     "compound",
     1,
     2,
-    new PureNodeFunction((a: any) => a),
+    new PureNodeFunction((a: any) => a)
   );
 }
 
 export function createNopNode(
   context: NodeBuildContext,
   x: number,
-  y: number,
+  y: number
 ): CompNode {
   return createNode(
     context,
@@ -435,7 +457,7 @@ export function createNopNode(
     "compound",
     1,
     1,
-    new PureNodeFunction((a: any) => a),
+    new PureNodeFunction((a: any) => a)
   );
 }
 
@@ -444,7 +466,7 @@ export function createConstantNode(
   x: number,
   y: number,
   initialValue: any = 0,
-  initialRepeat: boolean = true,
+  initialRepeat: boolean = true
 ): CompNode {
   const nodeId = `node-${context.nodeIdCounter++}`;
   context.cy.add({
@@ -461,27 +483,48 @@ export function createConstantNode(
 
   const node = context.cy.$(`#${nodeId}`) as NodeSingular;
 
-  const inputTerminals = makeInputTerminals(context.cy, nodeId, x, y, 0);
-  const outputTerminals = makeOutputTerminals(context.cy, nodeId, x, y, 1);
+  const [inputTerminals, invisibleIn] = makeInputTerminals(
+    context.cy,
+    nodeId,
+    x,
+    y,
+    0
+  );
+  const [outputTerminals, invisibleOut] = makeOutputTerminals(
+    context.cy,
+    nodeId,
+    x,
+    y,
+    1
+  );
 
   return new CompNode(
     new ConstantNodeFunction(),
     node,
     inputTerminals,
     outputTerminals,
+    invisibleIn.concat(invisibleOut),
+    true
   );
 }
 
-
-export const COMPONENT_REGISTRY: Map<ComponentType, (context: NodeBuildContext, x: number, y: number) => CompNode> = new Map([
-  [ "plus", createPlusNode ],
-  [ "multiply", createMultiplyNode],
-  [ "combine", createCombineNode ],
-  [ "split", createSplitNode ],
-  [ "nop",  createNopNode ],
-  [ "constant",  createConstantNode ],
+export const COMPONENT_REGISTRY: Map<
+  ComponentType,
+  (context: NodeBuildContext, x: number, y: number) => CompNode
+> = new Map([
+  ["plus", createPlusNode],
+  ["multiply", createMultiplyNode],
+  ["combine", createCombineNode],
+  ["split", createSplitNode],
+  ["nop", createNopNode],
+  ["constant", createConstantNode],
 ]);
 
-export function createNodeFromName(context: NodeBuildContext, type: ComponentType, x: number, y: number) : CompNode {
-    return getOrThrow(COMPONENT_REGISTRY, type)(context, x, y);
+export function createNodeFromName(
+  context: NodeBuildContext,
+  type: ComponentType,
+  x: number,
+  y: number
+): CompNode {
+  return getOrThrow(COMPONENT_REGISTRY, type)(context, x, y);
 }

@@ -15,4 +15,7 @@ export default defineConfig([
   tseslint.configs.recommended,
   pluginReact.configs.flat.recommended,
   pluginReactHooks.configs.flat.recommended,
+  {
+    rules: { "@typescript-eslint/no-explicit-any": "off" },
+  },
 ]);
