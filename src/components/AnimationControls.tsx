@@ -20,7 +20,9 @@ export function AnimationControls({
     }
 
     function positionCallback() {
-      updatePCMarkerForViewportChange(levelContext);
+      // TTODO Need to make this work again if want program counters to follow dragged nodes
+      //
+      // updatePCMarkerForViewportChange(levelContext);
     }
 
     levelContext.editorContext.cy.on("pan zoom", panZoomCallback);
