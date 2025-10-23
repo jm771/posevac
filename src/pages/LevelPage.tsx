@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { getLevelById } from "../levels";
 import { useParams } from "react-router";
 import { startLevel } from "../app";
-import { EditorSidebar } from "../components/Sidebar";
+import { EditorSidebar, setupNodeDeletion } from "../components/Sidebar";
 import { AnimationControls } from "../components/AnimationControls";
 import { SaveLoadControls } from "../components/SaveLoadControls";
 import { GraphEditorContext, LevelContext } from "../editor_context";
@@ -76,10 +76,11 @@ export function LevelPage() {
       setPanZoom(new PanZoomState(cy.pan(), cy.zoom()));
     };
     updateState();
+    startLevel(newLevelContext);
     cy.on("zoom pan viewport", updateState);
 
     // TODO this shouldn't be deferred really - but atm need some HTML to render before this runs
-    setTimeout(() => startLevel(newLevelContext), 100);
+    setTimeout(() => setupNodeDeletion(newLevelContext), 100);
 
     return () => newLevelContext.destroy();
   }, [level]);

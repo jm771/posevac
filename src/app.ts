@@ -5,7 +5,6 @@ import { setupNodeDeletion } from "./components/Sidebar";
 import { initializeConstantControls } from "./constant_controls";
 
 export function startLevel(levelContext: LevelContext): LevelContext {
-  setupNodeDeletion(levelContext);
   setupEdgeCreation(levelContext);
   setupAnimationControls(levelContext);
   initializeConstantControls(levelContext.editorContext);
