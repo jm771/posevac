@@ -61,6 +61,7 @@ export function EdgeConditionOverlay({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [textValue, setTextValue] = useState<string>("");
   const [selectedEdge, setSelectedEdge] = useState<EdgeSingular | null>(null);
+  const [updateCommited, setUpdateCommitted] = useState<boolean>(false);
 
   useEffect(() => {
     if (selectedEdge) {
@@ -84,12 +85,14 @@ export function EdgeConditionOverlay({
     setSelectedEdge(null);
   });
 
-  let updateCommited = false;
-
   function commitUpdate() {
-    if (updateCommited) return;
-    updateCommited = true;
-    selectedEdge?.data("condition", textValue);
+    setUpdateCommitted((x) => {
+      if (!x) {
+        selectedEdge?.data("condition", textValue);
+      }
+
+      return true;
+    });
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -99,7 +102,7 @@ export function EdgeConditionOverlay({
     if (e.key === "Enter") {
       input.blur();
     } else if (e.key === "Escape") {
-      updateCommited = true;
+      setUpdateCommitted(true);
       input.blur();
     }
   }
@@ -117,9 +120,7 @@ export function EdgeConditionOverlay({
         placeholder="condition..."
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
-        onFocus={() => {
-          updateCommited = false;
-        }}
+        onFocus={() => setUpdateCommitted(false)}
         onBlur={() => {
           commitUpdate();
           setTimeout(() => setSelectedEdge(null), 100);
