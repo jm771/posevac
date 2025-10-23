@@ -68,6 +68,7 @@ export function setupNodeDeletion(levelContext: LevelContext): void {
   const sidebar = document.getElementById("sidebar");
   const deleteZone = document.getElementById("deleteZone");
   const cyContainer = document.getElementById("cy");
+  console.log("setting up deletion1111", sidebar, deleteZone, cyContainer);
   if (!sidebar || !deleteZone || !cyContainer) return;
 
   context.cy.on("drag", "node", function (evt) {
@@ -87,7 +88,10 @@ export function setupNodeDeletion(levelContext: LevelContext): void {
     }
   });
 
+  console.log("setting up deletion");
+
   context.cy.on("free", "node", function (evt) {
+    console.log("freed");
     const node: NodeSingular = evt.target;
     const renderedPos = node.renderedPosition();
     const sidebarBounds = sidebar.getBoundingClientRect();
@@ -96,6 +100,7 @@ export function setupNodeDeletion(levelContext: LevelContext): void {
 
     // Delete node if dropped in sidebar
     if (nodeScreenX < sidebarBounds.right) {
+      console.log("deleteLogic");
       // Cy will potentially? trigger for the terminals too
       // we'll just ignore the event if the node isn't in our
       // compNodes list

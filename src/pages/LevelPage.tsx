@@ -68,14 +68,18 @@ export function LevelPage() {
       new GraphEditorContext(level),
       null
     );
+
     setLevelContext(newLevelContext);
-    startLevel(newLevelContext);
+
     const cy = newLevelContext.editorContext.cy;
     const updateState = () => {
       setPanZoom(new PanZoomState(cy.pan(), cy.zoom()));
     };
     updateState();
     cy.on("zoom pan viewport", updateState);
+
+    // TODO this shouldn't be deferred really - but atm need some HTML to render before this runs
+    setTimeout(() => startLevel(newLevelContext), 100);
 
     return () => newLevelContext.destroy();
   }, [level]);
