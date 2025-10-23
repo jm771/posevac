@@ -10,10 +10,6 @@ import {
   createConstantNode,
   CompNode,
 } from "./nodes";
-import {
-  createConstantControls,
-  initializeConstantControls,
-} from "./constant_controls";
 
 /**
  * Serializable graph structure - excludes animation state
@@ -127,10 +123,10 @@ export function exportGraph(context: GraphEditorContext): SerializedGraph {
 
     // Extract the terminal index from the ID
     const sourceMatch = sourceTerminalId.match(
-      new RegExp(`${sourceTerminalType}(\\d+)$`),
+      new RegExp(`${sourceTerminalType}(\\d+)$`)
     );
     const targetMatch = targetTerminalId.match(
-      new RegExp(`${targetTerminalType}(\\d+)$`),
+      new RegExp(`${targetTerminalType}(\\d+)$`)
     );
 
     const sourceIndex = sourceMatch ? parseInt(sourceMatch[1]) : 0;
@@ -163,14 +159,14 @@ export function exportGraph(context: GraphEditorContext): SerializedGraph {
 
 export function importGraph(
   context: GraphEditorContext,
-  serializedGraph: SerializedGraph,
+  serializedGraph: SerializedGraph
 ): void {
   const cy = context.cy;
 
   // Verify level compatibility
   if (serializedGraph.levelId !== context.level.id) {
     throw new Error(
-      `Graph is for level "${serializedGraph.levelId}" but current level is "${context.level.id}"`,
+      `Graph is for level "${serializedGraph.levelId}" but current level is "${context.level.id}"`
     );
   }
 
@@ -188,35 +184,35 @@ export function importGraph(
         newNode = createPlusNode(
           context,
           serializedNode.position.x,
-          serializedNode.position.y,
+          serializedNode.position.y
         );
         break;
       case "multiply":
         newNode = createMultiplyNode(
           context,
           serializedNode.position.x,
-          serializedNode.position.y,
+          serializedNode.position.y
         );
         break;
       case "combine":
         newNode = createCombineNode(
           context,
           serializedNode.position.x,
-          serializedNode.position.y,
+          serializedNode.position.y
         );
         break;
       case "split":
         newNode = createSplitNode(
           context,
           serializedNode.position.x,
-          serializedNode.position.y,
+          serializedNode.position.y
         );
         break;
       case "nop":
         newNode = createNopNode(
           context,
           serializedNode.position.x,
-          serializedNode.position.y,
+          serializedNode.position.y
         );
         break;
       case "constant":
@@ -225,10 +221,11 @@ export function importGraph(
           serializedNode.position.x,
           serializedNode.position.y,
           serializedNode.constantValue ?? 0,
-          serializedNode.constantRepeat ?? true,
+          serializedNode.constantRepeat ?? true
         );
-        // Create UI controls for the constant node
-        createConstantControls(newNode.node, context.cy);
+        // TODO
+        // Create UI controls for the constant nod
+        // createConstantControls(newNode.node, context.cy);
         break;
       default:
         throw new Error(`Unknown node type: ${serializedNode.type}`);
@@ -264,14 +261,14 @@ export function importGraph(
 
     if (!sourceTerminal) {
       console.warn(
-        `Source terminal ${serializedEdge.sourceTerminalIndex} not found on node ${serializedEdge.sourceNodeId}`,
+        `Source terminal ${serializedEdge.sourceTerminalIndex} not found on node ${serializedEdge.sourceNodeId}`
       );
       continue;
     }
 
     if (!targetTerminal) {
       console.warn(
-        `Target terminal ${serializedEdge.targetTerminalIndex} not found on node ${serializedEdge.targetNodeId}`,
+        `Target terminal ${serializedEdge.targetTerminalIndex} not found on node ${serializedEdge.targetNodeId}`
       );
       continue;
     }
@@ -295,16 +292,13 @@ export function importGraph(
   }
 
   console.log(
-    `Imported ${serializedGraph.nodes.length} nodes and ${serializedGraph.edges.length} edges`,
+    `Imported ${serializedGraph.nodes.length} nodes and ${serializedGraph.edges.length} edges`
   );
-
-  // Refresh constant node labels if any were loaded
-  initializeConstantControls(context);
 }
 
 export function downloadGraphAsJSON(
   context: GraphEditorContext,
-  filename?: string,
+  filename?: string
 ): void {
   const serialized = exportGraph(context);
   const json = JSON.stringify(serialized, null, 2);
@@ -327,7 +321,7 @@ export function downloadGraphAsJSON(
  */
 export function loadGraphFromFile(
   context: GraphEditorContext,
-  file: File,
+  file: File
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -364,7 +358,7 @@ export function exportGraphToJSON(context: GraphEditorContext): string {
  */
 export function importGraphFromJSON(
   context: GraphEditorContext,
-  json: string,
+  json: string
 ): void {
   const serialized = JSON.parse(json) as SerializedGraph;
   importGraph(context, serialized);

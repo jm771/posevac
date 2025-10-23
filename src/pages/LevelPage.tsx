@@ -6,10 +6,10 @@ import { LevelSidebar } from "../components/Sidebar";
 import { AnimationControls } from "../components/AnimationControls";
 import { SaveLoadControls } from "../components/SaveLoadControls";
 import { GraphEditorContext, LevelContext } from "../editor_context";
-import { createConstantControls } from "../constant_controls";
 import { ComponentType, createNodeFromName } from "../nodes";
 import { EdgeConditionOverlay } from "../components/EdgeConditionOverlay";
 import { PanZoomContext, PanZoomState } from "../rendered_position";
+import { ConstantNodeOverlay } from "../components/ConstantNodeOverlay";
 
 function handleDrop(
   levelContext: LevelContext | null,
@@ -42,12 +42,6 @@ function handleDrop(
   context.allNodes.push(newNode);
 
   console.log(context.allNodes.map((x) => x.getNodeId()));
-
-  // Create controls for constant nodes
-  // TODO: This seems silly
-  if (componentType === "constant") {
-    createConstantControls(newNode.node, context.cy);
-  }
 }
 
 function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
@@ -101,7 +95,10 @@ export function LevelPage() {
             }
           >
             {levelContext !== null && (
-              <EdgeConditionOverlay cy={levelContext.editorContext.cy} />
+              <>
+                <EdgeConditionOverlay cy={levelContext.editorContext.cy} />
+                <ConstantNodeOverlay cy={levelContext.editorContext.cy} />
+              </>
             )}
           </div>
         </main>

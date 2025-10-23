@@ -227,11 +227,11 @@ function closeConstantEditor(cy: Core, constantInput: HTMLInputElement): void {
   }
 }
 
-export function createConstantControls(_node: NodeSingular, cy: Core): void {
-  // Refresh HTML labels to show the new node
-  // @ts-ignore
-  cy.nodeHtmlLabel("refresh");
-}
+// export function createConstantControls(_node: NodeSingular, cy: Core): void {
+//   // Refresh HTML labels to show the new node
+//   // @ts-ignore
+//   cy.nodeHtmlLabel("refresh");
+// }
 
 /**
  * Remove controls for a specific node
