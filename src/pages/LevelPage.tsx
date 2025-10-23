@@ -2,16 +2,14 @@ import React, { useEffect, useState } from "react";
 import { getLevelById } from "../levels";
 import { useParams } from "react-router";
 import { startLevel } from "../app";
-import { EditorSidebar, setupNodeDeletion } from "../components/Sidebar";
+import { LevelSidebar } from "../components/Sidebar";
 import { AnimationControls } from "../components/AnimationControls";
 import { SaveLoadControls } from "../components/SaveLoadControls";
 import { GraphEditorContext, LevelContext } from "../editor_context";
 import { createConstantControls } from "../constant_controls";
 import { ComponentType, createNodeFromName } from "../nodes";
-import {
-  EdgeConditionOverlay,
-  PanZoomState,
-} from "../components/EdgeConditionOverlay";
+import { EdgeConditionOverlay } from "../components/EdgeConditionOverlay";
+import { PanZoomState } from "../rendered_position";
 
 function handleDrop(
   levelContext: LevelContext | null,
@@ -38,7 +36,12 @@ function handleDrop(
 
   const newNode = createNodeFromName(context, componentType, modelX, modelY);
 
+  console.log(
+    `Adding new node with id ${newNode.getNodeId()} to context id ${context.id}`
+  );
   context.allNodes.push(newNode);
+
+  console.log(context.allNodes.map((x) => x.getNodeId()));
 
   // Create controls for constant nodes
   // TODO: This seems silly
@@ -60,7 +63,6 @@ export function LevelPage() {
 
   const level = getLevelById(levelId);
   const [levelContext, setLevelContext] = useState<LevelContext | null>(null);
-
   const [panZoom, setPanZoom] = useState<PanZoomState>(new PanZoomState());
 
   useEffect(() => {
@@ -79,27 +81,12 @@ export function LevelPage() {
     startLevel(newLevelContext);
     cy.on("zoom pan viewport", updateState);
 
-    // TODO this shouldn't be deferred really - but atm need some HTML to render before this runs
-    setTimeout(() => setupNodeDeletion(newLevelContext), 100);
-
     return () => newLevelContext.destroy();
   }, [level]);
 
   return (
     <div className="container">
-      {levelContext !== null && (
-        <aside className="sidebar" id="sidebar">
-          <div className="level-info">
-            <h2 id="levelName">{level.name}</h2>
-            <p id="levelDescription">{level.description}</p>
-          </div>
-          <h3>Components</h3>
-          <EditorSidebar levelContext={levelContext} />
-          <div className="delete-zone" id="deleteZone">
-            <span>Drop here to delete</span>
-          </div>
-        </aside>
-      )}
+      {levelContext !== null && <LevelSidebar levelContext={levelContext} />}
 
       <main className="canvas-container">
         <div

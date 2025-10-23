@@ -1,122 +1,57 @@
-import cytoscape, { NodeSingular } from "cytoscape";
-import { getCytoscapeStyles } from "../styles";
-import {
-  COMPONENT_REGISTRY,
-  ComponentType,
-  createNodeFromName,
-} from "../nodes";
-import { LevelContext, NodeBuildContext } from "../editor_context";
-import React, { useEffect, useRef } from "react";
-import { Assert } from "../util";
+import { LevelContext } from "../editor_context";
+import React, { useRef, useState } from "react";
+import { ComponentBar } from "./ComponentBar";
+import { DeleteArea } from "./DeleteArea";
+import { CompNode } from "../nodes";
+import { getRenderedPositionOfNode } from "../rendered_position";
 
-export function SidebarElement({ type }: { type: ComponentType }) {
-  const divRef = useRef<HTMLDivElement>(null);
+export function LevelSidebar({ levelContext }: { levelContext: LevelContext }) {
+  const level = levelContext.editorContext.level;
+  const sideBarRef = useRef<HTMLBaseElement | null>(null);
+  const [draggedNode, setDraggedNode] = useState<CompNode | null>(null);
+  const [nodeIsOverBar, setNodeIsOverBar] = useState<boolean>(false);
 
-  useEffect(() => {
-    Assert(divRef.current !== null);
-    const previewCy = cytoscape({
-      container: divRef.current,
-      style: getCytoscapeStyles(),
-      userPanningEnabled: false,
-      userZoomingEnabled: false,
-      boxSelectionEnabled: false,
-      autoungrabify: true,
-    });
+  // Pretty sure this is just that the linter doesn't get this is a callback
+  // eslint-disable-next-line react-hooks/refs
+  levelContext.editorContext.cy.on("drag", "node", (evt) => {
+    const node: CompNode | null = levelContext.editorContext.getCompNodeForNode(
+      evt.target
+    );
 
-    const context: NodeBuildContext = { cy: previewCy, nodeIdCounter: 0 };
+    if (node === null) return;
 
-    createNodeFromName(context, type, 0, 0);
-
-    previewCy.fit(undefined, 10);
-  }, [divRef, type]);
-
-  return (
-    <div
-      ref={divRef}
-      className="component-template"
-      id={`preview-${type}`}
-      draggable="true"
-      onDragStart={(e: React.DragEvent<HTMLDivElement>) => {
-        e.dataTransfer.setData("component-type", type);
-        e.dataTransfer.effectAllowed = "copy";
-      }}
-    />
-  );
-}
-
-export function EditorSidebar({
-  levelContext,
-}: {
-  levelContext: LevelContext;
-}) {
-  return (
-    <div className="components-list">
-      {Array.from(COMPONENT_REGISTRY.keys())
-        .filter((type) =>
-          levelContext.editorContext.level.allowedNodes.includes(type)
-        )
-        .map((type) => (
-          <SidebarElement key={type} type={type} />
-        ))}
-    </div>
-  );
-}
-
-// Setup node dragging to delete
-export function setupNodeDeletion(levelContext: LevelContext): void {
-  const context = levelContext.editorContext;
-  const sidebar = document.getElementById("sidebar");
-  const deleteZone = document.getElementById("deleteZone");
-  const cyContainer = document.getElementById("cy");
-  console.log("setting up deletion1111", sidebar, deleteZone, cyContainer);
-  if (!sidebar || !deleteZone || !cyContainer) return;
-
-  context.cy.on("drag", "node", function (evt) {
-    const node = evt.target;
-    const renderedPos = node.renderedPosition();
-    const sidebarBounds = sidebar.getBoundingClientRect();
-    const cyBounds = cyContainer.getBoundingClientRect();
-
-    // Convert node position to viewport coordinates
-    const nodeScreenX = cyBounds.left + renderedPos.x;
-
-    // Check if node is over sidebar (sidebar is on the left)
-    if (nodeScreenX < sidebarBounds.right) {
-      deleteZone.classList.add("active");
-    } else {
-      deleteZone.classList.remove("active");
-    }
+    setDraggedNode(node);
+    if (!sideBarRef.current) return;
+    const nodePos = getRenderedPositionOfNode(node.node);
+    const sidebarBounds = sideBarRef.current!.getBoundingClientRect();
+    setNodeIsOverBar(nodePos.x < sidebarBounds.right);
   });
 
-  console.log("setting up deletion");
+  levelContext.editorContext.cy.on("free", "node", function (evt) {
+    const context = levelContext.editorContext;
+    const node: CompNode | null = context.getCompNodeForNode(evt.target);
 
-  context.cy.on("free", "node", function (evt) {
-    console.log("freed");
-    const node: NodeSingular = evt.target;
-    const renderedPos = node.renderedPosition();
-    const sidebarBounds = sidebar.getBoundingClientRect();
-    const cyBounds = cyContainer.getBoundingClientRect();
-    const nodeScreenX = cyBounds.left + renderedPos.x;
-
-    // Delete node if dropped in sidebar
-    if (nodeScreenX < sidebarBounds.right) {
-      console.log("deleteLogic");
-      // Cy will potentially? trigger for the terminals too
-      // we'll just ignore the event if the node isn't in our
-      // compNodes list
-      const nodeIndex = context.allNodes.findIndex(
-        (n) => n.getNodeId() === node.id()
-      );
-
-      if (nodeIndex !== -1) {
-        const compNode = context.allNodes[nodeIndex];
-        if (compNode.deletable) {
-          compNode.destroy();
-          context.allNodes.splice(nodeIndex, 1);
+    if (node?.deletable) {
+      setNodeIsOverBar((isOver) => {
+        if (isOver) {
+          console.log("removing");
+          context.removeNode(node.getNodeId());
         }
-      }
-    }
 
-    deleteZone.classList.remove("active");
+        return false;
+      });
+    }
   });
+
+  return (
+    <aside ref={sideBarRef} className="sidebar" id="sidebar">
+      <div className="level-info">
+        <h2 id="levelName">{level.name}</h2>
+        <p id="levelDescription">{level.description}</p>
+      </div>
+      <h3>Components</h3>
+      <ComponentBar levelContext={levelContext} />
+      <DeleteArea draggedNode={draggedNode} nodeIsOverBar={nodeIsOverBar} />
+    </aside>
+  );
 }

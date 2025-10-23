@@ -2,47 +2,14 @@ import cytoscape, { Core, EdgeSingular } from "cytoscape";
 import React, { useEffect, useRef } from "react";
 import { useState } from "react";
 import { Assert } from "../util";
-// TODO this can get moved somewhere more shared
-class RenderedPosition {
-  x: number;
-  y: number;
-  constructor(x: number, y: number) {
-    this.x = x;
-    this.y = y;
-  }
-}
-
-function getRenderedPosition(
-  position: cytoscape.Position,
-  panZoom: PanZoomState
-): RenderedPosition {
-  const renderedX = position.x * panZoom.zoom + panZoom.pan.x;
-  const renderedY = position.y * panZoom.zoom + panZoom.pan.y;
-  return new RenderedPosition(renderedX, renderedY);
-}
-
-function midpoint(
-  p1: cytoscape.Position,
-  p2: cytoscape.Position
-): cytoscape.Position {
-  return { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
-}
-
-function getEdgeCenter(edge: EdgeSingular): cytoscape.Position {
-  return midpoint(edge.source().position(), edge.target().position());
-}
-
-export class PanZoomState {
-  pan: cytoscape.Position;
-  zoom: number;
-
-  constructor(pan = { x: 0, y: 0 }, zoom = 1) {
-    this.pan = pan;
-    this.zoom = zoom;
-  }
-}
+import {
+  getEdgeCenter,
+  getRenderedPosition,
+  PanZoomState,
+} from "../rendered_position";
 
 function styleForPosition(position: cytoscape.Position, panZoom: PanZoomState) {
+  // .renderedPosition() might be the more sandthing here...
   const renderedPos = getRenderedPosition(position, panZoom);
   return {
     left: renderedPos.x,

@@ -1,15 +1,10 @@
-import React, { useEffect, StrictMode } from "react";
+import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { LevelSelector } from "./pages/LevelSelector";
 import { BrowserRouter, Route, Routes } from "react-router";
 import { LevelPage } from "./pages/LevelPage";
 
 export default function App() {
-  useEffect(() => {
-    console.log("Interactive Graph Tool - Game Mode");
-
-    console.log("Application initialized - Select a level to begin");
-  }, []);
   return (
     <BrowserRouter>
       <Routes>
@@ -23,5 +18,5 @@ export default function App() {
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App />
-  </StrictMode>,
+  </StrictMode>
 );

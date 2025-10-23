@@ -1,10 +1,11 @@
-import cytoscape, { Core } from "cytoscape";
+import cytoscape, { Core, NodeSingular } from "cytoscape";
 // @ts-ignore - no types available
 import nodeHtmlLabel from "cytoscape-node-html-label";
 import { getCytoscapeStyles } from "./styles";
 import { Level } from "./levels";
 import { createInputNode, createOutputNode, CompNode } from "./nodes";
 import { ProgramCounter } from "./program_counter";
+import { Assert } from "./util";
 
 // Register the node-html-label extension
 if (typeof cytoscape !== "undefined") {
@@ -42,6 +43,8 @@ export interface NodeBuildContext {
   nodeIdCounter: number;
 }
 
+let i = 0;
+
 export class GraphEditorContext implements NodeBuildContext {
   public cy: Core;
   public level: Level;
@@ -49,9 +52,13 @@ export class GraphEditorContext implements NodeBuildContext {
   public outputNodes: CompNode[] = [];
   public allNodes: CompNode[] = [];
   public nodeIdCounter = 0;
+  id: number;
 
   constructor(level: Level) {
+    console.log("editor context being constructed");
+
     this.level = level;
+    this.id = i++;
 
     const container = document.getElementById("cy");
     if (!container) {
@@ -73,6 +80,39 @@ export class GraphEditorContext implements NodeBuildContext {
     });
 
     this.initializeInputOutputNodes(level);
+  }
+
+  private getNodeIndexForNodeId(nodeId: string): number {
+    const nodeIndex = this.allNodes.findIndex((n) => n.getNodeId() === nodeId);
+
+    // Assert(
+    //   nodeIndex !== -1,
+    //   `could not find node for id ${nodeId}. MyId=${
+    //     this.id
+    //   } Available were ${this.allNodes.map((x) => x.getNodeId())}`
+    // );
+    return nodeIndex;
+  }
+
+  private getNodeIndexForNode(node: NodeSingular): number {
+    // while (node.isChild()) {
+    //   node = node.parent() as NodeSingular;
+    // }
+
+    return this.getNodeIndexForNodeId(node.id());
+  }
+
+  getCompNodeForNode(node: NodeSingular): CompNode | null {
+    const idx = this.getNodeIndexForNode(node);
+    return idx === -1 ? null : this.allNodes[idx];
+  }
+
+  removeNode(nodeId: string) {
+    const idx = this.getNodeIndexForNodeId(nodeId);
+    Assert(idx !== -1, `node ${nodeId} not found for delete`);
+
+    this.allNodes[idx].destroy();
+    this.allNodes.splice(idx, 1);
   }
 
   private initializeInputOutputNodes(level: Level): void {
