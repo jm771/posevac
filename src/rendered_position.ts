@@ -1,7 +1,7 @@
 import cytoscape, { EdgeSingular, NodeSingular } from "cytoscape";
 import { Assert } from "./util";
 
-class RenderedPosition {
+export class RenderedPosition {
   x: number;
   y: number;
   constructor(x: number, y: number) {

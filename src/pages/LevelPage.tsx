@@ -81,7 +81,10 @@ export function LevelPage() {
     startLevel(newLevelContext);
     cy.on("zoom pan viewport", updateState);
 
-    return () => newLevelContext.destroy();
+    return () => {
+      newLevelContext.destroy();
+      cy.off("zoom pan viewport", updateState);
+    };
   }, [level]);
 
   return (

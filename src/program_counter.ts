@@ -41,14 +41,16 @@ export class ProgramCounter {
   constructor(
     location: NodeSingular,
     edge: EdgeSingular | null,
-    contents: any,
+    contents: any
   ) {
     this._contents = contents;
     this._currentLocation = location;
     this._currentEdge = edge;
     this._position = { x: 0, y: 0 };
     this._angle = 0;
-    this.uniqueId = `pc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    this.uniqueId = `pc-${Date.now()}-${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
 
     // Create DOM elements
     this.createDOMElements();
@@ -104,7 +106,7 @@ export class ProgramCounter {
     // Create SVG element for arrow
     this.svgElement = document.createElementNS(
       "http://www.w3.org/2000/svg",
-      "svg",
+      "svg"
     );
     this.svgElement.setAttribute("class", "pc-arrow-overlay");
     this.svgElement.setAttribute("id", `pcArrow-${this.uniqueId}`);
@@ -113,7 +115,7 @@ export class ProgramCounter {
     // Create arrow line
     this.arrowLine = document.createElementNS(
       "http://www.w3.org/2000/svg",
-      "line",
+      "line"
     );
     this.arrowLine.setAttribute("stroke", "#ffeb3b");
     this.arrowLine.setAttribute("stroke-width", "3");
@@ -122,7 +124,7 @@ export class ProgramCounter {
     // Create arrow head
     this.arrowHead = document.createElementNS(
       "http://www.w3.org/2000/svg",
-      "polygon",
+      "polygon"
     );
     this.arrowHead.setAttribute("fill", "#ffeb3b");
     this.svgElement.appendChild(this.arrowHead);
@@ -188,7 +190,7 @@ export class ProgramCounter {
   updatePosition(
     arrowTipX: number,
     arrowTipY: number,
-    arrowAngle: number,
+    arrowAngle: number
   ): void {
     // Store position
     this._position = { x: arrowTipX, y: arrowTipY };
@@ -225,7 +227,7 @@ export class ProgramCounter {
 
     this.arrowHead.setAttribute(
       "points",
-      `${x1},${y1} ${x2},${y2} ${x3},${y3}`,
+      `${x1},${y1} ${x2},${y2} ${x3},${y3}`
     );
   }
 
@@ -248,7 +250,7 @@ export class ProgramCounter {
    */
   private animateAlongPath(
     waypoints: Waypoint[],
-    duration: number,
+    duration: number
   ): Promise<void> {
     return new Promise((resolve) => {
       if (!waypoints || waypoints.length === 0) {
@@ -271,7 +273,7 @@ export class ProgramCounter {
           this.updatePosition(
             waypoints[0].x,
             waypoints[0].y,
-            waypoints[0].angle,
+            waypoints[0].angle
           );
           resolve();
           return;
@@ -352,7 +354,7 @@ export class ProgramCounter {
   async animateMoveToNode(
     startPosition: NodeSingular,
     target: NodeSingular,
-    stepDuration: number = 200,
+    stepDuration: number = 200
   ) {
     if (this.isAnimating) {
       throw new Error("Program counter is already animating");
@@ -371,7 +373,7 @@ export class ProgramCounter {
       const angleToOutput =
         (Math.atan2(
           outputScreen.y - currentScreen.y,
-          outputScreen.x - currentScreen.x,
+          outputScreen.x - currentScreen.x
         ) *
           180) /
         Math.PI;

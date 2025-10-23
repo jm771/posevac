@@ -1,9 +1,10 @@
 import { LevelContext } from "../editor_context";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ComponentBar } from "./ComponentBar";
 import { DeleteArea } from "./DeleteArea";
 import { CompNode } from "../nodes";
 import { getRenderedPositionOfNode } from "../rendered_position";
+import { EventObject } from "cytoscape";
 
 export function LevelSidebar({ levelContext }: { levelContext: LevelContext }) {
   const level = levelContext.editorContext.level;
@@ -11,37 +12,44 @@ export function LevelSidebar({ levelContext }: { levelContext: LevelContext }) {
   const [draggedNode, setDraggedNode] = useState<CompNode | null>(null);
   const [nodeIsOverBar, setNodeIsOverBar] = useState<boolean>(false);
 
-  // Pretty sure this is just that the linter doesn't get this is a callback
-  // eslint-disable-next-line react-hooks/refs
-  levelContext.editorContext.cy.on("drag", "node", (evt) => {
-    const node: CompNode | null = levelContext.editorContext.getCompNodeForNode(
-      evt.target
-    );
+  useEffect(() => {
+    function dragHandler(evt: EventObject) {
+      const node: CompNode | null =
+        levelContext.editorContext.getCompNodeForNode(evt.target);
 
-    if (node === null) return;
+      if (node === null) return;
 
-    setDraggedNode(node);
-    if (!sideBarRef.current) return;
-    const nodePos = getRenderedPositionOfNode(node.node);
-    const sidebarBounds = sideBarRef.current!.getBoundingClientRect();
-    setNodeIsOverBar(nodePos.x < sidebarBounds.right);
-  });
-
-  levelContext.editorContext.cy.on("free", "node", function (evt) {
-    const context = levelContext.editorContext;
-    const node: CompNode | null = context.getCompNodeForNode(evt.target);
-
-    if (node?.deletable) {
-      setNodeIsOverBar((isOver) => {
-        if (isOver) {
-          console.log("removing");
-          context.removeNode(node.getNodeId());
-        }
-
-        return false;
-      });
+      setDraggedNode(node);
+      if (!sideBarRef.current) return;
+      const nodePos = getRenderedPositionOfNode(node.node);
+      const sidebarBounds = sideBarRef.current!.getBoundingClientRect();
+      setNodeIsOverBar(nodePos.x < sidebarBounds.right);
     }
-  });
+
+    function freeHandler(evt: EventObject) {
+      const context = levelContext.editorContext;
+      const node: CompNode | null = context.getCompNodeForNode(evt.target);
+
+      if (node?.deletable) {
+        setNodeIsOverBar((isOver) => {
+          if (isOver) {
+            console.log("removing");
+            context.removeNode(node.getNodeId());
+          }
+
+          return false;
+        });
+      }
+    }
+
+    levelContext.editorContext.cy.on("free", "node", freeHandler);
+    levelContext.editorContext.cy.on("drag", "node", dragHandler);
+
+    return () => {
+      levelContext.editorContext.cy.off("free", "node", freeHandler);
+      levelContext.editorContext.cy.off("drag", "node", dragHandler);
+    };
+  }, [levelContext]);
 
   return (
     <aside ref={sideBarRef} className="sidebar" id="sidebar">

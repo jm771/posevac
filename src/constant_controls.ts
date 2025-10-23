@@ -60,23 +60,6 @@ export function initializeConstantControls(
     showConstantEditor(editorContext, node);
   });
 
-  // Hopefully covered by focus loss?
-  // Click on background to close any open editor
-  // cy.on('tap', (evt) => {
-  //     if (evt.target === cy) {
-  //         closeConstantEditor(editorContext, node);
-  //     }
-  // });
-
-  // Hopefully covered by focus loss?
-  // // Click on other nodes to close editor
-  // cy.on('tap', 'node', (evt) => {
-  //     const node = evt.target as NodeSingular;
-  //     if (node.data('type') !== 'constant') {
-  //         closeConstantEditor();
-  //     }
-  // });
-
   // Refresh HTML labels when data changes
   cy.on("data", 'node[type="constant"]', () => {
     // @ts-ignore

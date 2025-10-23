@@ -1,4 +1,4 @@
-import { Core, EdgeSingular } from "cytoscape";
+import { Core, EdgeSingular, EventObject } from "cytoscape";
 import React, { useEffect, useRef } from "react";
 import { useState } from "react";
 import { Assert } from "../util";
@@ -20,6 +20,31 @@ export function EdgeConditionOverlay({
   const [selectedEdge, setSelectedEdge] = useState<EdgeSingular | null>(null);
   const [, setUpdateCommitted] = useState<boolean>(false);
 
+  function nodeTapHandler() {
+    setSelectedEdge(null);
+  }
+
+  function edgeTapHandler(evt: EventObject) {
+    setSelectedEdge(evt.target as EdgeSingular);
+  }
+
+  useEffect(() => {
+    function tapHandler(evt: EventObject) {
+      if (evt.target === cy) {
+        setSelectedEdge(null);
+      }
+    }
+
+    cy.on("tap", "edge", edgeTapHandler);
+    cy.on("tap", tapHandler);
+    cy.on("tap", "node", nodeTapHandler);
+    return () => {
+      cy.off("tap", "edge", edgeTapHandler);
+      cy.off("tap", tapHandler);
+      cy.off("tap", "node", nodeTapHandler);
+    };
+  }, [cy]);
+
   useEffect(() => {
     if (selectedEdge) {
       inputRef.current?.select();
@@ -27,20 +52,6 @@ export function EdgeConditionOverlay({
       setTextValue(selectedEdge.data("condition"));
     }
   }, [selectedEdge]);
-
-  cy.on("tap", "edge", (evt) => {
-    setSelectedEdge(evt.target as EdgeSingular);
-  });
-
-  cy.on("tap", (evt) => {
-    if (evt.target === cy) {
-      setSelectedEdge(null);
-    }
-  });
-
-  cy.on("tap", "node", () => {
-    setSelectedEdge(null);
-  });
 
   function commitUpdate() {
     setUpdateCommitted((x) => {
