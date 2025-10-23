@@ -17,7 +17,9 @@ function nextStage(stage: Stage): Stage {
 }
 
 // Update PC marker positions when viewport changes (pan/zoom) or nodes move
-function updatePCMarkerForViewportChange(levelContext: LevelContext): void {
+export function updatePCMarkerForViewportChange(
+  levelContext: LevelContext
+): void {
   if (levelContext.animationState === null) {
     throw Error("Null level context");
   }
@@ -37,10 +39,10 @@ function updatePCMarkerForViewportChange(levelContext: LevelContext): void {
 
 async function evaluateFunctions(
   context: GraphEditorContext,
-  animationState: AnimationState,
+  animationState: AnimationState
 ): Promise<void> {
   const evaluations: Array<EvaluateOutput> = context.allNodes.map((node) =>
-    node.evaluate(animationState.nodeAnimationState.get(node.getNodeId())),
+    node.evaluate(animationState.nodeAnimationState.get(node.getNodeId()))
   );
 
   const moveInAnimations = [];
@@ -51,15 +53,15 @@ async function evaluateFunctions(
     });
     moveInAnimations.push(
       ...evaluations[i].pcsDestroyed.map((pc) =>
-        pc.animateMoveToNode(pc.currentLocation, context.allNodes[i].node),
-      ),
+        pc.animateMoveToNode(pc.currentLocation, context.allNodes[i].node)
+      )
     );
   }
 
   await Promise.all(moveInAnimations);
 
   evaluations.forEach((evaluation) =>
-    evaluation.pcsDestroyed.forEach((pc) => pc.destroy()),
+    evaluation.pcsDestroyed.forEach((pc) => pc.destroy())
   );
 
   const moveOutAnimations: Array<Promise<void>> = [];
@@ -69,7 +71,7 @@ async function evaluateFunctions(
       const parentNode = context.allNodes[i].node;
       pc.initializePositionAndShow(parentNode);
       moveOutAnimations.push(
-        pc.animateMoveToNode(parentNode, pc.currentLocation),
+        pc.animateMoveToNode(parentNode, pc.currentLocation)
       );
       animationState.programCounters.set(pc.id, pc);
     });
@@ -85,7 +87,7 @@ async function advanceCounters(animationState: AnimationState): Promise<void> {
     const nextNode = pc.tryAdvance();
     if (nextNode != null) {
       movePromises.push(
-        pc.animateMoveToNode(pc.currentLocation, nextNode, 600),
+        pc.animateMoveToNode(pc.currentLocation, nextNode, 600)
       );
     }
   });
@@ -93,11 +95,12 @@ async function advanceCounters(animationState: AnimationState): Promise<void> {
   await Promise.all(movePromises);
 }
 
-async function stepForward(levelContext: LevelContext): Promise<void> {
+export async function stepForward(levelContext: LevelContext): Promise<void> {
+  console.log("stepping forward");
   if (levelContext.animationState == null) {
     // Doesn't feel amazing - but I guess I do want to start the animation with the foward button.
     levelContext.animationState = new AnimationState(
-      levelContext.editorContext.allNodes,
+      levelContext.editorContext.allNodes
     );
   }
   const animationState: AnimationState = levelContext.animationState;
@@ -125,24 +128,8 @@ async function stepForward(levelContext: LevelContext): Promise<void> {
 }
 
 // Setup animation controls
-export function setupAnimationControls(levelContext: LevelContext): void {
-  const forwardBtn = document.getElementById("forwardBtn");
-  const resetBtn = document.getElementById("resetBtn");
 
-  if (!forwardBtn || !resetBtn) return;
-
-  forwardBtn.addEventListener("click", () => stepForward(levelContext));
-  resetBtn.addEventListener("click", () => resetAnimation(levelContext));
-
-  levelContext.editorContext.cy.on("pan zoom", () =>
-    updatePCMarkerForViewportChange(levelContext),
-  );
-  levelContext.editorContext.cy.on("position", "node", () =>
-    updatePCMarkerForViewportChange(levelContext),
-  );
-}
-
-function resetAnimation(levelContext: LevelContext): void {
+export function resetAnimation(levelContext: LevelContext): void {
   if (levelContext.animationState?.isAnimating) return;
 
   levelContext.animationState?.destroy();

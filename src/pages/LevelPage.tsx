@@ -107,7 +107,7 @@ export function LevelPage() {
 
       {levelContext !== null && (
         <aside className="controls-panel" id="controlsPanel">
-          <AnimationControls />
+          <AnimationControls levelContext={levelContext} />
           <SaveLoadControls context={levelContext} />
         </aside>
       )}
