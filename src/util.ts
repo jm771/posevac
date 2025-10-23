@@ -11,3 +11,8 @@ export function Assert(condition: boolean, message: string = "") {
     throw Error(message);
   }
 }
+
+export function NotNull<T>(val: T | null): T {
+  Assert(val !== null, "unexpected null value");
+  return val!;
+}

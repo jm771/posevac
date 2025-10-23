@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getLevelById } from "../levels";
 import { useParams } from "react-router";
-import { startLevel } from "../app";
 import { LevelSidebar } from "../components/Sidebar";
 import { AnimationControls } from "../components/AnimationControls";
 import { SaveLoadControls } from "../components/SaveLoadControls";
@@ -13,6 +12,8 @@ import {
   ConstantNodeOverlay,
   initializeNodeLabelStyling,
 } from "../components/ConstantNodeOverlay";
+import { setupEdgeCreation } from "../edge_creation";
+import { CyContainer } from "../components/CyContainer";
 
 function handleDrop(
   levelContext: LevelContext | null,
@@ -72,7 +73,8 @@ export function LevelPage() {
       setPanZoom(new PanZoomState(cy.pan(), cy.zoom()));
     };
     updateState();
-    startLevel(newLevelContext);
+    setupEdgeCreation(newLevelContext);
+
     cy.on("zoom pan viewport", updateState);
 
     return () => {
@@ -86,7 +88,7 @@ export function LevelPage() {
       <div className="container">
         {levelContext !== null && <LevelSidebar levelContext={levelContext} />}
 
-        <main className="canvas-container">
+        <CyContainer>
           <div
             id="cy"
             onDragOver={handleDragOver}
@@ -101,7 +103,7 @@ export function LevelPage() {
               </>
             )}
           </div>
-        </main>
+        </CyContainer>
 
         {levelContext !== null && (
           <aside className="controls-panel" id="controlsPanel">
