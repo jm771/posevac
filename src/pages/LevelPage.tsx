@@ -9,7 +9,10 @@ import { GraphEditorContext, LevelContext } from "../editor_context";
 import { ComponentType, createNodeFromName } from "../nodes";
 import { EdgeConditionOverlay } from "../components/EdgeConditionOverlay";
 import { PanZoomContext, PanZoomState } from "../rendered_position";
-import { ConstantNodeOverlay } from "../components/ConstantNodeOverlay";
+import {
+  ConstantNodeOverlay,
+  initializeNodeLabelStyling,
+} from "../components/ConstantNodeOverlay";
 
 function handleDrop(
   levelContext: LevelContext | null,
@@ -63,6 +66,8 @@ export function LevelPage() {
     setLevelContext(newLevelContext);
 
     const cy = newLevelContext.editorContext.cy;
+    initializeNodeLabelStyling(cy);
+
     const updateState = () => {
       setPanZoom(new PanZoomState(cy.pan(), cy.zoom()));
     };

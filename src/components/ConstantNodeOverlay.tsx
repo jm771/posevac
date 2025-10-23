@@ -2,46 +2,40 @@ import { Core, NodeSingular, EventObject } from "cytoscape";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { PanZoomContext, styleForPosition } from "../rendered_position";
 
-export function ConstantNodeOverlay({ cy }: { cy: Core }) {
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const toggleRef = useRef<HTMLButtonElement | null>(null);
-  const [value, setValue] = useState<string>("");
-  const [repeat, setRepeat] = useState<boolean>(true);
-  const [selectedNode, setSelectedNode] = useState<NodeSingular | null>(null);
-  const [originalValue, setOriginalValue] = useState<any>(0);
-  const [originalRepeat, setOriginalRepeat] = useState<boolean>(true);
-  const panZoom = useContext(PanZoomContext);
+export function initializeNodeLabelStyling(cy: Core) {
+  // @ts-ignore - nodeHtmlLabel is added by extension
+  cy.nodeHtmlLabel([
+    {
+      query: 'node[type="constant"]',
+      cssClass: "constant-node-display",
+      tpl: function (data: any) {
+        const value = data.constantValue !== undefined ? data.constantValue : 0;
+        const repeat =
+          data.constantRepeat !== undefined ? data.constantRepeat : true;
+        const modeIcon = repeat ? "∞" : "1×";
+        const modeClass = repeat ? "repeat" : "once";
 
-  // Initialize nodeHtmlLabel for constant nodes
-  useEffect(() => {
-    // @ts-ignore - nodeHtmlLabel is added by extension
-    cy.nodeHtmlLabel([
-      {
-        query: 'node[type="constant"]',
-        halign: "center",
-        valign: "center",
-        halignBox: "center",
-        valignBox: "center",
-        cssClass: "constant-node-display",
-        tpl: function (data: any) {
-          const value =
-            data.constantValue !== undefined ? data.constantValue : 0;
-          const repeat =
-            data.constantRepeat !== undefined ? data.constantRepeat : true;
-          const modeIcon = repeat ? "∞" : "1×";
-          const modeClass = repeat ? "repeat" : "once";
-
-          return `
+        return `
                 <div class="constant-display">
                     <div class="constant-display-value">${value}</div>
                     <div class="constant-display-mode ${modeClass}">${modeIcon}</div>
                 </div>
             `;
-        },
       },
-    ]);
+    },
+  ]);
+}
 
-    // Refresh HTML labels when data changes
+export function ConstantNodeOverlay({ cy }: { cy: Core }) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const toggleRef = useRef<HTMLButtonElement | null>(null);
+  const [selectedNode, setSelectedNode] = useState<NodeSingular | null>(null);
+  const [, setNodeDataVer] = useState<number>(0);
+  const incNodeDataVer = () => setNodeDataVer((x) => x + 1);
+
+  const panZoom = useContext(PanZoomContext);
+
+  useEffect(() => {
     const dataHandler = () => {
       // @ts-ignore
       cy.nodeHtmlLabel("refresh");
@@ -53,22 +47,16 @@ export function ConstantNodeOverlay({ cy }: { cy: Core }) {
     };
   }, [cy]);
 
-  // Set up event listeners for constant node taps
   useEffect(() => {
-    function constantNodeTapHandler(evt: EventObject) {
-      const node = evt.target as NodeSingular;
-      setSelectedNode(node);
+    if (selectedNode) {
+      inputRef.current?.select();
+      inputRef.current?.focus();
     }
+  }, [selectedNode]);
 
+  useEffect(() => {
     function backgroundTapHandler(evt: EventObject) {
       if (evt.target === cy) {
-        setSelectedNode(null);
-      }
-    }
-
-    function otherNodeTapHandler(evt: EventObject) {
-      const node = evt.target as NodeSingular;
-      if (node.data("type") !== "constant") {
         setSelectedNode(null);
       }
     }
@@ -77,67 +65,46 @@ export function ConstantNodeOverlay({ cy }: { cy: Core }) {
       setSelectedNode(null);
     }
 
-    cy.on("tap", 'node[type="constant"]', constantNodeTapHandler);
+    function nodeTapHandler(evt: EventObject) {
+      const node = evt.target as NodeSingular;
+      if (node.data("type") !== "constant") {
+        setSelectedNode(null);
+      } else {
+        setSelectedNode(node);
+      }
+    }
+
     cy.on("tap", backgroundTapHandler);
-    cy.on("tap", "node", otherNodeTapHandler);
+    cy.on("tap", "node", nodeTapHandler);
     cy.on("tap", "edge", edgeTapHandler);
 
     return () => {
-      cy.off("tap", 'node[type="constant"]', constantNodeTapHandler);
       cy.off("tap", backgroundTapHandler);
-      cy.off("tap", "node", otherNodeTapHandler);
+      cy.off("tap", "node", nodeTapHandler);
       cy.off("tap", "edge", edgeTapHandler);
     };
   }, [cy]);
 
-  // Update state when selected node changes
-  useEffect(() => {
-    if (selectedNode) {
-      const currentValue =
-        selectedNode.data("constantValue") !== undefined
-          ? selectedNode.data("constantValue")
-          : 0;
-      const currentRepeat =
-        selectedNode.data("constantRepeat") !== undefined
-          ? selectedNode.data("constantRepeat")
-          : true;
-
-      setValue(String(currentValue));
-      setRepeat(currentRepeat);
-      setOriginalValue(currentValue);
-      setOriginalRepeat(currentRepeat);
-
-      inputRef.current?.select();
-      inputRef.current?.focus();
-    }
-  }, [selectedNode]);
-
   function handleValueChange(e: React.ChangeEvent<HTMLInputElement>) {
     const newValue = e.target.value;
-    setValue(newValue);
-
     let parsedValue: any = newValue;
     const numValue = Number(newValue);
     if (!isNaN(numValue) && newValue.trim() !== "") {
       parsedValue = numValue;
     }
+
     selectedNode?.data("constantValue", parsedValue);
+    incNodeDataVer();
   }
 
   function handleToggleClick(e: React.MouseEvent<HTMLButtonElement>) {
     e.stopPropagation();
-    const newRepeat = !repeat;
-    setRepeat(newRepeat);
-    selectedNode?.data("constantRepeat", newRepeat);
+    selectedNode?.data("constantRepeat", !selectedNode?.data("constantRepeat"));
+    incNodeDataVer();
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") {
-      inputRef.current?.blur();
-    } else if (e.key === "Escape") {
-      // Restore original values
-      selectedNode?.data("constantValue", originalValue);
-      selectedNode?.data("constantRepeat", originalRepeat);
+    if (e.key === "Enter" || e.key === "Escape") {
       inputRef.current?.blur();
     }
   }
@@ -165,17 +132,19 @@ export function ConstantNodeOverlay({ cy }: { cy: Core }) {
           ref={inputRef}
           type="text"
           className="constant-value-input"
-          value={value}
+          value={selectedNode.data("constantValue")}
           onChange={handleValueChange}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
         />
         <button
           ref={toggleRef}
-          className={`constant-toggle-button ${repeat ? "repeat" : "once"}`}
+          className={`constant-toggle-button ${
+            selectedNode.data("constantRepeat") ? "repeat" : "once"
+          }`}
           onClick={handleToggleClick}
         >
-          {repeat ? "REPEAT" : "ONCE"}
+          {selectedNode.data("constantRepeat") ? "REPEAT" : "ONCE"}
         </button>
       </div>
     )
