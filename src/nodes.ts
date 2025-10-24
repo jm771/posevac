@@ -35,9 +35,9 @@ interface NodeFunction {
 }
 
 class PureNodeFunction implements NodeFunction {
-  private func: Function;
+  private func: (a: any) => any;
 
-  constructor(func: Function) {
+  constructor(func: (a: any) => any) {
     this.func = func;
   }
 
