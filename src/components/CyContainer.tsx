@@ -219,7 +219,6 @@ export function CyContainer({
       onMouseUp={mouseUpHandler}
       onContextMenu={(e) => e.preventDefault()}
     >
-      {" "}
       {children}
     </main>
   );

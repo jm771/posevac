@@ -51,14 +51,8 @@ export class GraphEditorContext implements NodeBuildContext {
   public allNodes: CompNode[] = [];
   public nodeIdCounter = 0;
 
-  constructor(level: Level) {
+  constructor(level: Level, container: HTMLElement) {
     this.level = level;
-
-    const container = document.getElementById("cy");
-    if (!container) {
-      throw new Error("Cytoscape container element not found");
-    }
-
     this.cy = cytoscape({
       container: container,
       style: getCytoscapeStyles(),

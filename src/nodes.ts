@@ -14,7 +14,7 @@ export type ComponentType =
   | "constant";
 
 // Honestly this should not exist - will remove later
-export type NodeType = "compound" | "input" | "output" | "constant";
+export type NodeStyle = "compound" | "input" | "output" | "constant";
 
 export class EvaluateOutput {
   pcsDestroyed: Array<ProgramCounter>;
@@ -143,7 +143,7 @@ function makeTerminals(
       data: {
         id: terminalId,
         parent: nodeId,
-        type: `${type}-terminal`,
+        style: `${type}-terminal`,
         terminalType: type,
         program_counters: new Map<string, ProgramCounter>(),
       },
@@ -294,8 +294,9 @@ function createNode(
   context: NodeBuildContext,
   x: number,
   y: number,
+  type: ComponentType,
   label: string,
-  type: NodeType,
+  style: NodeStyle,
   inTerminals: number,
   outTerminals: number,
   func: NodeFunction
@@ -307,6 +308,7 @@ function createNode(
       id: nodeId,
       label: label,
       type: type,
+      style: style,
     },
     position: { x, y },
   });
@@ -328,7 +330,7 @@ function createNode(
     outTerminals
   );
 
-  const isDeleteable = !(type == "input" || type == "output");
+  const isDeleteable = !(style == "input" || style == "output");
 
   return new CompNode(
     func,
@@ -352,6 +354,7 @@ export function createInputNode(
     y,
     "input",
     "input",
+    "input",
     0,
     1,
     new InputNodeFunction(inputs)
@@ -370,6 +373,7 @@ export function createOutputNode(
     y,
     "output",
     "output",
+    "output",
     1,
     0,
     new OutputNodeFunction(outputs)
@@ -385,6 +389,7 @@ export function createPlusNode(
     context,
     x,
     y,
+    "plus",
     "+",
     "compound",
     2,
@@ -402,6 +407,7 @@ export function createMultiplyNode(
     context,
     x,
     y,
+    "multiply",
     "×",
     "compound",
     2,
@@ -420,6 +426,7 @@ export function createCombineNode(
     x,
     y,
     "combine",
+    "combine",
     "compound",
     2,
     1,
@@ -437,6 +444,7 @@ export function createSplitNode(
     x,
     y,
     "split",
+    "split",
     "compound",
     1,
     2,
@@ -453,6 +461,7 @@ export function createNopNode(
     context,
     x,
     y,
+    "plus",
     "+",
     "compound",
     1,
@@ -473,8 +482,9 @@ export function createConstantNode(
     group: "nodes",
     data: {
       id: nodeId,
-      label: "const",
       type: "constant",
+      label: "const",
+      style: "constant",
       constantValue: initialValue,
       constantRepeat: initialRepeat,
     },

@@ -2,13 +2,10 @@
 import { NodeSingular } from "cytoscape";
 import { GraphEditorContext } from "./editor_context";
 import {
-  createPlusNode,
-  createMultiplyNode,
-  createCombineNode,
-  createSplitNode,
-  createNopNode,
   createConstantNode,
   CompNode,
+  createNodeFromName,
+  ComponentType,
 } from "./nodes";
 
 /**
@@ -24,9 +21,8 @@ export interface SerializedGraph {
 
 export interface SerializedNode {
   id: string;
-  type: "plus" | "multiply" | "combine" | "split" | "nop" | "constant";
+  type: ComponentType;
   position: { x: number; y: number };
-  label: string;
   constantValue?: any;
   constantRepeat?: boolean;
 }
@@ -39,62 +35,28 @@ export interface SerializedEdge {
   condition?: string;
 }
 
-/**
- * Export the current graph to a JSON-serializable format
- * Excludes input/output nodes and animation state
- */
 export function exportGraph(context: GraphEditorContext): SerializedGraph {
   const cy = context.cy;
 
   // Get all user-created nodes (exclude input/output nodes and terminals)
   const userNodes = cy.nodes().filter((node) => {
-    const nodeType = node.data("type");
-    return (
-      (nodeType === "compound" || nodeType === "constant") &&
-      !node.data("parent")
-    );
+    const nodeType: ComponentType = node.data("type");
+    return nodeType !== "input" && nodeType !== "output";
   });
 
-  // Serialize nodes
   const serializedNodes: SerializedNode[] = userNodes.map((node) => {
     const nodeSingular = node as NodeSingular;
     const position = nodeSingular.position();
-    const label = nodeSingular.data("label");
     const nodeType = nodeSingular.data("type");
-
-    // Determine node type based on label or node type
-    let type: SerializedNode["type"];
-    if (nodeType === "constant") {
-      type = "constant";
-    } else {
-      switch (label) {
-        case "+":
-          type = "plus";
-          break;
-        case "×":
-          type = "multiply";
-          break;
-        case "combine":
-          type = "combine";
-          break;
-        case "split":
-          type = "split";
-          break;
-        default:
-          type = "nop";
-          break;
-      }
-    }
 
     const serialized: SerializedNode = {
       id: nodeSingular.id(),
-      type: type,
+      type: nodeType,
       position: { x: position.x, y: position.y },
-      label: label,
     };
 
     // Add constant-specific fields
-    if (type === "constant") {
+    if (nodeType === "constant") {
       serialized.constantValue = nodeSingular.data("constantValue");
       serialized.constantRepeat = nodeSingular.data("constantRepeat");
     }
@@ -163,58 +125,20 @@ export function importGraph(
 ): void {
   const cy = context.cy;
 
-  // Verify level compatibility
   if (serializedGraph.levelId !== context.level.id) {
     throw new Error(
       `Graph is for level "${serializedGraph.levelId}" but current level is "${context.level.id}"`
     );
   }
 
-  // Create a mapping from old node IDs to new CompNode instances
   const nodeIdMap = new Map<string, CompNode>();
   context.inputNodes.forEach((n) => nodeIdMap.set(n.getNodeId(), n));
   context.outputNodes.forEach((n) => nodeIdMap.set(n.getNodeId(), n));
 
-  // Recreate nodes
   for (const serializedNode of serializedGraph.nodes) {
     let newNode: CompNode;
 
     switch (serializedNode.type) {
-      case "plus":
-        newNode = createPlusNode(
-          context,
-          serializedNode.position.x,
-          serializedNode.position.y
-        );
-        break;
-      case "multiply":
-        newNode = createMultiplyNode(
-          context,
-          serializedNode.position.x,
-          serializedNode.position.y
-        );
-        break;
-      case "combine":
-        newNode = createCombineNode(
-          context,
-          serializedNode.position.x,
-          serializedNode.position.y
-        );
-        break;
-      case "split":
-        newNode = createSplitNode(
-          context,
-          serializedNode.position.x,
-          serializedNode.position.y
-        );
-        break;
-      case "nop":
-        newNode = createNopNode(
-          context,
-          serializedNode.position.x,
-          serializedNode.position.y
-        );
-        break;
       case "constant":
         newNode = createConstantNode(
           context,
@@ -223,12 +147,15 @@ export function importGraph(
           serializedNode.constantValue ?? 0,
           serializedNode.constantRepeat ?? true
         );
-        // TODO
-        // Create UI controls for the constant nod
-        // createConstantControls(newNode.node, context.cy);
         break;
       default:
-        throw new Error(`Unknown node type: ${serializedNode.type}`);
+        newNode = createNodeFromName(
+          context,
+          serializedNode.type,
+          serializedNode.position.x,
+          serializedNode.position.y
+        );
+        break;
     }
 
     context.allNodes.push(newNode);

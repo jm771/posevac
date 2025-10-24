@@ -5,7 +5,7 @@ export function getCytoscapeStyles(): StylesheetJson {
   return [
     // Start node styles
     {
-      selector: 'node[type="input"]',
+      selector: 'node[style="input"]',
       style: {
         "background-color": "#81c784",
         shape: "roundrectangle",
@@ -23,7 +23,7 @@ export function getCytoscapeStyles(): StylesheetJson {
     },
     // Stop node styles
     {
-      selector: 'node[type="output"]',
+      selector: 'node[style="output"]',
       style: {
         "background-color": "#e57373",
         shape: "roundrectangle",
@@ -46,7 +46,7 @@ export function getCytoscapeStyles(): StylesheetJson {
     },
     // Compound parent node styles
     {
-      selector: 'node[type="compound"]',
+      selector: 'node[style="compound"]',
       style: {
         "background-color": "#2d2d30",
         "border-width": 2,
@@ -62,7 +62,7 @@ export function getCytoscapeStyles(): StylesheetJson {
     },
     // Constant node styles
     {
-      selector: 'node[type="constant"]',
+      selector: 'node[style="constant"]',
       style: {
         "background-color": "#4a4a4a",
         "border-width": 2,
@@ -78,7 +78,7 @@ export function getCytoscapeStyles(): StylesheetJson {
     },
     // Input terminal styles (children of compound)
     {
-      selector: 'node[type="input-terminal"]',
+      selector: 'node[style="input-terminal"]',
       style: {
         "background-color": "#81c784",
         width: 12,
@@ -91,7 +91,7 @@ export function getCytoscapeStyles(): StylesheetJson {
     },
     // Output terminal styles (children of compound)
     {
-      selector: 'node[type="output-terminal"]',
+      selector: 'node[style="output-terminal"]',
       style: {
         "background-color": "#ffb74d",
         width: 12,
@@ -103,7 +103,7 @@ export function getCytoscapeStyles(): StylesheetJson {
       },
     },
     {
-      selector: 'node[type="invisible-terminal"]',
+      selector: 'node[style="invisible-terminal"]',
       style: {
         opacity: 0, // Transparent
         "background-opacity": 0,

@@ -3,7 +3,7 @@ import { downloadGraphAsJSON, loadGraphFromFile } from "../graph_serialization";
 import { LevelContext } from "../editor_context";
 
 function MakeFileSelectedHandler(
-  levelContext: LevelContext,
+  levelContext: LevelContext
 ): (event: React.ChangeEvent<HTMLInputElement>) => Promise<void> {
   return async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -13,7 +13,9 @@ function MakeFileSelectedHandler(
       await loadGraphFromFile(levelContext.editorContext, file);
     } catch (error) {
       alert(
-        `Error loading graph: ${error instanceof Error ? error.message : "Unknown error"}`,
+        `Error loading graph: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
       );
     }
   };
@@ -24,7 +26,9 @@ function downloadGraph(context: LevelContext) {
     downloadGraphAsJSON(context.editorContext);
   } catch (error) {
     alert(
-      `Error saving graph: ${error instanceof Error ? error.message : "Unknown error"}`,
+      `Error saving graph: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
     );
   }
 }

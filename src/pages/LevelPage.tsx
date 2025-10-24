@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { getLevelById } from "../levels";
 import { useParams } from "react-router";
 import { LevelSidebar } from "../components/Sidebar";
@@ -12,8 +12,8 @@ import {
   ConstantNodeOverlay,
   initializeNodeLabelStyling,
 } from "../components/ConstantNodeOverlay";
-// import { setupEdgeCreation } from "../edge_creation";
 import { CyContainer } from "../components/CyContainer";
+import { NotNull } from "../util";
 
 function handleDrop(
   levelContext: LevelContext | null,
@@ -57,10 +57,11 @@ export function LevelPage() {
   const level = getLevelById(levelId);
   const [levelContext, setLevelContext] = useState<LevelContext | null>(null);
   const [panZoom, setPanZoom] = useState<PanZoomState>(new PanZoomState());
+  const cyDivRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const newLevelContext = new LevelContext(
-      new GraphEditorContext(level),
+      new GraphEditorContext(level, NotNull(cyDivRef.current)),
       null
     );
 
@@ -73,13 +74,12 @@ export function LevelPage() {
       setPanZoom(new PanZoomState(cy.pan(), cy.zoom()));
     };
     updateState();
-    // setupEdgeCreation(newLevelContext);
 
     cy.on("zoom pan viewport", updateState);
 
     return () => {
       newLevelContext.destroy();
-      cy.off("zoom pan viewport", updateState);
+      // cy.off("zoom pan viewport", updateState);
     };
   }, [level]);
 
@@ -90,7 +90,8 @@ export function LevelPage() {
 
         <CyContainer levelContext={levelContext}>
           <div
-            id="cy"
+            ref={cyDivRef}
+            className="cy-container"
             onDragOver={handleDragOver}
             onDrop={(e: React.DragEvent<HTMLDivElement>) =>
               handleDrop(levelContext, e)
