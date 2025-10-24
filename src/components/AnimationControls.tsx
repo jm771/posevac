@@ -1,10 +1,7 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router";
-import {
-  resetAnimation,
-  stepForward,
-  updatePCMarkerForViewportChange,
-} from "../animation";
+import { resetAnimation, updatePCMarkerForViewportChange } from "../evaluation";
+import { stepForward } from "../animation";
 import { LevelContext } from "../editor_context";
 
 export function AnimationControls({

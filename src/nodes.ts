@@ -217,7 +217,7 @@ export class CompNode {
     this.node.remove();
   }
 
-  evaluate(nodeAnimationState: any): EvaluateOutput {
+  evaluate(nodeEvaluationState: any): EvaluateOutput {
     for (const term of this.outputTerminals) {
       if (getTerminalProgramCounters(term).size != 0) {
         return new EvaluateOutput([], []);
@@ -236,7 +236,7 @@ export class CompNode {
     const funcArgs = this.inputTerminals.map(
       (t) => getTerminalProgramCounters(t).values().next().value?.contents
     );
-    const result = this.func.evaluate(nodeAnimationState, this.node, funcArgs);
+    const result = this.func.evaluate(nodeEvaluationState, this.node, funcArgs);
     const newPcs: Array<ProgramCounter> = [];
 
     if (result != undefined) {

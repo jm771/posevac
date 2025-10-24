@@ -1,137 +1,146 @@
 import { ProgramCounter } from "./program_counter";
-import { EvaluateOutput } from "./nodes";
-import {
-  AnimationState,
-  GraphEditorContext,
-  LevelContext,
-  Stage,
-} from "./editor_context";
+import { CompNode, EvaluateOutput } from "./nodes";
+import { GraphEditorContext, LevelContext, Stage } from "./editor_context";
+import { NodeSingular } from "cytoscape";
 
-function nextStage(stage: Stage): Stage {
-  switch (stage) {
-    case Stage.AdvanceCounter:
-      return Stage.Evaluate;
-    case Stage.Evaluate:
-      return Stage.AdvanceCounter;
-  }
+type CounterAdvanceEvent = {
+  programCounterId: string;
+  startTerminal: NodeSingular;
+  endTerminal: NodeSingular;
+};
+
+type NodeEvaluateEvent = {
+  node: NodeSingular;
+  inputCounters: ProgramCounter[];
+  outputCounters: ProgramCounter[];
+};
+
+enum EvaluationEvent {
+  Start,
+  End,
 }
 
-// Update PC marker positions when viewport changes (pan/zoom) or nodes move
-export function updatePCMarkerForViewportChange(
-  levelContext: LevelContext
-): void {
-  if (levelContext.animationState === null) {
-    throw Error("Null level context");
-  }
+type CounterAdvanceListener = (e: CounterAdvanceEvent) => void;
+type NodeEvaluateListener = (e: NodeEvaluateEvent) => void;
+type EvaluationEventListener = (e: EvaluationEvent) => void;
 
-  const animationState: AnimationState = levelContext.animationState;
+export type EvaluationListener = {
+  onCounterAdvance: CounterAdvanceListener;
+  onNodeEvaluate: NodeEvaluateListener;
+  onEvaluationEvent: EvaluationEventListener;
+};
 
-  // Only update if animation is initialized and not currently animating
-  if (animationState.programCounters.size === 0 || animationState.isAnimating) {
-    return;
-  }
-
-  // Update all program counters
-  for (const pc of animationState.programCounters.values()) {
-    pc.updateForViewportChange();
-  }
+enum Stage {
+  AdvanceCounter,
+  Evaluate,
 }
 
-async function evaluateFunctions(
-  context: GraphEditorContext,
-  animationState: AnimationState
-): Promise<void> {
-  const evaluations: Array<EvaluateOutput> = context.allNodes.map((node) =>
-    node.evaluate(animationState.nodeAnimationState.get(node.getNodeId()))
-  );
-
-  const moveInAnimations = [];
-
-  for (let i = 0; i < evaluations.length; i++) {
-    evaluations[i].pcsDestroyed.forEach((pc: ProgramCounter) => {
-      animationState.programCounters.delete(pc.id);
-    });
-    moveInAnimations.push(
-      ...evaluations[i].pcsDestroyed.map((pc) =>
-        pc.animateMoveToNode(pc.currentLocation, context.allNodes[i].node)
-      )
-    );
-  }
-
-  await Promise.all(moveInAnimations);
-
-  evaluations.forEach((evaluation) =>
-    evaluation.pcsDestroyed.forEach((pc) => pc.destroy())
-  );
-
-  const moveOutAnimations: Array<Promise<void>> = [];
-
-  for (let i = 0; i < evaluations.length; i++) {
-    evaluations[i].pcsCreated.forEach((pc) => {
-      const parentNode = context.allNodes[i].node;
-      pc.initializePositionAndShow(parentNode);
-      moveOutAnimations.push(
-        pc.animateMoveToNode(parentNode, pc.currentLocation)
-      );
-      animationState.programCounters.set(pc.id, pc);
-    });
-  }
-
-  await Promise.all(moveOutAnimations);
-}
-
-async function advanceCounters(animationState: AnimationState): Promise<void> {
-  // Advance each program counter that can move
-  const movePromises: Array<Promise<void>> = [];
-  animationState.programCounters.forEach((pc, _) => {
-    const nextNode = pc.tryAdvance();
-    if (nextNode != null) {
-      movePromises.push(
-        pc.animateMoveToNode(pc.currentLocation, nextNode, 600)
-      );
+type State =
+  | {
+      stage: Stage.AdvanceCounter;
+      counters: Array<ProgramCounter>;
+      counterIndex: number;
     }
-  });
+  | { stage: Stage.Evaluate; nodeIndex: number };
 
-  await Promise.all(movePromises);
-}
+export class Evaluator {
+  private programCounters: Map<string, ProgramCounter>;
+  private state: State;
+  private nodeEvaluationState: Map<string, any>;
+  private listeners: Map<number, EvaluationListener> = new Map<
+    number,
+    EvaluationListener
+  >();
+  private currentListenerId: number = 0;
+  private nodes: Array<CompNode>;
 
-export async function stepForward(levelContext: LevelContext): Promise<void> {
-  if (levelContext.animationState == null) {
-    // Doesn't feel amazing - but I guess I do want to start the animation with the foward button.
-    levelContext.animationState = new AnimationState(
-      levelContext.editorContext.allNodes
+  registerListener(l: EvaluationListener): number {
+    const id = this.currentListenerId++;
+    this.listeners.set(id, l);
+    return id;
+  }
+
+  deregisterListener(id: number) {
+    this.listeners.delete(id);
+  }
+
+  constructor(nodes: Array<CompNode>) {
+    this.programCounters = new Map<string, ProgramCounter>();
+    this.state = { stage: Stage.Evaluate, nodeIndex: 0 };
+    this.nodeEvaluationState = new Map<string, any>();
+    nodes.forEach((n: CompNode) => {
+      this.nodeEvaluationState.set(n.getNodeId(), n.makeCleanState());
+    });
+    this.nodes = nodes;
+  }
+
+  evaluateNode(node: CompNode): void {
+    const evaluation = node.evaluate(
+      this.nodeEvaluationState.get(node.getNodeId())
     );
-  }
-  const animationState: AnimationState = levelContext.animationState;
-  if (animationState.isAnimating) {
-    console.log("Animation already in progress, ignoring");
-    return;
+
+    evaluation.pcsDestroyed.forEach((pc) => this.programCounters.delete(pc.id));
+    evaluation.pcsCreated.forEach((pc) => this.programCounters.set(pc.id, pc));
+
+    const event: NodeEvaluateEvent = {
+      node: node.node,
+      inputCounters: evaluation.pcsDestroyed,
+      outputCounters: evaluation.pcsCreated,
+    };
+
+    this.listeners.forEach((l) => l.onNodeEvaluate(event));
   }
 
-  animationState.isAnimating = true;
+  advanceCounter(pc: ProgramCounter) {
+    const startTerminal = pc.currentLocation;
+    const nextTerminal = pc.tryAdvance();
 
-  try {
-    switch (animationState.stage) {
-      case Stage.AdvanceCounter:
-        await advanceCounters(animationState);
-        break;
-      case Stage.Evaluate:
-        await evaluateFunctions(levelContext.editorContext, animationState);
-        break;
+    if (nextTerminal != null) {
+      const event: CounterAdvanceEvent = {
+        programCounterId: pc.id,
+        startTerminal: startTerminal,
+        endTerminal: nextTerminal,
+      };
+      this.listeners.forEach((l) => l.onCounterAdvance(event));
     }
-
-    animationState.stage = nextStage(animationState.stage);
-  } finally {
-    animationState.isAnimating = false;
   }
-}
 
-// Setup animation controls
+  step() {
+    switch (this.state.stage) {
+      case Stage.AdvanceCounter: {
+        if (this.state.counterIndex >= this.state.counters.length) {
+          this.state = { stage: Stage.Evaluate, nodeIndex: 0 };
+        } else {
+          this.advanceCounter(this.state.counters[this.state.counterIndex++]);
+        }
 
-export function resetAnimation(levelContext: LevelContext): void {
-  if (levelContext.animationState?.isAnimating) return;
+        break;
+      }
+      case Stage.Evaluate: {
+        if (this.state.nodeIndex >= this.programCounters.size) {
+          this.state = {
+            stage: Stage.AdvanceCounter,
+            counters: Array.from(this.programCounters.values()),
+            counterIndex: 0,
+          };
+        } else {
+          this.evaluateNode(this.nodes[this.state.nodeIndex++]);
+        }
 
-  levelContext.animationState?.destroy();
+        break;
+      }
+    }
+  }
 
-  levelContext.animationState = null; //new AnimationState(levelContext.editorContex.allNodes);
+  stride() {
+    const startStage = this.state.stage;
+
+    while (this.state.stage == startStage) {
+      this.step();
+    }
+  }
+
+  destroy() {
+    this.listeners.forEach((v, _) => v.onEvaluationEvent(EvaluationEvent.End));
+  }
 }

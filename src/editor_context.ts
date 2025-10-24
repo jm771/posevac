@@ -4,38 +4,12 @@ import nodeHtmlLabel from "cytoscape-node-html-label";
 import { getCytoscapeStyles } from "./styles";
 import { Level } from "./levels";
 import { createInputNode, createOutputNode, CompNode } from "./nodes";
-import { ProgramCounter } from "./program_counter";
 import { Assert } from "./util";
+import { Evaluator } from "./evaluation";
 
 // Register the node-html-label extension
 if (typeof cytoscape !== "undefined") {
   nodeHtmlLabel(cytoscape);
-}
-
-export enum Stage {
-  AdvanceCounter = 1,
-  Evaluate,
-}
-
-export class AnimationState {
-  programCounters: Map<string, ProgramCounter>;
-  isAnimating: boolean;
-  stage: Stage;
-  nodeAnimationState: Map<string, any>;
-
-  constructor(nodes: Array<CompNode>) {
-    this.programCounters = new Map<string, ProgramCounter>();
-    this.isAnimating = false;
-    this.stage = Stage.Evaluate;
-    this.nodeAnimationState = new Map<string, any>();
-    nodes.forEach((n: CompNode) => {
-      this.nodeAnimationState.set(n.getNodeId(), n.makeCleanState());
-    });
-  }
-
-  destroy() {
-    this.programCounters.forEach((pc) => pc.destroy());
-  }
 }
 
 export interface NodeBuildContext {
@@ -128,17 +102,17 @@ export class GraphEditorContext implements NodeBuildContext {
 
 export class LevelContext {
   editorContext: GraphEditorContext;
-  animationState: AnimationState | null;
+  evaluator: Evaluator | null;
   constructor(
     editorContex: GraphEditorContext,
-    animationState: AnimationState | null
+    animationState: Evaluator | null
   ) {
     this.editorContext = editorContex;
-    this.animationState = animationState;
+    this.evaluator = animationState;
   }
 
   destroy(): void {
-    this.animationState?.destroy();
+    this.evaluator?.destroy();
     this.editorContext.destroy();
   }
 }
