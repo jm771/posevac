@@ -8,6 +8,7 @@ export function ProgramCounterComponent({
 }: {
   position: cytoscape.Position;
   text: string;
+  angle: number;
 }) {
   const panZoom = useContext(PanZoomContext);
 

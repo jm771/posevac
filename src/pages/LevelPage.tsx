@@ -101,6 +101,7 @@ export function LevelPage() {
               <>
                 <EdgeConditionOverlay cy={levelContext.editorContext.cy} />
                 <ConstantNodeOverlay cy={levelContext.editorContext.cy} />
+                <ProgramCounterOverlay cy={levelContext.editorContext.cy} />
               </>
             )}
           </div>
