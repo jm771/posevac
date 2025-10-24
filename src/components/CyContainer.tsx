@@ -212,6 +212,7 @@ export function CyContainer({
 
   return (
     <main
+      ref={containerRef}
       className="canvas-container"
       onMouseDown={mouseDownHander}
       onMouseMove={mouseMoveHandler}

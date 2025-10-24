@@ -27,8 +27,8 @@ export interface SerializedNode {
   type: "plus" | "multiply" | "combine" | "split" | "nop" | "constant";
   position: { x: number; y: number };
   label: string;
-  constantValue: any;
-  constantRepeat: boolean;
+  constantValue?: any;
+  constantRepeat?: boolean;
 }
 
 export interface SerializedEdge {
