@@ -23,7 +23,8 @@ export function ProgramCounterOverlay({
     const listenerCallbacks: EvaluationListener = {
       onCounterAdvance: (e: CounterAdvanceEvent) => {
         setProgramCounters((pcs) => {
-          const newProgramCounters = { ...pcs };
+          const newProgramCounters = new Map(pcs);
+          // this is mutating the original object but it's... ok
           newProgramCounters.get(e.programCounterId)!.currentLocation =
             e.endTerminal;
 
@@ -32,7 +33,7 @@ export function ProgramCounterOverlay({
       },
       onNodeEvaluate: (e: NodeEvaluateEvent) => {
         setProgramCounters((pcs) => {
-          const newProgramCounters = { ...pcs };
+          const newProgramCounters: Map<string, ProgramCounter> = new Map(pcs);
           e.inputCounters.forEach((pc) => newProgramCounters.delete(pc.id));
           e.outputCounters.forEach((pc) => newProgramCounters.set(pc.id, pc));
           return newProgramCounters;

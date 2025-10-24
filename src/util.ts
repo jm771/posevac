@@ -31,3 +31,16 @@ export function mapIterable<T, U>(
 
   return ret;
 }
+
+export class DefaultMap<K, V> extends Map<K, V> {
+  constructor(private factory: () => V) {
+    super();
+  }
+
+  get(key: K): V {
+    if (!this.has(key)) {
+      this.set(key, this.factory());
+    }
+    return super.get(key)!;
+  }
+}

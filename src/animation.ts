@@ -3,7 +3,10 @@ import { Evaluator } from "./evaluation";
 
 export function stepForward(levelContext: LevelContext) {
   if (levelContext.evaluator == null) {
-    levelContext.evaluator = new Evaluator(levelContext.editorContext.allNodes);
+    levelContext.evaluator = new Evaluator(
+      levelContext.editorContext.allNodes,
+      levelContext.evaluationListenerHolder
+    );
   }
 
   levelContext.evaluator.stride();

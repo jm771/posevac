@@ -1,7 +1,7 @@
 import { CollectionData, Core, NodeSingular } from "cytoscape";
 import { NodeBuildContext } from "./editor_context";
 import { ProgramCounter } from "./program_counter";
-import { getOrThrow } from "./util";
+import { DefaultMap, getOrThrow } from "./util";
 
 export type ComponentType =
   | "input"
@@ -113,12 +113,6 @@ class ConstantNodeFunction implements NodeFunction {
   }
 }
 
-export function getTerminalProgramCounters(
-  terminal: NodeSingular
-): Map<string, ProgramCounter> {
-  return terminal.data("program_counters");
-}
-
 function makeTerminals(
   cy: Core,
   nodeId: string,
@@ -145,7 +139,6 @@ function makeTerminals(
         parent: nodeId,
         style: `${type}-terminal`,
         terminalType: type,
-        program_counters: new Map<string, ProgramCounter>(),
       },
       position: { x: x, y: y + yOffset },
     });
@@ -217,24 +210,28 @@ export class CompNode {
     this.node.remove();
   }
 
-  evaluate(nodeEvaluationState: any): EvaluateOutput {
+  evaluate(
+    nodeEvaluationState: any,
+    terminalToProgramCounters: DefaultMap<string, Map<string, ProgramCounter>>
+  ): EvaluateOutput {
     for (const term of this.outputTerminals) {
-      if (getTerminalProgramCounters(term).size != 0) {
+      if (terminalToProgramCounters.get(term.id()).size != 0) {
         return new EvaluateOutput([], []);
       }
     }
 
     for (const term of this.inputTerminals) {
-      if (getTerminalProgramCounters(term).size > 1) {
+      if (terminalToProgramCounters.get(term.id()).size > 1) {
         throw Error("More than one program counter at input");
       }
-      if (getTerminalProgramCounters(term).size == 0) {
+      if (terminalToProgramCounters.get(term.id()).size == 0) {
         return new EvaluateOutput([], []);
       }
     }
 
     const funcArgs = this.inputTerminals.map(
-      (t) => getTerminalProgramCounters(t).values().next().value?.contents
+      (t) =>
+        terminalToProgramCounters.get(t.id()).values().next().value?.contents
     );
     const result = this.func.evaluate(nodeEvaluationState, this.node, funcArgs);
     const newPcs: Array<ProgramCounter> = [];
@@ -252,9 +249,7 @@ export class CompNode {
       }
 
       for (let i = 0; i < resultArray.length; i++) {
-        // TODO - does this work?
         const edges = this.outputTerminals[i].edgesTo("").toArray();
-        // const edges =  cy.edges(`[source="${this.outputTerminals[i].id()}"]`).toArray()
         const filteredEdges = edges.filter((edge) => {
           if (edge.data("condition") === "") {
             return true;
@@ -269,10 +264,9 @@ export class CompNode {
             edge,
             resultArray[i]
           );
-          getTerminalProgramCounters(this.outputTerminals[i]).set(
-            newPc.id,
-            newPc
-          );
+          terminalToProgramCounters
+            .get(this.outputTerminals[i].id())
+            .set(newPc.id, newPc);
           newPcs.push(newPc);
         }
       }
@@ -280,10 +274,10 @@ export class CompNode {
 
     const rmedPcs: Array<ProgramCounter> = [];
     this.inputTerminals.forEach((term) => {
-      rmedPcs.push(
-        getTerminalProgramCounters(term).values().next().value as ProgramCounter
-      );
-      getTerminalProgramCounters(term).clear();
+      const termPcs = terminalToProgramCounters.get(term.id());
+
+      rmedPcs.push(termPcs.values().next().value as ProgramCounter);
+      termPcs.clear();
     });
 
     return new EvaluateOutput(rmedPcs, newPcs);

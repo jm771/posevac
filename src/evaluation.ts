@@ -1,6 +1,7 @@
 import { NodeSingular } from "cytoscape";
 import { CompNode } from "./nodes";
 import { ProgramCounter } from "./program_counter";
+import { DefaultMap } from "./util";
 
 export type CounterAdvanceEvent = {
   programCounterId: string;
@@ -47,16 +48,26 @@ export interface EvaluationEventSource {
   deregisterListener(id: number): void;
 }
 
-export class Evaluator implements EvaluationEventSource {
-  private programCounters: Map<string, ProgramCounter>;
-  private state: State;
-  private nodeEvaluationState: Map<string, any>;
+export class EvaluationListenerHolder
+  implements EvaluationEventSource, EvaluationListener
+{
+  onCounterAdvance(e: CounterAdvanceEvent) {
+    this.listeners.forEach((l) => l.onCounterAdvance(e));
+  }
+
+  onNodeEvaluate(e: NodeEvaluateEvent) {
+    this.listeners.forEach((l) => l.onNodeEvaluate(e));
+  }
+
+  onEvaluationEvent(e: EvaluationEvent) {
+    this.listeners.forEach((l) => l.onEvaluationEvent(e));
+  }
+
   private listeners: Map<number, EvaluationListener> = new Map<
     number,
     EvaluationListener
   >();
   private currentListenerId: number = 0;
-  private nodes: Array<CompNode>;
 
   registerListener(l: EvaluationListener): number {
     const id = this.currentListenerId++;
@@ -67,11 +78,28 @@ export class Evaluator implements EvaluationEventSource {
   deregisterListener(id: number) {
     this.listeners.delete(id);
   }
+}
 
-  constructor(nodes: Array<CompNode>) {
+export class Evaluator {
+  private programCounters: Map<string, ProgramCounter>;
+  private terminalToProgramCounters: DefaultMap<
+    string,
+    Map<string, ProgramCounter>
+  >;
+  private nodeEvaluationState: Map<string, any>;
+  private state: State;
+  private nodes: Array<CompNode>;
+  private listener: EvaluationListener;
+
+  constructor(nodes: Array<CompNode>, listener: EvaluationListener) {
     this.programCounters = new Map<string, ProgramCounter>();
     this.state = { stage: Stage.Evaluate, nodeIndex: 0 };
     this.nodeEvaluationState = new Map<string, any>();
+    this.listener = listener;
+    this.terminalToProgramCounters = new DefaultMap<
+      string,
+      Map<string, ProgramCounter>
+    >(() => new Map<string, ProgramCounter>());
     nodes.forEach((n: CompNode) => {
       this.nodeEvaluationState.set(n.getNodeId(), n.makeCleanState());
     });
@@ -80,10 +108,13 @@ export class Evaluator implements EvaluationEventSource {
 
   evaluateNode(node: CompNode): void {
     const evaluation = node.evaluate(
-      this.nodeEvaluationState.get(node.getNodeId())
+      this.nodeEvaluationState.get(node.getNodeId()),
+      this.terminalToProgramCounters
     );
 
-    evaluation.pcsDestroyed.forEach((pc) => this.programCounters.delete(pc.id));
+    evaluation.pcsDestroyed.forEach((pc) => {
+      this.programCounters.delete(pc.id);
+    });
     evaluation.pcsCreated.forEach((pc) => this.programCounters.set(pc.id, pc));
 
     const event: NodeEvaluateEvent = {
@@ -92,12 +123,12 @@ export class Evaluator implements EvaluationEventSource {
       outputCounters: evaluation.pcsCreated,
     };
 
-    this.listeners.forEach((l) => l.onNodeEvaluate(event));
+    this.listener.onNodeEvaluate(event);
   }
 
   advanceCounter(pc: ProgramCounter) {
     const startTerminal = pc.currentLocation;
-    const nextTerminal = pc.tryAdvance();
+    const nextTerminal = pc.tryAdvance(this.terminalToProgramCounters);
 
     if (nextTerminal != null) {
       const event: CounterAdvanceEvent = {
@@ -105,7 +136,7 @@ export class Evaluator implements EvaluationEventSource {
         startTerminal: startTerminal,
         endTerminal: nextTerminal,
       };
-      this.listeners.forEach((l) => l.onCounterAdvance(event));
+      this.listener.onCounterAdvance(event);
     }
   }
 
@@ -121,7 +152,7 @@ export class Evaluator implements EvaluationEventSource {
         break;
       }
       case Stage.Evaluate: {
-        if (this.state.nodeIndex >= this.programCounters.size) {
+        if (this.state.nodeIndex >= this.nodes.length) {
           this.state = {
             stage: Stage.AdvanceCounter,
             counters: Array.from(this.programCounters.values()),
@@ -145,6 +176,6 @@ export class Evaluator implements EvaluationEventSource {
   }
 
   destroy() {
-    this.listeners.forEach((v, _) => v.onEvaluationEvent(EvaluationEvent.End));
+    this.listener.onEvaluationEvent(EvaluationEvent.End);
   }
 }

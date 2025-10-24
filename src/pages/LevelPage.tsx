@@ -102,7 +102,9 @@ export function LevelPage() {
               <>
                 <EdgeConditionOverlay cy={levelContext.editorContext.cy} />
                 <ConstantNodeOverlay cy={levelContext.editorContext.cy} />
-                {/* <ProgramCounterOverlay cy={levelContext.editorContext.cy} /> */}
+                <ProgramCounterOverlay
+                  evaluationEventSource={levelContext.evaluationListenerHolder}
+                />
               </>
             )}
           </div>
@@ -112,11 +114,6 @@ export function LevelPage() {
           <aside className="controls-panel" id="controlsPanel">
             <AnimationControls levelContext={levelContext} />
             <SaveLoadControls context={levelContext} />
-            {levelContext.evaluator && (
-              <ProgramCounterOverlay
-                evaluationEventSource={levelContext.evaluator}
-              />
-            )}
           </aside>
         )}
       </div>

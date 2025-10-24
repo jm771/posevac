@@ -492,3 +492,7 @@ body {
 .constant-toggle-button.once {
   background: #ffb74d;
 }
+
+.pc-box {
+    display: flex
+}

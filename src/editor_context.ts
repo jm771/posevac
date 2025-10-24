@@ -1,11 +1,11 @@
 import cytoscape, { Core, NodeSingular } from "cytoscape";
 // @ts-ignore - no types available
 import nodeHtmlLabel from "cytoscape-node-html-label";
-import { getCytoscapeStyles } from "./styles";
+import { EvaluationListenerHolder, Evaluator } from "./evaluation";
 import { Level } from "./levels";
-import { createInputNode, createOutputNode, CompNode } from "./nodes";
+import { CompNode, createInputNode, createOutputNode } from "./nodes";
+import { getCytoscapeStyles } from "./styles";
 import { Assert } from "./util";
-import { Evaluator } from "./evaluation";
 
 // Register the node-html-label extension
 if (typeof cytoscape !== "undefined") {
@@ -102,12 +102,14 @@ export class GraphEditorContext implements NodeBuildContext {
 
 export class LevelContext {
   editorContext: GraphEditorContext;
+  evaluationListenerHolder: EvaluationListenerHolder;
   evaluator: Evaluator | null;
   constructor(
     editorContex: GraphEditorContext,
     animationState: Evaluator | null
   ) {
     this.editorContext = editorContex;
+    this.evaluationListenerHolder = new EvaluationListenerHolder();
     this.evaluator = animationState;
   }
 
