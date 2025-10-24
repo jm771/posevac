@@ -1,6 +1,6 @@
 import { CollectionData, Core, NodeSingular } from "cytoscape";
-import { ProgramCounter } from "./program_counter";
 import { NodeBuildContext } from "./editor_context";
+import { ProgramCounter } from "./program_counter";
 import { getOrThrow } from "./util";
 
 export type ComponentType =
@@ -35,9 +35,9 @@ interface NodeFunction {
 }
 
 class PureNodeFunction implements NodeFunction {
-  private func: (a: any) => any;
+  private func: Function;
 
-  constructor(func: (a: any) => any) {
+  constructor(func: Function) {
     this.func = func;
   }
 

@@ -1,18 +1,19 @@
 import React, { useEffect, useRef, useState } from "react";
-import { getLevelById } from "../levels";
 import { useParams } from "react-router";
-import { LevelSidebar } from "../components/Sidebar";
 import { AnimationControls } from "../components/AnimationControls";
-import { SaveLoadControls } from "../components/SaveLoadControls";
-import { GraphEditorContext, LevelContext } from "../editor_context";
-import { ComponentType, createNodeFromName } from "../nodes";
-import { EdgeConditionOverlay } from "../components/EdgeConditionOverlay";
-import { PanZoomContext, PanZoomState } from "../rendered_position";
 import {
   ConstantNodeOverlay,
   initializeNodeLabelStyling,
 } from "../components/ConstantNodeOverlay";
 import { CyContainer } from "../components/CyContainer";
+import { EdgeConditionOverlay } from "../components/EdgeConditionOverlay";
+import { ProgramCounterOverlay } from "../components/ProgramCounterOverlay";
+import { SaveLoadControls } from "../components/SaveLoadControls";
+import { LevelSidebar } from "../components/Sidebar";
+import { GraphEditorContext, LevelContext } from "../editor_context";
+import { getLevelById } from "../levels";
+import { ComponentType, createNodeFromName } from "../nodes";
+import { PanZoomContext, PanZoomState } from "../rendered_position";
 import { NotNull } from "../util";
 
 function handleDrop(
@@ -101,7 +102,7 @@ export function LevelPage() {
               <>
                 <EdgeConditionOverlay cy={levelContext.editorContext.cy} />
                 <ConstantNodeOverlay cy={levelContext.editorContext.cy} />
-                <ProgramCounterOverlay cy={levelContext.editorContext.cy} />
+                {/* <ProgramCounterOverlay cy={levelContext.editorContext.cy} /> */}
               </>
             )}
           </div>
@@ -111,6 +112,11 @@ export function LevelPage() {
           <aside className="controls-panel" id="controlsPanel">
             <AnimationControls levelContext={levelContext} />
             <SaveLoadControls context={levelContext} />
+            {levelContext.evaluator && (
+              <ProgramCounterOverlay
+                evaluationEventSource={levelContext.evaluator}
+              />
+            )}
           </aside>
         )}
       </div>

@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router";
-import { resetAnimation, updatePCMarkerForViewportChange } from "../evaluation";
-import { stepForward } from "../animation";
+import { resetAnimation, stepForward } from "../animation";
 import { LevelContext } from "../editor_context";
 
 export function AnimationControls({
@@ -13,7 +12,7 @@ export function AnimationControls({
 
   useEffect(() => {
     function panZoomCallback() {
-      updatePCMarkerForViewportChange(levelContext);
+      // updatePCMarkerForViewportChange(levelContext);
     }
 
     function positionCallback() {

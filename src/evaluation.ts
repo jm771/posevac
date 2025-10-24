@@ -1,28 +1,27 @@
-import { ProgramCounter } from "./program_counter";
-import { CompNode, EvaluateOutput } from "./nodes";
-import { GraphEditorContext, LevelContext, Stage } from "./editor_context";
 import { NodeSingular } from "cytoscape";
+import { CompNode } from "./nodes";
+import { ProgramCounter } from "./program_counter";
 
-type CounterAdvanceEvent = {
+export type CounterAdvanceEvent = {
   programCounterId: string;
   startTerminal: NodeSingular;
   endTerminal: NodeSingular;
 };
 
-type NodeEvaluateEvent = {
+export type NodeEvaluateEvent = {
   node: NodeSingular;
   inputCounters: ProgramCounter[];
   outputCounters: ProgramCounter[];
 };
 
-enum EvaluationEvent {
+export enum EvaluationEvent {
   Start,
   End,
 }
 
-type CounterAdvanceListener = (e: CounterAdvanceEvent) => void;
-type NodeEvaluateListener = (e: NodeEvaluateEvent) => void;
-type EvaluationEventListener = (e: EvaluationEvent) => void;
+export type CounterAdvanceListener = (e: CounterAdvanceEvent) => void;
+export type NodeEvaluateListener = (e: NodeEvaluateEvent) => void;
+export type EvaluationEventListener = (e: EvaluationEvent) => void;
 
 export type EvaluationListener = {
   onCounterAdvance: CounterAdvanceListener;
@@ -43,7 +42,12 @@ type State =
     }
   | { stage: Stage.Evaluate; nodeIndex: number };
 
-export class Evaluator {
+export interface EvaluationEventSource {
+  registerListener(l: EvaluationListener): number;
+  deregisterListener(id: number): void;
+}
+
+export class Evaluator implements EvaluationEventSource {
   private programCounters: Map<string, ProgramCounter>;
   private state: State;
   private nodeEvaluationState: Map<string, any>;
