@@ -1,17 +1,17 @@
 enum Matcher {
+  Wild,
   Zero,
   One,
-  Wild,
 }
 
 function matcherMatches(matcher: Matcher, value: unknown) {
   switch (matcher) {
     case Matcher.Wild:
       return true;
-    case Matcher.One:
-      return value === 1;
     case Matcher.Zero:
       return value === 0;
+    case Matcher.One:
+      return value === 1;
   }
 }
 
