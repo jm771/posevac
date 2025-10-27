@@ -1,6 +1,7 @@
 import { Core, EventObject, NodeSingular } from "cytoscape";
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { PanZoomContext, styleForPosition } from "../rendered_position";
+import { ConstantNodeData } from "../nodes";
 
 export function initializeNodeLabelStyling(cy: Core) {
   // @ts-ignore - nodeHtmlLabel is added by extension

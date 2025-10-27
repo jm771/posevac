@@ -52,20 +52,9 @@ export function EdgeConditionOverlay({ cy }: { cy: Core }) {
     incConditionVersion();
   }
 
-  function handleRemoveMatcher(index: number) {
-    if (!selectedEdge) return;
-    const condition = selectedEdge.data("condition") as Condition;
-    const newMatchers = condition.matchers.filter((_, i) => i !== index);
-    selectedEdge.data("condition", new Condition(newMatchers));
-    incConditionVersion();
-
-    // If no matchers left, close the overlay
-    if (newMatchers.length === 0) {
-      setSelectedEdge(null);
-    }
-  }
-
-  function handleCycleMatcher(index: number) {
+  function handleCycleMatcher(index: number, e: React.MouseEvent) {
+    e.stopPropagation();
+    e.preventDefault();
     if (!selectedEdge) return;
     const condition = selectedEdge.data("condition") as Condition;
     const newMatchers = [...condition.matchers];
@@ -75,8 +64,24 @@ export function EdgeConditionOverlay({ cy }: { cy: Core }) {
     incConditionVersion();
   }
 
+  function handleRemoveLastMatcher(e: React.MouseEvent) {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!selectedEdge) return;
+    const condition = selectedEdge.data("condition") as Condition;
+    if (condition.matchers.length === 0) return;
+    const newMatchers = condition.matchers.slice(0, -1);
+    selectedEdge.data("condition", new Condition(newMatchers));
+    incConditionVersion();
+  }
+
+  function handleAddMatcherClick(e: React.MouseEvent) {
+    e.stopPropagation();
+    e.preventDefault();
+    handleAddMatcher();
+  }
+
   const pos = selectedEdge && getEdgeCenter(selectedEdge);
-  console.log(pos);
   const condition = selectedEdge?.data("condition") as Condition;
   return (
     selectedEdge && (
@@ -88,21 +93,22 @@ export function EdgeConditionOverlay({ cy }: { cy: Core }) {
       >
         <div className="matcher-list">
           {condition.matchers.map((matcher, index) => (
-            <span key={index} className="matcher-item">
-              <button
-                className="matcher-button"
-                onClick={() => handleCycleMatcher(index)}
-              >
-                {MATCHER_LABELS[matcher]}
-              </button>
-            </span>
+            <button
+              key={index}
+              className="matcher-button"
+              onClick={(e) => handleCycleMatcher(index, e)}
+            >
+              {MATCHER_LABELS[matcher]}
+            </button>
           ))}
-        </div>
-        <div>
-          <button className="matcher-add-button" onClick={handleAddMatcher}>
+          <button className="matcher-add-button" onClick={handleAddMatcherClick}>
             +
           </button>
-          <button className="matcher-remove-button">-</button>
+          {condition.matchers.length > 0 && (
+            <button className="matcher-remove-button" onClick={handleRemoveLastMatcher}>
+              −
+            </button>
+          )}
         </div>
       </div>
     )
