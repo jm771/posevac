@@ -1,10 +1,10 @@
-import { LevelContext } from "../editor_context";
+import { EventObject } from "cytoscape";
 import React, { useEffect, useRef, useState } from "react";
-import { ComponentBar } from "./ComponentBar";
-import { DeleteArea } from "./DeleteArea";
+import { LevelContext } from "../editor_context";
 import { CompNode } from "../nodes";
 import { getRenderedPositionOfNode } from "../rendered_position";
-import { EventObject } from "cytoscape";
+import { ComponentBar } from "./ComponentBar";
+import { DeleteArea } from "./DeleteArea";
 
 export function LevelSidebar({ levelContext }: { levelContext: LevelContext }) {
   const level = levelContext.editorContext.level;
@@ -31,13 +31,8 @@ export function LevelSidebar({ levelContext }: { levelContext: LevelContext }) {
       const node: CompNode | null = context.getCompNodeForNode(evt.target);
 
       if (node?.deletable) {
-        setNodeIsOverBar((isOver) => {
-          if (isOver) {
-            context.removeNode(node.getNodeId());
-          }
-
-          return false;
-        });
+        context.removeNode(node.getNodeId());
+        setNodeIsOverBar(false);
       }
     }
 
