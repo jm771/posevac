@@ -1,7 +1,7 @@
 import { CollectionData, Core, NodeSingular } from "cytoscape";
 import { NodeBuildContext } from "./editor_context";
 import { ProgramCounter } from "./program_counter";
-import { DefaultMap, getOrThrow } from "./util";
+import { Assert, DefaultMap, getOrThrow } from "./util";
 
 export type ComponentType =
   | "input"
@@ -12,6 +12,18 @@ export type ComponentType =
   | "split"
   | "nop"
   | "constant";
+
+export type NodeData = {
+  id: string;
+  label: string;
+  type: string;
+  style: string;
+};
+
+export type ConstantNodeData = NodeData & {
+  constantValue: unknown;
+  constantRepeat: boolean;
+};
 
 // Honestly this should not exist - will remove later
 export type NodeStyle = "compound" | "input" | "output" | "constant";
@@ -34,16 +46,16 @@ export interface TestValuesContext {
   getOutputChecker(): OutputChecker;
 }
 
-interface NodeFunction {
-  makeState(): unknown;
+interface NodeFunction<TState> {
+  makeState(): TState;
   evaluate(
-    state: unknown,
+    state: TState,
     nodedata: CollectionData,
     args: Array<unknown>
   ): unknown;
 }
 
-class PureNodeFunction implements NodeFunction {
+class PureNodeFunction implements NodeFunction<void> {
   private func: Function;
 
   constructor(func: Function) {
@@ -67,7 +79,7 @@ export interface OutputChecker {
   checkOutput(index: number, val: unknown): void;
 }
 
-class InputNodeFunction implements NodeFunction {
+class InputNodeFunction implements NodeFunction<void> {
   private testValues: TestValuesContext;
   private index: number;
 
@@ -80,12 +92,12 @@ class InputNodeFunction implements NodeFunction {
     return {};
   }
 
-  evaluate(state: unknown, _: CollectionData, __: Array<unknown>) {
+  evaluate(_state: unknown, _: CollectionData, __: Array<unknown>) {
     return this.testValues.getInputProvider().getInput(this.index);
   }
 }
 
-class OutputNodeFunction implements NodeFunction {
+class OutputNodeFunction implements NodeFunction<void> {
   private testValues: TestValuesContext;
   private index: number;
 
@@ -98,19 +110,25 @@ class OutputNodeFunction implements NodeFunction {
     return {};
   }
 
-  evaluate(state: unknown, _: CollectionData, inputs: Array<unknown>) {
+  evaluate(_state: unknown, _: CollectionData, inputs: Array<unknown>) {
     return this.testValues
       .getOutputChecker()
       .checkOutput(this.index, inputs[0]);
   }
 }
 
-class ConstantNodeFunction implements NodeFunction {
+type ConstantState = { triggered: boolean };
+
+class ConstantNodeFunction implements NodeFunction<ConstantState> {
   makeState() {
     return { triggered: false };
   }
 
-  evaluate(state: unknown, nodeData: CollectionData, _: Array<unknown>) {
+  evaluate(state: ConstantState, nodeData: CollectionData, _: Array<unknown>) {
+    if (state.triggered === undefined) {
+      throw Error("Nooooo");
+    }
+
     if (nodeData.data("constantRepeat")) {
       return nodeData.data("constantValue");
     } else if (!state.triggered) {
@@ -178,16 +196,16 @@ function makeOutputTerminals(
   return makeTerminals(cy, nodeId, x + 50, y, n, "output");
 }
 
-export class CompNode {
+class CompNodeInternal<TState> {
   inputTerminals: NodeSingular[];
   outputTerminals: NodeSingular[];
   invisibleTerminals: NodeSingular[];
   node: NodeSingular;
-  func: NodeFunction;
+  func: NodeFunction<TState>;
   deletable: boolean;
 
   constructor(
-    func: NodeFunction,
+    func: NodeFunction<TState>,
     node: NodeSingular,
     inputTerminals: NodeSingular[],
     outputTerminals: NodeSingular[],
@@ -218,7 +236,7 @@ export class CompNode {
   }
 
   evaluate(
-    nodeEvaluationState: unknown,
+    nodeEvaluationState: TState,
     terminalToProgramCounters: DefaultMap<string, Map<string, ProgramCounter>>
   ): EvaluateOutput {
     for (const term of this.outputTerminals) {
@@ -291,6 +309,9 @@ export class CompNode {
   }
 }
 
+export const CompNode = CompNodeInternal<unknown>;
+export type CompNode = CompNodeInternal<unknown>;
+
 function createNode(
   context: NodeBuildContext,
   x: number,
@@ -300,7 +321,7 @@ function createNode(
   style: NodeStyle,
   inTerminals: number,
   outTerminals: number,
-  func: NodeFunction,
+  func: NodeFunction<unknown>,
   extraData: { [key: string]: unknown } = {}
 ): CompNode {
   const nodeId = `node-${context.nodeIdCounter++}`;
@@ -399,7 +420,10 @@ export function createPlusNode(
     "compound",
     2,
     1,
-    new PureNodeFunction((a: unknown, b: unknown) => a + b)
+    new PureNodeFunction((a: unknown, b: unknown) => {
+      Assert(typeof a === "number" && typeof b === "number");
+      return a + b;
+    })
   );
 }
 
@@ -417,7 +441,10 @@ export function createMultiplyNode(
     "compound",
     2,
     1,
-    new PureNodeFunction((a: unknown, b: unknown) => a * b)
+    new PureNodeFunction((a: unknown, b: unknown) => {
+      Assert(typeof a === "number" && typeof b === "number");
+      return a * b;
+    })
   );
 }
 

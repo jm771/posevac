@@ -1,11 +1,12 @@
 // Graph Serialization - Save and load graph structures to/from JSON
 import { NodeSingular } from "cytoscape";
+import { EdgeData } from "./edges";
 import { GraphEditorContext } from "./editor_context";
 import {
-  createConstantNode,
   CompNode,
-  createNodeFromName,
   ComponentType,
+  createConstantNode,
+  createNodeFromName,
 } from "./nodes";
 
 /**
@@ -201,7 +202,7 @@ export function importGraph(
     }
 
     // Create edge between the terminals
-    const edgeData: unknown = {
+    const edgeData: EdgeData = {
       source: sourceTerminal.id(),
       target: targetTerminal.id(),
       condition: "",

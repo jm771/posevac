@@ -1,5 +1,6 @@
-import { Core, NodeSingular, EventObject } from "cytoscape";
+import { Core, EventObject, NodeSingular } from "cytoscape";
 import React, { useContext, useEffect, useRef, useState } from "react";
+import { ConstantNodeData } from "../nodes";
 import { PanZoomContext, styleForPosition } from "../rendered_position";
 
 export function initializeNodeLabelStyling(cy: Core) {
@@ -8,7 +9,7 @@ export function initializeNodeLabelStyling(cy: Core) {
     {
       query: 'node[type="constant"]',
       cssClass: "constant-node-display",
-      tpl: function (data: unknown) {
+      tpl: function (data: ConstantNodeData) {
         const value = data.constantValue !== undefined ? data.constantValue : 0;
         const repeat =
           data.constantRepeat !== undefined ? data.constantRepeat : true;

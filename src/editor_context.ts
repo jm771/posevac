@@ -104,7 +104,7 @@ export class GraphEditorContext implements NodeBuildContext {
     const startY = 100;
 
     level.testCases[0].inputs.forEach(
-      (inputData: Array<unknown>, index: number) => {
+      (_inputData: Array<unknown>, index: number) => {
         const x = 100;
         const y = startY + index * spacing;
         const inputNode = createInputNode(
@@ -121,7 +121,7 @@ export class GraphEditorContext implements NodeBuildContext {
     );
 
     level.testCases[0].expectedOutputs.forEach(
-      (outputs: Array<unknown>, index: number) => {
+      (_outputs: Array<unknown>, index: number) => {
         const x = 700;
         const y = startY + index * spacing;
         const outputNode = createOutputNode(
@@ -162,14 +162,14 @@ export class LevelContext implements TestValuesContext {
 
     // TODO suuuuper unsure this is the right approach.
     this.testerListenerHolder.registerListener({
-      onExpectedOutput: function (outputId: number, index: number): void {},
+      onExpectedOutput: function (_outputId: number, _index: number): void {},
       onUnexpectedOutput: function (
-        expected: unknown,
-        actual: unknown,
-        outputId: number,
-        index: number
+        _expected: unknown,
+        _actual: unknown,
+        _outputId: number,
+        _ndex: number
       ): void {},
-      onTestPassed: function (index: number): void {
+      onTestPassed: function (_index: number): void {
         lc.evaluator = null;
       },
       onAllTestsPassed: function (): void {
