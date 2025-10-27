@@ -9,15 +9,24 @@ type TestCaseState = {
 };
 
 export type TesterListener = {
-  onExpectedOutput: (outputId: number, index: number) => void;
-  onInputProduced: (inputId: number, index: number) => void;
+  onExpectedOutput: (
+    testCaseIndex: number,
+    outputId: number,
+    index: number
+  ) => void;
+  onInputProduced: (
+    testCaseIndex: number,
+    inputId: number,
+    index: number
+  ) => void;
   onUnexpectedOutput: (
+    testCaseIndex: number,
     expected: unknown,
     actual: unknown,
     outputId: number,
     index: number
   ) => void;
-  onTestPassed: (index: number) => void;
+  onTestPassed: (testCaseIndex: number) => void;
   onAllTestsPassed: () => void;
 };
 
@@ -27,18 +36,25 @@ export interface TesterEventSource {
 }
 
 export class TesterListenerHolder implements TesterEventSource, TesterListener {
-  onExpectedOutput(outputId: number, index: number): void {
-    this.listeners.forEach((l) => l.onExpectedOutput(outputId, index));
+  onExpectedOutput(
+    testCaseIndex: number,
+    outputId: number,
+    index: number
+  ): void {
+    this.listeners.forEach((l) =>
+      l.onExpectedOutput(testCaseIndex, outputId, index)
+    );
   }
 
   onUnexpectedOutput(
+    testCaseIndex: number,
     expected: unknown,
     actual: unknown,
     outputId: number,
     index: number
   ): void {
     this.listeners.forEach((l) =>
-      l.onUnexpectedOutput(expected, actual, outputId, index)
+      l.onUnexpectedOutput(testCaseIndex, expected, actual, outputId, index)
     );
   }
 
@@ -50,8 +66,10 @@ export class TesterListenerHolder implements TesterEventSource, TesterListener {
     this.listeners.forEach((l) => l.onAllTestsPassed());
   }
 
-  onInputProduced(inputId: number, index: number): void {
-    this.listeners.forEach((l) => l.onInputProduced(inputId, index));
+  onInputProduced(testCaseIndex: number, inputId: number, index: number): void {
+    this.listeners.forEach((l) =>
+      l.onInputProduced(testCaseIndex, inputId, index)
+    );
   }
 
   private listeners: Map<number, TesterListener> = new Map<
@@ -119,6 +137,7 @@ export class Tester implements InputProvider, OutputChecker {
       // TODO think more about what happens if you keep playing after failing
       this.currState.hasFailed = true;
       this.listener.onUnexpectedOutput(
+        this.currCaseIndex,
         outpurArr[outputIndex],
         val,
         outputId,
@@ -126,7 +145,7 @@ export class Tester implements InputProvider, OutputChecker {
       );
       return;
     } else {
-      this.listener.onExpectedOutput(outputId, outputIndex);
+      this.listener.onExpectedOutput(this.currCaseIndex, outputId, outputIndex);
       if (this.allOutputsProduced()) {
         if (!this.currState.hasFailed) {
           Assert(
@@ -154,7 +173,7 @@ export class Tester implements InputProvider, OutputChecker {
     const inputArr = this.testCases[this.currCaseIndex].inputs[inputId];
     if (this.currState.inputIndexes[inputId] < inputArr.length) {
       const inputIndex = this.currState.inputIndexes[inputId]++;
-      this.listener.onInputProduced(inputId, inputIndex);
+      this.listener.onInputProduced(this.currCaseIndex, inputId, inputIndex);
       return inputArr[inputIndex];
     } else {
       return null;

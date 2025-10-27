@@ -27,58 +27,61 @@ export function TestCasePanel({
 }) {
   const makeFreshInputStates = () =>
     levelContext.editorContext.level.testCases.map((c) =>
-      c.inputs.map(() => InputStatus.Pending)
+      c.inputs.map((arr) => arr.map(() => InputStatus.Pending))
     );
   const makeFreshOutputStates = () =>
     levelContext.editorContext.level.testCases.map((c) =>
-      c.expectedOutputs.map(() => OutputStatus.Pending)
+      c.expectedOutputs.map((arr) => arr.map(() => OutputStatus.Pending))
     );
 
   const [currentTestIndex, setCurrentTestIndex] = useState(0);
   const [inputStates, setInputStates] =
-    useState<InputStatus[][]>(makeFreshInputStates);
-  const [outputStates, setOutputStates] = useState<OutputStatus[][]>(
+    useState<InputStatus[][][]>(makeFreshInputStates);
+  const [outputStates, setOutputStates] = useState<OutputStatus[][][]>(
     makeFreshOutputStates
   );
 
   useEffect(() => {
     const listener: TesterListener = {
-      onInputProduced: (inputId: number, index: number) => {
-        setInputStates((prev: InputStatus[][]) => {
+      onInputProduced: (
+        testCaseIndex: number,
+        inputId: number,
+        index: number
+      ) => {
+        setInputStates((prev: InputStatus[][][]) => {
           const newStates = [...prev];
-          newStates[inputId][index] = InputStatus.Produced;
+          newStates[testCaseIndex][inputId][index] = InputStatus.Produced;
           return newStates;
         });
       },
 
-      onExpectedOutput: (outputId: number, index: number) => {
-        setOutputStates((prev: OutputStatus[][]) => {
+      onExpectedOutput: (
+        testCaseIndex: number,
+        outputId: number,
+        index: number
+      ) => {
+        setOutputStates((prev: OutputStatus[][][]) => {
           const newStates = [...prev];
-          newStates[outputId][index] = OutputStatus.Correct;
+          newStates[testCaseIndex][outputId][index] = OutputStatus.Correct;
           return newStates;
         });
       },
 
       onUnexpectedOutput: (
+        testCaseIndex: number,
         _expected: unknown,
         _actual: unknown,
         outputId: number,
         index: number
       ) => {
-        setOutputStates((prev: OutputStatus[][]) => {
+        setOutputStates((prev: OutputStatus[][][]) => {
           const newStates = [...prev];
-          newStates[outputId][index] = OutputStatus.Incorrect;
+          newStates[testCaseIndex][outputId][index] = OutputStatus.Incorrect;
           return newStates;
         });
       },
 
-      onTestPassed: (_index: number) => {
-        setCurrentTestIndex(
-          _index < levelContext.editorContext.level.testCases.length - 1
-            ? _index + 1
-            : _index
-        );
-      },
+      onTestPassed: (_index: number) => {},
 
       onAllTestsPassed: () => {},
     };
@@ -93,8 +96,8 @@ export function TestCasePanel({
 
   useEffect(() => {
     const listener: EvaluationListener = {
-      onCounterAdvance: function (e: CounterAdvanceEvent): void {},
-      onNodeEvaluate: function (e: NodeEvaluateEvent): void {},
+      onCounterAdvance: function (_e: CounterAdvanceEvent): void {},
+      onNodeEvaluate: function (_e: NodeEvaluateEvent): void {},
       onEvaluationEvent: function (e: EvaluationEvent): void {
         Assert(e === EvaluationEvent.End || e === EvaluationEvent.Start);
         setCurrentTestIndex(0);
@@ -120,6 +123,9 @@ export function TestCasePanel({
   const handleNextTest = () => {
     setCurrentTestIndex((prev) => (prev < totalTests - 1 ? prev + 1 : prev));
   };
+
+  const currTestCase =
+    levelContext.editorContext.level.testCases[currentTestIndex];
 
   return (
     <div className="test-case-panel">
@@ -150,16 +156,16 @@ export function TestCasePanel({
         <div className="test-case-section">
           <h4>Inputs</h4>
           <div className="io-grid">
-            {currentState.inputs.map((inputArr, inputId) => (
+            {currTestCase.inputs.map((inputArr, inputId) => (
               <div key={inputId} className="io-row">
                 <div className="io-label">Input {inputId}</div>
                 <div className="io-values">
                   {inputArr.map((input, idx) => (
                     <div
                       key={idx}
-                      className={`io-value ${getStatusClass(input.status)}`}
+                      className={`io-value ${inputStates[currentTestIndex][inputId][idx]}`}
                     >
-                      {String(input.value)}
+                      {String(input)}
                     </div>
                   ))}
                 </div>
@@ -171,16 +177,16 @@ export function TestCasePanel({
         <div className="test-case-section">
           <h4>Expected Outputs</h4>
           <div className="io-grid">
-            {currentState.outputs.map((outputArr, outputId) => (
+            {currTestCase.expectedOutputs.map((outputArr, outputId) => (
               <div key={outputId} className="io-row">
                 <div className="io-label">Output {outputId}</div>
                 <div className="io-values">
                   {outputArr.map((output, idx) => (
                     <div
                       key={idx}
-                      className={`io-value ${getStatusClass(output.status)}`}
+                      className={`io-value ${outputStates[currentTestIndex][outputId][idx]}`}
                     >
-                      {String(output.value)}
+                      {String(output)}
                     </div>
                   ))}
                 </div>

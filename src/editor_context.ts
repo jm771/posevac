@@ -165,6 +165,7 @@ export class LevelContext implements TestValuesContext {
       onInputProduced: function (_inputId: number, _index: number): void {},
       onExpectedOutput: function (_outputId: number, _index: number): void {},
       onUnexpectedOutput: function (
+        _testCaseIndex: number,
         _expected: unknown,
         _actual: unknown,
         _outputId: number,
