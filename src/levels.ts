@@ -1,8 +1,8 @@
 import { ComponentType } from "./nodes";
 
 export type TestCase = {
-  inputs: any[][]; // Array of arrays - each inner array represents inputs for one input node
-  expectedOutputs: any[][]; // Array of arrays - expected outputs
+  inputs: unknown[][]; // Array of arrays - each inner array represents inputs for one input node
+  expectedOutputs: unknown[][]; // Array of arrays - expected outputs
 };
 
 export interface Level {

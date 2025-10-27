@@ -8,7 +8,7 @@ export function initializeNodeLabelStyling(cy: Core) {
     {
       query: 'node[type="constant"]',
       cssClass: "constant-node-display",
-      tpl: function (data: any) {
+      tpl: function (data: unknown) {
         const value = data.constantValue !== undefined ? data.constantValue : 0;
         const repeat =
           data.constantRepeat !== undefined ? data.constantRepeat : true;
@@ -87,7 +87,7 @@ export function ConstantNodeOverlay({ cy }: { cy: Core }) {
 
   function handleValueChange(e: React.ChangeEvent<HTMLInputElement>) {
     const newValue = e.target.value;
-    let parsedValue: any = newValue;
+    let parsedValue: unknown = newValue;
     const numValue = Number(newValue);
     if (!isNaN(numValue) && newValue.trim() !== "") {
       parsedValue = numValue;

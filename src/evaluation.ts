@@ -86,7 +86,7 @@ export class Evaluator {
     string,
     Map<string, ProgramCounter>
   >;
-  private nodeEvaluationState: Map<string, any>;
+  private nodeEvaluationState: Map<string, unknown>;
   private state: State;
   private nodes: Array<CompNode>;
   private listener: EvaluationListener;
@@ -94,7 +94,7 @@ export class Evaluator {
   constructor(nodes: Array<CompNode>, listener: EvaluationListener) {
     this.programCounters = new Map<string, ProgramCounter>();
     this.state = { stage: Stage.Evaluate, nodeIndex: 0 };
-    this.nodeEvaluationState = new Map<string, any>();
+    this.nodeEvaluationState = new Map<string, unknown>();
     this.listener = listener;
     this.terminalToProgramCounters = new DefaultMap<
       string,

@@ -74,7 +74,7 @@ export class GraphEditorContext implements NodeBuildContext {
     const spacing = 150;
     const startY = 100;
 
-    level.inputs.forEach((inputData: Array<any>, index: number) => {
+    level.inputs.forEach((inputData: Array<unknown>, index: number) => {
       const x = 100;
       const y = startY + index * spacing;
       const inputNode = createInputNode(this, x, y, inputData);
@@ -83,7 +83,7 @@ export class GraphEditorContext implements NodeBuildContext {
       this.allNodes.push(inputNode);
     });
 
-    level.expectedOutputs.forEach((outputs: Array<any>, index: number) => {
+    level.expectedOutputs.forEach((outputs: Array<unknown>, index: number) => {
       const x = 700;
       const y = startY + index * spacing;
       const outputNode = createOutputNode(this, x, y, outputs);

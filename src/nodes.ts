@@ -30,8 +30,12 @@ export class EvaluateOutput {
 }
 
 interface NodeFunction {
-  makeState(): any;
-  evaluate(state: any, nodedata: CollectionData, args: Array<any>): any;
+  makeState(): unknown;
+  evaluate(
+    state: unknown,
+    nodedata: CollectionData,
+    args: Array<unknown>
+  ): unknown;
 }
 
 class PureNodeFunction implements NodeFunction {
@@ -45,23 +49,23 @@ class PureNodeFunction implements NodeFunction {
     return null;
   }
 
-  evaluate(_: any, __: CollectionData, args: Array<any>) {
+  evaluate(_: unknown, __: CollectionData, args: Array<unknown>) {
     return this.func(...args);
   }
 }
 
 export interface InputProvider {
-  getInput(index: number): any;
+  getInput(index: number): unknown;
 }
 
 export interface OutputChecker {
-  checkOutput(index: number, val: any): void;
+  checkOutput(index: number, val: unknown): void;
 }
 
 class InputNodeFunction implements NodeFunction {
-  private inputs: Array<any>;
+  private inputs: Array<unknown>;
 
-  constructor(inputs: Array<any>) {
+  constructor(inputs: Array<unknown>) {
     this.inputs = inputs;
   }
 
@@ -69,7 +73,7 @@ class InputNodeFunction implements NodeFunction {
     return { i: 0 };
   }
 
-  evaluate(state: any, _: CollectionData, __: Array<any>) {
+  evaluate(state: unknown, _: CollectionData, __: Array<unknown>) {
     if (state.i < this.inputs.length) {
       return this.inputs[state.i++];
     } else {
@@ -79,9 +83,9 @@ class InputNodeFunction implements NodeFunction {
 }
 
 class OutputNodeFunction implements NodeFunction {
-  private outputs: Array<any>;
+  private outputs: Array<unknown>;
 
-  constructor(outputs: Array<any>) {
+  constructor(outputs: Array<unknown>) {
     this.outputs = outputs;
   }
 
@@ -89,7 +93,7 @@ class OutputNodeFunction implements NodeFunction {
     return { i: 0 };
   }
 
-  evaluate(state: any, _: CollectionData, args: Array<any>) {
+  evaluate(state: unknown, _: CollectionData, args: Array<unknown>) {
     if (state.i < this.outputs.length) {
       console.log(
         "expected: ",
@@ -111,7 +115,7 @@ class ConstantNodeFunction implements NodeFunction {
     return { triggered: false };
   }
 
-  evaluate(state: any, nodeData: CollectionData, _: Array<any>) {
+  evaluate(state: unknown, nodeData: CollectionData, _: Array<unknown>) {
     if (nodeData.data("constantRepeat")) {
       return nodeData.data("constantValue");
     } else if (!state.triggered) {
@@ -207,7 +211,7 @@ export class CompNode {
     return this.node.id();
   }
 
-  makeCleanState(): any {
+  makeCleanState(): unknown {
     return this.func.makeState();
   }
 
@@ -219,7 +223,7 @@ export class CompNode {
   }
 
   evaluate(
-    nodeEvaluationState: any,
+    nodeEvaluationState: unknown,
     terminalToProgramCounters: DefaultMap<string, Map<string, ProgramCounter>>
   ): EvaluateOutput {
     for (const term of this.outputTerminals) {
@@ -250,7 +254,7 @@ export class CompNode {
       if (this.outputTerminals.length == 1) {
         resultArray = [result];
       } else {
-        resultArray = result as Array<any>;
+        resultArray = result as Array<unknown>;
       }
       if (this.outputTerminals.length != resultArray.length) {
         throw Error("N out terminals didn't match result length");
@@ -302,7 +306,7 @@ function createNode(
   inTerminals: number,
   outTerminals: number,
   func: NodeFunction,
-  extraData: { [key: string]: any } = {}
+  extraData: { [key: string]: unknown } = {}
 ): CompNode {
   const nodeId = `node-${context.nodeIdCounter++}`;
   context.cy.add({
@@ -350,7 +354,7 @@ export function createInputNode(
   context: NodeBuildContext,
   x: number,
   y: number,
-  inputs: Array<any>
+  inputs: Array<unknown>
 ): CompNode {
   return createNode(
     context,
@@ -369,7 +373,7 @@ export function createOutputNode(
   context: NodeBuildContext,
   x: number,
   y: number,
-  outputs: Array<any>
+  outputs: Array<unknown>
 ): CompNode {
   return createNode(
     context,
@@ -398,7 +402,7 @@ export function createPlusNode(
     "compound",
     2,
     1,
-    new PureNodeFunction((a: any, b: any) => a + b)
+    new PureNodeFunction((a: unknown, b: unknown) => a + b)
   );
 }
 
@@ -416,7 +420,7 @@ export function createMultiplyNode(
     "compound",
     2,
     1,
-    new PureNodeFunction((a: any, b: any) => a * b)
+    new PureNodeFunction((a: unknown, b: unknown) => a * b)
   );
 }
 
@@ -434,7 +438,7 @@ export function createCombineNode(
     "compound",
     2,
     1,
-    new PureNodeFunction((a: any, b: any) => [a, b])
+    new PureNodeFunction((a: unknown, b: unknown) => [a, b])
   );
 }
 
@@ -452,7 +456,7 @@ export function createSplitNode(
     "compound",
     1,
     2,
-    new PureNodeFunction((a: any) => a)
+    new PureNodeFunction((a: unknown) => a)
   );
 }
 
@@ -470,7 +474,7 @@ export function createNopNode(
     "compound",
     1,
     1,
-    new PureNodeFunction((a: any) => a)
+    new PureNodeFunction((a: unknown) => a)
   );
 }
 
@@ -478,7 +482,7 @@ export function createConstantNode(
   context: NodeBuildContext,
   x: number,
   y: number,
-  initialValue: any = 0,
+  initialValue: unknown = 0,
   initialRepeat: boolean = true
 ): CompNode {
   return createNode(

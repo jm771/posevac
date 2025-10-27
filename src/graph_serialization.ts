@@ -23,7 +23,7 @@ export interface SerializedNode {
   id: string;
   type: ComponentType;
   position: { x: number; y: number };
-  constantValue?: any;
+  constantValue?: unknown;
   constantRepeat?: boolean;
 }
 
@@ -201,7 +201,7 @@ export function importGraph(
     }
 
     // Create edge between the terminals
-    const edgeData: any = {
+    const edgeData: unknown = {
       source: sourceTerminal.id(),
       target: targetTerminal.id(),
       condition: "",
