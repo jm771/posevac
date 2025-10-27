@@ -44,6 +44,19 @@ export function EdgeConditionOverlay({ cy }: { cy: Core }) {
     };
   }, [cy]);
 
+  // Disable panning when overlay is open
+  useEffect(() => {
+    if (selectedEdge) {
+      cy.userPanningEnabled(false);
+    } else {
+      cy.userPanningEnabled(true);
+    }
+
+    return () => {
+      cy.userPanningEnabled(true);
+    };
+  }, [selectedEdge, cy]);
+
   function handleAddMatcher() {
     if (!selectedEdge) return;
     const condition = selectedEdge.data("condition") as Condition;
@@ -55,6 +68,7 @@ export function EdgeConditionOverlay({ cy }: { cy: Core }) {
   function handleCycleMatcher(index: number, e: React.MouseEvent) {
     e.stopPropagation();
     e.preventDefault();
+    e.nativeEvent.stopImmediatePropagation();
     if (!selectedEdge) return;
     const condition = selectedEdge.data("condition") as Condition;
     const newMatchers = [...condition.matchers];
@@ -67,6 +81,7 @@ export function EdgeConditionOverlay({ cy }: { cy: Core }) {
   function handleRemoveLastMatcher(e: React.MouseEvent) {
     e.stopPropagation();
     e.preventDefault();
+    e.nativeEvent.stopImmediatePropagation();
     if (!selectedEdge) return;
     const condition = selectedEdge.data("condition") as Condition;
     if (condition.matchers.length === 0) return;
@@ -78,7 +93,14 @@ export function EdgeConditionOverlay({ cy }: { cy: Core }) {
   function handleAddMatcherClick(e: React.MouseEvent) {
     e.stopPropagation();
     e.preventDefault();
+    e.nativeEvent.stopImmediatePropagation();
     handleAddMatcher();
+  }
+
+  function stopEvent(e: React.MouseEvent) {
+    e.stopPropagation();
+    e.preventDefault();
+    e.nativeEvent.stopImmediatePropagation();
   }
 
   const pos = selectedEdge && getEdgeCenter(selectedEdge);
@@ -88,24 +110,34 @@ export function EdgeConditionOverlay({ cy }: { cy: Core }) {
       <div
         className="edge-condition-input"
         style={styleForPosition(pos!, panZoom)}
-        onMouseDown={(e) => e.stopPropagation()}
-        onClick={(e) => e.stopPropagation()}
+        onMouseDown={stopEvent}
+        onMouseUp={stopEvent}
+        onClick={stopEvent}
       >
         <div className="matcher-list">
           {condition.matchers.map((matcher, index) => (
             <button
               key={index}
               className="matcher-button"
-              onClick={(e) => handleCycleMatcher(index, e)}
+              onMouseDown={(e) => handleCycleMatcher(index, e)}
+              onClick={stopEvent}
             >
               {MATCHER_LABELS[matcher]}
             </button>
           ))}
-          <button className="matcher-add-button" onClick={handleAddMatcherClick}>
+          <button
+            className="matcher-add-button"
+            onMouseDown={handleAddMatcherClick}
+            onClick={stopEvent}
+          >
             +
           </button>
           {condition.matchers.length > 0 && (
-            <button className="matcher-remove-button" onClick={handleRemoveLastMatcher}>
+            <button
+              className="matcher-remove-button"
+              onMouseDown={handleRemoveLastMatcher}
+              onClick={stopEvent}
+            >
               −
             </button>
           )}
