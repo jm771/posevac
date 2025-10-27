@@ -10,7 +10,8 @@ export function LevelSidebar({ levelContext }: { levelContext: LevelContext }) {
   const level = levelContext.editorContext.level;
   const sideBarRef = useRef<HTMLBaseElement | null>(null);
   const [draggedNode, setDraggedNode] = useState<CompNode | null>(null);
-  const [nodeIsOverBar, setNodeIsOverBar] = useState<boolean>(false);
+  const isNodeOverBarRef = useRef<boolean>(false);
+  const [isNodeOverBar, setIsNodeOverBar] = useState<boolean>(false);
 
   useEffect(() => {
     function dragHandler(evt: EventObject) {
@@ -23,16 +24,18 @@ export function LevelSidebar({ levelContext }: { levelContext: LevelContext }) {
       if (!sideBarRef.current) return;
       const nodePos = getRenderedPositionOfNode(node.node);
       const sidebarBounds = sideBarRef.current!.getBoundingClientRect();
-      setNodeIsOverBar(nodePos.x < sidebarBounds.right);
+      isNodeOverBarRef.current = nodePos.x < sidebarBounds.right;
+      setIsNodeOverBar(isNodeOverBarRef.current);
     }
 
     function freeHandler(evt: EventObject) {
       const context = levelContext.editorContext;
       const node: CompNode | null = context.getCompNodeForNode(evt.target);
 
-      if (node?.deletable) {
+      if (node?.deletable && isNodeOverBarRef.current) {
         context.removeNode(node.getNodeId());
-        setNodeIsOverBar(false);
+        isNodeOverBarRef.current = false;
+        setIsNodeOverBar(false);
       }
     }
 
@@ -53,7 +56,7 @@ export function LevelSidebar({ levelContext }: { levelContext: LevelContext }) {
       </div>
       <h3>Components</h3>
       <ComponentBar levelContext={levelContext} />
-      <DeleteArea draggedNode={draggedNode} nodeIsOverBar={nodeIsOverBar} />
+      <DeleteArea draggedNode={draggedNode} nodeIsOverBar={isNodeOverBar} />
     </aside>
   );
 }
