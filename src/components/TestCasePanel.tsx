@@ -1,22 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { LevelContext } from "../editor_context";
+import {
+  CounterAdvanceEvent,
+  EvaluationEvent,
+  EvaluationListener,
+  NodeEvaluateEvent,
+} from "../evaluation";
 import { TesterListener } from "../tester";
+import { Assert } from "../util";
 
-type IOStatus = "pending" | "produced" | "correct" | "incorrect";
-
-interface InputState {
-  value: unknown;
-  status: IOStatus;
+enum InputStatus {
+  Pending = "io-value-pending",
+  Produced = "io-value-produced",
 }
 
-interface OutputState {
-  value: unknown;
-  status: IOStatus;
-}
-
-interface TestCaseState {
-  inputs: InputState[][];
-  outputs: OutputState[][];
+enum OutputStatus {
+  Pending = "io-value-pending",
+  Correct = "io-value-correct",
+  Incorrect = "io-value-incorrect",
 }
 
 export function TestCasePanel({
@@ -24,54 +25,36 @@ export function TestCasePanel({
 }: {
   levelContext: LevelContext;
 }) {
+  const makeFreshInputStates = () =>
+    levelContext.editorContext.level.testCases.map((c) =>
+      c.inputs.map(() => InputStatus.Pending)
+    );
+  const makeFreshOutputStates = () =>
+    levelContext.editorContext.level.testCases.map((c) =>
+      c.expectedOutputs.map(() => OutputStatus.Pending)
+    );
+
   const [currentTestIndex, setCurrentTestIndex] = useState(0);
-  const [testCaseStates, setTestCaseStates] = useState<TestCaseState[]>([]);
-
-  useEffect(() => {
-    const level = levelContext.editorContext.level;
-    const initialStates: TestCaseState[] = level.testCases.map((tc) => ({
-      inputs: tc.inputs.map((inputArr) =>
-        inputArr.map((value) => ({ value, status: "pending" as IOStatus }))
-      ),
-      outputs: tc.expectedOutputs.map((outputArr) =>
-        outputArr.map((value) => ({ value, status: "pending" as IOStatus }))
-      ),
-    }));
-
-    setTestCaseStates(initialStates);
-    setCurrentTestIndex(0);
-  }, [levelContext]);
+  const [inputStates, setInputStates] =
+    useState<InputStatus[][]>(makeFreshInputStates);
+  const [outputStates, setOutputStates] = useState<OutputStatus[][]>(
+    makeFreshOutputStates
+  );
 
   useEffect(() => {
     const listener: TesterListener = {
       onInputProduced: (inputId: number, index: number) => {
-        setTestCaseStates((prev) => {
+        setInputStates((prev: InputStatus[][]) => {
           const newStates = [...prev];
-          const currentState = { ...newStates[currentTestIndex] };
-          const newInputs = [...currentState.inputs];
-          newInputs[inputId] = [...newInputs[inputId]];
-          newInputs[inputId][index] = {
-            ...newInputs[inputId][index],
-            status: "produced",
-          };
-          currentState.inputs = newInputs;
-          newStates[currentTestIndex] = currentState;
+          newStates[inputId][index] = InputStatus.Produced;
           return newStates;
         });
       },
 
       onExpectedOutput: (outputId: number, index: number) => {
-        setTestCaseStates((prev) => {
+        setOutputStates((prev: OutputStatus[][]) => {
           const newStates = [...prev];
-          const currentState = { ...newStates[currentTestIndex] };
-          const newOutputs = [...currentState.outputs];
-          newOutputs[outputId] = [...newOutputs[outputId]];
-          newOutputs[outputId][index] = {
-            ...newOutputs[outputId][index],
-            status: "correct",
-          };
-          currentState.outputs = newOutputs;
-          newStates[currentTestIndex] = currentState;
+          newStates[outputId][index] = OutputStatus.Correct;
           return newStates;
         });
       },
@@ -82,26 +65,18 @@ export function TestCasePanel({
         outputId: number,
         index: number
       ) => {
-        setTestCaseStates((prev) => {
+        setOutputStates((prev: OutputStatus[][]) => {
           const newStates = [...prev];
-          const currentState = { ...newStates[currentTestIndex] };
-          const newOutputs = [...currentState.outputs];
-          newOutputs[outputId] = [...newOutputs[outputId]];
-          newOutputs[outputId][index] = {
-            ...newOutputs[outputId][index],
-            status: "incorrect",
-          };
-          currentState.outputs = newOutputs;
-          newStates[currentTestIndex] = currentState;
+          newStates[outputId][index] = OutputStatus.Incorrect;
           return newStates;
         });
       },
 
       onTestPassed: (_index: number) => {
-        setCurrentTestIndex((prev) =>
-          prev < levelContext.editorContext.level.testCases.length - 1
-            ? prev + 1
-            : prev
+        setCurrentTestIndex(
+          _index < levelContext.editorContext.level.testCases.length - 1
+            ? _index + 1
+            : _index
         );
       },
 
@@ -114,33 +89,28 @@ export function TestCasePanel({
     return () => {
       levelContext.testerListenerHolder.deregisterListener(listenerId);
     };
-  }, [levelContext, currentTestIndex]);
-
-  useEffect(() => {
-    const checkInterval = setInterval(() => {
-      if (levelContext.tester === null) {
-        setCurrentTestIndex(0);
-        const level = levelContext.editorContext.level;
-        const initialStates: TestCaseState[] = level.testCases.map((tc) => ({
-          inputs: tc.inputs.map((inputArr) =>
-            inputArr.map((value) => ({ value, status: "pending" as IOStatus }))
-          ),
-          outputs: tc.expectedOutputs.map((outputArr) =>
-            outputArr.map((value) => ({ value, status: "pending" as IOStatus }))
-          ),
-        }));
-        setTestCaseStates(initialStates);
-      }
-    }, 100);
-
-    return () => clearInterval(checkInterval);
   }, [levelContext]);
 
-  if (testCaseStates.length === 0) {
-    return null;
-  }
+  useEffect(() => {
+    const listener: EvaluationListener = {
+      onCounterAdvance: function (e: CounterAdvanceEvent): void {},
+      onNodeEvaluate: function (e: NodeEvaluateEvent): void {},
+      onEvaluationEvent: function (e: EvaluationEvent): void {
+        Assert(e === EvaluationEvent.End || e === EvaluationEvent.Start);
+        setCurrentTestIndex(0);
+        setInputStates(makeFreshInputStates);
+        setOutputStates(makeFreshOutputStates);
+      },
+    };
 
-  const currentState = testCaseStates[currentTestIndex];
+    const listenerId =
+      levelContext.evaluationListenerHolder.registerListener(listener);
+
+    return () => {
+      levelContext.evaluationListenerHolder.deregisterListener(listenerId);
+    };
+  }, [levelContext]);
+
   const totalTests = levelContext.editorContext.level.testCases.length;
 
   const handlePrevTest = () => {
@@ -148,24 +118,7 @@ export function TestCasePanel({
   };
 
   const handleNextTest = () => {
-    setCurrentTestIndex((prev) =>
-      prev < totalTests - 1 ? prev + 1 : prev
-    );
-  };
-
-  const getStatusClass = (status: IOStatus): string => {
-    switch (status) {
-      case "pending":
-        return "io-value-pending";
-      case "produced":
-        return "io-value-produced";
-      case "correct":
-        return "io-value-correct";
-      case "incorrect":
-        return "io-value-incorrect";
-      default:
-        return "";
-    }
+    setCurrentTestIndex((prev) => (prev < totalTests - 1 ? prev + 1 : prev));
   };
 
   return (
