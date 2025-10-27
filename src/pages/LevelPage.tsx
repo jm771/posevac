@@ -10,6 +10,7 @@ import { EdgeConditionOverlay } from "../components/EdgeConditionOverlay";
 import { ProgramCounterOverlay } from "../components/ProgramCounterOverlay";
 import { SaveLoadControls } from "../components/SaveLoadControls";
 import { LevelSidebar } from "../components/Sidebar";
+import { TestCasePanel } from "../components/TestCasePanel";
 import { LevelContext } from "../editor_context";
 import { getLevelById } from "../levels";
 import { ComponentType, createNodeFromName } from "../nodes";
@@ -108,10 +109,13 @@ export function LevelPage() {
         </CyContainer>
 
         {levelContext !== null && (
-          <aside className="controls-panel" id="controlsPanel">
-            <AnimationControls levelContext={levelContext} />
-            <SaveLoadControls context={levelContext} />
-          </aside>
+          <>
+            <aside className="controls-panel" id="controlsPanel">
+              <AnimationControls levelContext={levelContext} />
+              <SaveLoadControls context={levelContext} />
+            </aside>
+            <TestCasePanel levelContext={levelContext} />
+          </>
         )}
       </div>
     </PanZoomContext>
