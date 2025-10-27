@@ -55,7 +55,7 @@ class PureNodeFunction implements NodeFunction {
 }
 
 export interface InputProvider {
-  getInput(index: number): unknown;
+  getInput(index: number): unknown | null;
 }
 
 export interface OutputChecker {
