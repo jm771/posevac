@@ -10,6 +10,7 @@ type TestCaseState = {
 
 export type TesterListener = {
   onExpectedOutput: (outputId: number, index: number) => void;
+  onInputProduced: (inputId: number, index: number) => void;
   onUnexpectedOutput: (
     expected: unknown,
     actual: unknown,
@@ -47,6 +48,10 @@ export class TesterListenerHolder implements TesterEventSource, TesterListener {
 
   onAllTestsPassed(): void {
     this.listeners.forEach((l) => l.onAllTestsPassed());
+  }
+
+  onInputProduced(inputId: number, index: number): void {
+    this.listeners.forEach((l) => l.onInputProduced(inputId, index));
   }
 
   private listeners: Map<number, TesterListener> = new Map<
@@ -148,7 +153,9 @@ export class Tester implements InputProvider, OutputChecker {
     Assert(inputId < this.currState.inputIndexes.length);
     const inputArr = this.testCases[this.currCaseIndex].inputs[inputId];
     if (this.currState.inputIndexes[inputId] < inputArr.length) {
-      return inputArr[this.currState.inputIndexes[inputId]++];
+      const inputIndex = this.currState.inputIndexes[inputId];
+      this.listener.onInputProduced(inputId, inputIndex);
+      return inputArr[inputIndex];
     } else {
       return null;
     }
