@@ -10,7 +10,7 @@ import { EdgeConditionOverlay } from "../components/EdgeConditionOverlay";
 import { ProgramCounterOverlay } from "../components/ProgramCounterOverlay";
 import { SaveLoadControls } from "../components/SaveLoadControls";
 import { LevelSidebar } from "../components/Sidebar";
-import { GraphEditorContext, LevelContext } from "../editor_context";
+import { LevelContext } from "../editor_context";
 import { getLevelById } from "../levels";
 import { ComponentType, createNodeFromName } from "../nodes";
 import { PanZoomContext, PanZoomState } from "../rendered_position";
@@ -61,10 +61,7 @@ export function LevelPage() {
   const cyDivRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const newLevelContext = new LevelContext(
-      new GraphEditorContext(level, NotNull(cyDivRef.current)),
-      null
-    );
+    const newLevelContext = new LevelContext(level, NotNull(cyDivRef.current));
 
     setLevelContext(newLevelContext);
 

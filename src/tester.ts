@@ -73,19 +73,6 @@ export class Tester implements InputProvider, OutputChecker {
   listener: TesterListener;
 
   constructor(testCases: TestCase[], listener: TesterListener) {
-    // TODO maybe this moves somewhere else
-    Assert(testCases.length > 0, "No test cases");
-    Assert(
-      testCases.every((tc) => tc.inputs.length == testCases[0].inputs.length),
-      "Not all test cases have same number of inputs"
-    );
-    Assert(
-      testCases.every(
-        (tc) => tc.expectedOutputs.length == testCases[0].expectedOutputs.length
-      ),
-      "Not all test cases have same number of outputs"
-    );
-
     this.testCases = testCases;
     this.currCaseIndex = 0;
     this.currState = this.makeStartState(testCases[0]);

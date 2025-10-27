@@ -3,9 +3,17 @@ import cytoscape, { Core, NodeSingular } from "cytoscape";
 import nodeHtmlLabel from "cytoscape-node-html-label";
 import { EvaluationListenerHolder, Evaluator } from "./evaluation";
 import { Level } from "./levels";
-import { CompNode, createInputNode, createOutputNode } from "./nodes";
+import {
+  CompNode,
+  createInputNode,
+  createOutputNode,
+  InputProvider,
+  OutputChecker,
+  TestValuesContext,
+} from "./nodes";
 import { getCytoscapeStyles } from "./styles";
-import { Assert } from "./util";
+import { Tester, TesterListenerHolder } from "./tester";
+import { Assert, NotNull } from "./util";
 
 // Register the node-html-label extension
 if (typeof cytoscape !== "undefined") {
@@ -24,9 +32,15 @@ export class GraphEditorContext implements NodeBuildContext {
   public outputNodes: CompNode[] = [];
   public allNodes: CompNode[] = [];
   public nodeIdCounter = 0;
+  testValuesContext: TestValuesContext;
 
-  constructor(level: Level, container: HTMLElement) {
+  constructor(
+    level: Level,
+    testValuesContext: TestValuesContext,
+    container: HTMLElement
+  ) {
     this.level = level;
+    this.testValuesContext = testValuesContext;
     this.cy = cytoscape({
       container: container,
       style: getCytoscapeStyles(),
@@ -40,6 +54,21 @@ export class GraphEditorContext implements NodeBuildContext {
       userZoomingEnabled: true,
       boxSelectionEnabled: false,
     });
+
+    const testCases = level.testCases;
+
+    // TODO maybe this moves somewhere else
+    Assert(testCases.length > 0, "No test cases");
+    Assert(
+      testCases.every((tc) => tc.inputs.length == testCases[0].inputs.length),
+      "Not all test cases have same number of inputs"
+    );
+    Assert(
+      testCases.every(
+        (tc) => tc.expectedOutputs.length == testCases[0].expectedOutputs.length
+      ),
+      "Not all test cases have same number of outputs"
+    );
 
     this.initializeInputOutputNodes(level);
   }
@@ -74,23 +103,39 @@ export class GraphEditorContext implements NodeBuildContext {
     const spacing = 150;
     const startY = 100;
 
-    level.inputs.forEach((inputData: Array<unknown>, index: number) => {
-      const x = 100;
-      const y = startY + index * spacing;
-      const inputNode = createInputNode(this, x, y, inputData);
+    level.testCases[0].inputs.forEach(
+      (inputData: Array<unknown>, index: number) => {
+        const x = 100;
+        const y = startY + index * spacing;
+        const inputNode = createInputNode(
+          this,
+          this.testValuesContext,
+          x,
+          y,
+          index
+        );
 
-      this.inputNodes.push(inputNode);
-      this.allNodes.push(inputNode);
-    });
+        this.inputNodes.push(inputNode);
+        this.allNodes.push(inputNode);
+      }
+    );
 
-    level.expectedOutputs.forEach((outputs: Array<unknown>, index: number) => {
-      const x = 700;
-      const y = startY + index * spacing;
-      const outputNode = createOutputNode(this, x, y, outputs);
+    level.testCases[0].expectedOutputs.forEach(
+      (outputs: Array<unknown>, index: number) => {
+        const x = 700;
+        const y = startY + index * spacing;
+        const outputNode = createOutputNode(
+          this,
+          this.testValuesContext,
+          x,
+          y,
+          index
+        );
 
-      this.outputNodes.push(outputNode);
-      this.allNodes.push(outputNode);
-    });
+        this.outputNodes.push(outputNode);
+        this.allNodes.push(outputNode);
+      }
+    );
   }
 
   destroy(): void {
@@ -100,17 +145,43 @@ export class GraphEditorContext implements NodeBuildContext {
   }
 }
 
-export class LevelContext {
+export class LevelContext implements TestValuesContext {
   editorContext: GraphEditorContext;
   evaluationListenerHolder: EvaluationListenerHolder;
+  testerListenerHolder: TesterListenerHolder;
+  tester: Tester | null;
   evaluator: Evaluator | null;
-  constructor(
-    editorContex: GraphEditorContext,
-    animationState: Evaluator | null
-  ) {
-    this.editorContext = editorContex;
+  constructor(level: Level, container: HTMLElement) {
+    this.editorContext = new GraphEditorContext(level, this, container);
     this.evaluationListenerHolder = new EvaluationListenerHolder();
-    this.evaluator = animationState;
+    this.evaluator = null;
+    this.testerListenerHolder = new TesterListenerHolder();
+    this.tester = null;
+
+    const lc = this;
+
+    // TODO suuuuper unsure this is the right approach.
+    this.testerListenerHolder.registerListener({
+      onExpectedOutput: function (outputId: number, index: number): void {},
+      onUnexpectedOutput: function (
+        expected: unknown,
+        actual: unknown,
+        outputId: number,
+        index: number
+      ): void {},
+      onTestPassed: function (index: number): void {
+        lc.evaluator = null;
+      },
+      onAllTestsPassed: function (): void {
+        alert("All tests passed!!!");
+      },
+    });
+  }
+  getInputProvider(): InputProvider {
+    return NotNull(this.tester);
+  }
+  getOutputChecker(): OutputChecker {
+    return NotNull(this.tester);
   }
 
   destroy(): void {

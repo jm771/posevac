@@ -29,6 +29,11 @@ export class EvaluateOutput {
   }
 }
 
+export interface TestValuesContext {
+  getInputProvider(): InputProvider;
+  getOutputChecker(): OutputChecker;
+}
+
 interface NodeFunction {
   makeState(): unknown;
   evaluate(
@@ -63,50 +68,40 @@ export interface OutputChecker {
 }
 
 class InputNodeFunction implements NodeFunction {
-  private inputs: Array<unknown>;
+  private testValues: TestValuesContext;
+  private index: number;
 
-  constructor(inputs: Array<unknown>) {
-    this.inputs = inputs;
+  constructor(testValues: TestValuesContext, index: number) {
+    this.testValues = testValues;
+    this.index = index;
   }
 
   makeState() {
-    return { i: 0 };
+    return {};
   }
 
   evaluate(state: unknown, _: CollectionData, __: Array<unknown>) {
-    if (state.i < this.inputs.length) {
-      return this.inputs[state.i++];
-    } else {
-      return null;
-    }
+    return this.testValues.getInputProvider().getInput(this.index);
   }
 }
 
 class OutputNodeFunction implements NodeFunction {
-  private outputs: Array<unknown>;
+  private testValues: TestValuesContext;
+  private index: number;
 
-  constructor(outputs: Array<unknown>) {
-    this.outputs = outputs;
+  constructor(testValues: TestValuesContext, index: number) {
+    this.testValues = testValues;
+    this.index = index;
   }
 
   makeState() {
-    return { i: 0 };
+    return {};
   }
 
-  evaluate(state: unknown, _: CollectionData, args: Array<unknown>) {
-    if (state.i < this.outputs.length) {
-      console.log(
-        "expected: ",
-        this.outputs[state.i],
-        "actual: ",
-        args[0],
-        "match: ",
-        this.outputs[state.i] === args[0]
-      );
-      state.i++;
-    } else {
-      console.log("Got more outputs than expected");
-    }
+  evaluate(state: unknown, _: CollectionData, inputs: Array<unknown>) {
+    return this.testValues
+      .getOutputChecker()
+      .checkOutput(this.index, inputs[0]);
   }
 }
 
@@ -352,9 +347,10 @@ function createNode(
 
 export function createInputNode(
   context: NodeBuildContext,
+  testValues: TestValuesContext,
   x: number,
   y: number,
-  inputs: Array<unknown>
+  index: number
 ): CompNode {
   return createNode(
     context,
@@ -365,15 +361,16 @@ export function createInputNode(
     "input",
     0,
     1,
-    new InputNodeFunction(inputs)
+    new InputNodeFunction(testValues, index)
   );
 }
 
 export function createOutputNode(
   context: NodeBuildContext,
+  testValues: TestValuesContext,
   x: number,
   y: number,
-  outputs: Array<unknown>
+  index: number
 ): CompNode {
   return createNode(
     context,
@@ -384,7 +381,7 @@ export function createOutputNode(
     "output",
     1,
     0,
-    new OutputNodeFunction(outputs)
+    new OutputNodeFunction(testValues, index)
   );
 }
 

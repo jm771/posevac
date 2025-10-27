@@ -104,6 +104,9 @@ export class Evaluator {
       this.nodeEvaluationState.set(n.getNodeId(), n.makeCleanState());
     });
     this.nodes = nodes;
+
+    // TODO - sensible place?
+    this.listener.onEvaluationEvent(EvaluationEvent.Start);
   }
 
   evaluateNode(node: CompNode): void {

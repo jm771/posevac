@@ -20,7 +20,7 @@ export function ProgramCounterOverlay({
   >(new Map<string, ProgramCounter>());
 
   useEffect(() => {
-    const listenerCallbacks: EvaluationListener = {
+    const evaluationListenerCallbacks: EvaluationListener = {
       onCounterAdvance: (e: CounterAdvanceEvent) => {
         setProgramCounters((pcs) => {
           const newProgramCounters = new Map(pcs);
@@ -40,16 +40,22 @@ export function ProgramCounterOverlay({
         });
       },
       onEvaluationEvent: (e: EvaluationEvent) => {
+        if (e == EvaluationEvent.Start) {
+          setProgramCounters(new Map<string, ProgramCounter>());
+        }
         if (e == EvaluationEvent.End) {
           setProgramCounters(new Map<string, ProgramCounter>());
         }
       },
     };
 
-    const registration =
-      evaluationEventSource.registerListener(listenerCallbacks);
+    const evaluationRegistration = evaluationEventSource.registerListener(
+      evaluationListenerCallbacks
+    );
 
-    return () => evaluationEventSource.deregisterListener(registration);
+    return () => {
+      evaluationEventSource.deregisterListener(evaluationRegistration);
+    };
   }, [evaluationEventSource]);
 
   return (
