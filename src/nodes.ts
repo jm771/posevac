@@ -50,6 +50,14 @@ class PureNodeFunction implements NodeFunction {
   }
 }
 
+export interface InputProvider {
+  getInput(index: number): any;
+}
+
+export interface OutputChecker {
+  checkOutput(index: number, val: any): void;
+}
+
 class InputNodeFunction implements NodeFunction {
   private inputs: Array<any>;
 
@@ -293,7 +301,8 @@ function createNode(
   style: NodeStyle,
   inTerminals: number,
   outTerminals: number,
-  func: NodeFunction
+  func: NodeFunction,
+  extraData: { [key: string]: any } = {}
 ): CompNode {
   const nodeId = `node-${context.nodeIdCounter++}`;
   context.cy.add({
@@ -303,6 +312,7 @@ function createNode(
       label: label,
       type: type,
       style: style,
+      ...extraData,
     },
     position: { x, y },
   });
@@ -471,44 +481,17 @@ export function createConstantNode(
   initialValue: any = 0,
   initialRepeat: boolean = true
 ): CompNode {
-  const nodeId = `node-${context.nodeIdCounter++}`;
-  context.cy.add({
-    group: "nodes",
-    data: {
-      id: nodeId,
-      type: "constant",
-      label: "const",
-      style: "constant",
-      constantValue: initialValue,
-      constantRepeat: initialRepeat,
-    },
-    position: { x, y },
-  });
-
-  const node = context.cy.$(`#${nodeId}`) as NodeSingular;
-
-  const [inputTerminals, invisibleIn] = makeInputTerminals(
-    context.cy,
-    nodeId,
+  return createNode(
+    context,
     x,
     y,
-    0
-  );
-  const [outputTerminals, invisibleOut] = makeOutputTerminals(
-    context.cy,
-    nodeId,
-    x,
-    y,
-    1
-  );
-
-  return new CompNode(
+    "constant",
+    "const",
+    "constant",
+    0,
+    1,
     new ConstantNodeFunction(),
-    node,
-    inputTerminals,
-    outputTerminals,
-    invisibleIn.concat(invisibleOut),
-    true
+    { constantValue: initialValue, constantRepeat: initialRepeat }
   );
 }
 

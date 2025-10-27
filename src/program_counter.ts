@@ -2,7 +2,7 @@ import { EdgeSingular, NodeSingular } from "cytoscape";
 import { DefaultMap } from "./util";
 
 export class ProgramCounter {
-  contents: any;
+  contents: unknown;
   currentLocation: NodeSingular;
   currentEdge: EdgeSingular | null;
   id: string;
@@ -10,7 +10,7 @@ export class ProgramCounter {
   constructor(
     location: NodeSingular,
     edge: EdgeSingular | null,
-    contents: any
+    contents: unknown
   ) {
     this.contents = contents;
     this.currentLocation = location;
