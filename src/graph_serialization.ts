@@ -8,6 +8,7 @@ import {
   createConstantNode,
   createNodeFromName,
 } from "./nodes";
+import { Condition } from "./condition";
 
 /**
  * Serializable graph structure - excludes animation state
@@ -33,7 +34,7 @@ export interface SerializedEdge {
   sourceTerminalIndex: number;
   targetNodeId: string;
   targetTerminalIndex: number;
-  condition?: string;
+  condition?: number[];
 }
 
 export function exportGraph(context: GraphEditorContext): SerializedGraph {
@@ -103,9 +104,9 @@ export function exportGraph(context: GraphEditorContext): SerializedGraph {
     };
 
     // Add condition if it exists
-    const condition = edge.data("condition");
-    if (condition) {
-      serialized.condition = condition;
+    const condition = edge.data("condition") as Condition;
+    if (condition && condition.matchers.length > 0) {
+      serialized.condition = condition.matchers;
     }
 
     return serialized;
@@ -205,12 +206,12 @@ export function importGraph(
     const edgeData: EdgeData = {
       source: sourceTerminal.id(),
       target: targetTerminal.id(),
-      condition: "",
+      condition: new Condition([]),
     };
 
     // Restore condition if it exists
     if (serializedEdge.condition) {
-      edgeData.condition = serializedEdge.condition;
+      edgeData.condition = new Condition(serializedEdge.condition);
     }
 
     cy.add({
