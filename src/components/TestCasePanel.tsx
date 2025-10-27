@@ -1,13 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { LevelContext } from "../editor_context";
-import {
-  CounterAdvanceEvent,
-  EvaluationEvent,
-  EvaluationListener,
-  NodeEvaluateEvent,
-} from "../evaluation";
 import { TesterListener } from "../tester";
-import { Assert } from "../util";
 
 enum InputStatus {
   Pending = "io-value-pending",
@@ -18,6 +11,7 @@ enum OutputStatus {
   Pending = "io-value-pending",
   Correct = "io-value-correct",
   Incorrect = "io-value-incorrect",
+  TestPassed = "io-value-test-passed",
 }
 
 export function TestCasePanel({
@@ -81,9 +75,28 @@ export function TestCasePanel({
         });
       },
 
-      onTestPassed: (_index: number) => {},
+      onTestPassed: (testCaseIndex: number) => {
+        setOutputStates((prev: OutputStatus[][][]) => {
+          const newStates = [...prev];
+          newStates[testCaseIndex] = newStates[testCaseIndex].map((arr) =>
+            arr.map((_) => OutputStatus.TestPassed)
+          );
+          return newStates;
+        });
+      },
 
-      onAllTestsPassed: () => {},
+      onAllTestsPassed: () => {
+        alert("All tests passed!!!");
+      },
+      onTestCaseStart: function (testCaseIndex: number): void {
+        if (testCaseIndex === 0) {
+          setInputStates(makeFreshInputStates);
+          setOutputStates(makeFreshOutputStates);
+        }
+
+        console.log("starting test case", testCaseIndex);
+        setCurrentTestIndex(testCaseIndex);
+      },
     };
 
     const listenerId =
@@ -91,26 +104,6 @@ export function TestCasePanel({
 
     return () => {
       levelContext.testerListenerHolder.deregisterListener(listenerId);
-    };
-  }, [levelContext]);
-
-  useEffect(() => {
-    const listener: EvaluationListener = {
-      onCounterAdvance: function (_e: CounterAdvanceEvent): void {},
-      onNodeEvaluate: function (_e: NodeEvaluateEvent): void {},
-      onEvaluationEvent: function (e: EvaluationEvent): void {
-        Assert(e === EvaluationEvent.End || e === EvaluationEvent.Start);
-        setCurrentTestIndex(0);
-        setInputStates(makeFreshInputStates);
-        setOutputStates(makeFreshOutputStates);
-      },
-    };
-
-    const listenerId =
-      levelContext.evaluationListenerHolder.registerListener(listener);
-
-    return () => {
-      levelContext.evaluationListenerHolder.deregisterListener(listenerId);
     };
   }, [levelContext]);
 

@@ -9,6 +9,7 @@ type TestCaseState = {
 };
 
 export type TesterListener = {
+  onTestCaseStart: (testCaseIndex: number) => void;
   onExpectedOutput: (
     testCaseIndex: number,
     outputId: number,
@@ -36,6 +37,10 @@ export interface TesterEventSource {
 }
 
 export class TesterListenerHolder implements TesterEventSource, TesterListener {
+  onTestCaseStart(testCaseIndex: number): void {
+    this.listeners.forEach((l) => l.onTestCaseStart(testCaseIndex));
+  }
+
   onExpectedOutput(
     testCaseIndex: number,
     outputId: number,
@@ -100,6 +105,7 @@ export class Tester implements InputProvider, OutputChecker {
     this.currCaseIndex = 0;
     this.currState = this.makeStartState(testCases[0]);
     this.listener = listener;
+    this.listener.onTestCaseStart(0);
   }
 
   private makeStartState(tc: TestCase): TestCaseState {
@@ -162,6 +168,7 @@ export class Tester implements InputProvider, OutputChecker {
             this.currState = this.makeStartState(
               this.testCases[this.currCaseIndex]
             );
+            this.listener.onTestCaseStart(this.currCaseIndex);
           }
         }
       }

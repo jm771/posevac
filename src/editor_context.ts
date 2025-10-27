@@ -174,9 +174,8 @@ export class LevelContext implements TestValuesContext {
       onTestPassed: function (_index: number): void {
         lc.evaluator = null;
       },
-      onAllTestsPassed: function (): void {
-        alert("All tests passed!!!");
-      },
+      onAllTestsPassed: function (): void {},
+      onTestCaseStart: function (_testCaseIndex: number): void {},
     });
   }
   getInputProvider(): InputProvider {

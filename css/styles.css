@@ -627,6 +627,13 @@ body {
   box-shadow: 0 0 8px rgba(229, 115, 115, 0.4);
 }
 
+.io-value-test-passed {
+  background-color: #d3af37;
+  border: 1px solid #d3af37;
+  color: white;
+  box-shadow: 0 0 8px rgba(229, 115, 115, 0.4);
+}
+
 .test-case-content::-webkit-scrollbar {
   width: 6px;
   height: 6px;
