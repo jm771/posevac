@@ -162,6 +162,7 @@ export class LevelContext implements TestValuesContext {
 
     // TODO suuuuper unsure this is the right approach.
     this.testerListenerHolder.registerListener({
+      onInputProduced: function (_inputId: number, _index: number): void {},
       onExpectedOutput: function (_outputId: number, _index: number): void {},
       onUnexpectedOutput: function (
         _expected: unknown,

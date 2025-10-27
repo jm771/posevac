@@ -153,7 +153,7 @@ export class Tester implements InputProvider, OutputChecker {
     Assert(inputId < this.currState.inputIndexes.length);
     const inputArr = this.testCases[this.currCaseIndex].inputs[inputId];
     if (this.currState.inputIndexes[inputId] < inputArr.length) {
-      const inputIndex = this.currState.inputIndexes[inputId];
+      const inputIndex = this.currState.inputIndexes[inputId]++;
       this.listener.onInputProduced(inputId, inputIndex);
       return inputArr[inputIndex];
     } else {
