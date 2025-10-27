@@ -27,6 +27,13 @@ export const LEVELS: Level[] = [
         ],
         expectedOutputs: [[10, 13, 17]],
       },
+      {
+        inputs: [
+          [1, 3, 5],
+          [2, 4, 6],
+        ],
+        expectedOutputs: [[3, 7, 11]],
+      },
     ],
     allowedNodes: ["plus"],
   },
