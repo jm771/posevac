@@ -1,4 +1,5 @@
-import { StylesheetJson } from "cytoscape";
+import { EdgeSingular, StylesheetJson } from "cytoscape";
+import { Condition } from "./condition";
 
 // Get shared Cytoscape styles (used for main canvas and previews)
 export function getCytoscapeStyles(): StylesheetJson {
@@ -121,7 +122,8 @@ export function getCytoscapeStyles(): StylesheetJson {
         "target-arrow-shape": "triangle",
         "curve-style": "bezier",
         "arrow-scale": 1.5,
-        label: "data(condition)",
+        label: (ele: EdgeSingular) =>
+          (ele.data("condition") as Condition).matchers.join(",") + "hi there",
         "font-size": "10",
         "text-background-color": "#2d2d30",
         "text-background-opacity": 0.8,

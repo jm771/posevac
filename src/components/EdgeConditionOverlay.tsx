@@ -1,18 +1,22 @@
 import { Core, EdgeSingular, EventObject } from "cytoscape";
-import React, { useContext, useEffect, useRef } from "react";
-import { useState } from "react";
-import { Assert } from "../util";
+import React, { useContext, useEffect, useState } from "react";
+import { Condition, Matcher } from "../condition";
 import {
   getEdgeCenter,
   PanZoomContext,
   styleForPosition,
 } from "../rendered_position";
 
+const MATCHER_LABELS = {
+  [Matcher.Wild]: "*",
+  [Matcher.Zero]: "0",
+  [Matcher.One]: "1",
+};
+
 export function EdgeConditionOverlay({ cy }: { cy: Core }) {
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const [textValue, setTextValue] = useState<string>("");
   const [selectedEdge, setSelectedEdge] = useState<EdgeSingular | null>(null);
-  const [, setUpdateCommitted] = useState<boolean>(false);
+  const [, setConditionVersion] = useState<number>(0);
+  const incConditionVersion = () => setConditionVersion((x) => x + 1);
   const panZoom = useContext(PanZoomContext);
 
   function nodeTapHandler() {
@@ -40,57 +44,67 @@ export function EdgeConditionOverlay({ cy }: { cy: Core }) {
     };
   }, [cy]);
 
-  useEffect(() => {
-    if (selectedEdge) {
-      inputRef.current?.select();
-      inputRef.current?.focus();
-      setTextValue(selectedEdge.data("condition"));
-    }
-  }, [selectedEdge]);
-
-  function commitUpdate() {
-    setUpdateCommitted((x) => {
-      if (!x) {
-        selectedEdge?.data("condition", textValue);
-      }
-
-      return true;
-    });
+  function handleAddMatcher() {
+    if (!selectedEdge) return;
+    const condition = selectedEdge.data("condition") as Condition;
+    const newMatchers = [...condition.matchers, Matcher.Wild];
+    selectedEdge.data("condition", new Condition(newMatchers));
+    incConditionVersion();
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    Assert(inputRef.current !== null);
-    const input = inputRef.current as HTMLInputElement;
+  function handleRemoveMatcher(index: number) {
+    if (!selectedEdge) return;
+    const condition = selectedEdge.data("condition") as Condition;
+    const newMatchers = condition.matchers.filter((_, i) => i !== index);
+    selectedEdge.data("condition", new Condition(newMatchers));
+    incConditionVersion();
 
-    if (e.key === "Enter") {
-      input.blur();
-    } else if (e.key === "Escape") {
-      setUpdateCommitted(true);
-      input.blur();
+    // If no matchers left, close the overlay
+    if (newMatchers.length === 0) {
+      setSelectedEdge(null);
     }
+  }
+
+  function handleCycleMatcher(index: number) {
+    if (!selectedEdge) return;
+    const condition = selectedEdge.data("condition") as Condition;
+    const newMatchers = [...condition.matchers];
+    // Cycle: Wild -> Zero -> One -> Wild
+    newMatchers[index] = (newMatchers[index] + 1) % 3;
+    selectedEdge.data("condition", new Condition(newMatchers));
+    incConditionVersion();
   }
 
   const pos = selectedEdge && getEdgeCenter(selectedEdge);
-
+  console.log(pos);
+  const condition = selectedEdge?.data("condition") as Condition;
   return (
     selectedEdge && (
-      <input
-        ref={inputRef}
-        type="text"
+      <div
         className="edge-condition-input"
-        value={textValue}
-        onChange={(e) => setTextValue(e.target.value)}
-        placeholder="condition..."
+        style={styleForPosition(pos!, panZoom)}
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
-        onFocus={() => setUpdateCommitted(false)}
-        onBlur={() => {
-          commitUpdate();
-          setTimeout(() => setSelectedEdge(null), 100);
-        }}
-        onKeyDown={handleKeyDown}
-        style={styleForPosition(pos!, panZoom)}
-      />
+      >
+        <div className="matcher-list">
+          {condition.matchers.map((matcher, index) => (
+            <span key={index} className="matcher-item">
+              <button
+                className="matcher-button"
+                onClick={() => handleCycleMatcher(index)}
+              >
+                {MATCHER_LABELS[matcher]}
+              </button>
+            </span>
+          ))}
+        </div>
+        <div>
+          <button className="matcher-add-button" onClick={handleAddMatcher}>
+            +
+          </button>
+          <button className="matcher-remove-button">-</button>
+        </div>
+      </div>
     )
   );
 }
