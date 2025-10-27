@@ -1,6 +1,5 @@
 import { Core, EventObject, NodeSingular } from "cytoscape";
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { ConstantNodeData } from "../nodes";
 import { PanZoomContext, styleForPosition } from "../rendered_position";
 
 export function initializeNodeLabelStyling(cy: Core) {
@@ -15,7 +14,6 @@ export function initializeNodeLabelStyling(cy: Core) {
           data.constantRepeat !== undefined ? data.constantRepeat : true;
         const modeIcon = repeat ? "∞" : "1×";
         const modeClass = repeat ? "repeat" : "once";
-
         return `
                 <div class="constant-display">
                     <div class="constant-display-value">${value}</div>

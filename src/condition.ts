@@ -1,4 +1,4 @@
-enum Matcher {
+export enum Matcher {
   Wild,
   Zero,
   One,
