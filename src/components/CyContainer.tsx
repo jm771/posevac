@@ -1,6 +1,7 @@
-import React, { useRef, useState } from "react";
-import { LevelContext } from "../editor_context";
 import { EdgeSingular, NodeSingular, Position } from "cytoscape";
+import React, { useRef, useState } from "react";
+import { Condition } from "../condition";
+import { LevelContext } from "../editor_context";
 
 // Should move into state??
 let edgeIdCounter = 0;
@@ -115,7 +116,7 @@ export function CyContainer({
             id: "temp-edge",
             source: sourceNode.id(),
             target: tempTargetId,
-            condition: "",
+            condition: new Condition([]),
           },
           classes: "temp",
         }) as EdgeSingular
@@ -192,7 +193,7 @@ export function CyContainer({
                 id: `edge-${edgeIdCounter++}`,
                 source: sourceNode.id(),
                 target: targetNode.id(),
-                condition: "",
+                condition: new Condition([]),
               },
             });
           }

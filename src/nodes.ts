@@ -276,11 +276,8 @@ class CompNodeInternal<TState> {
       for (let i = 0; i < resultArray.length; i++) {
         const edges = this.outputTerminals[i].edgesTo("").toArray();
         const filteredEdges = edges.filter((edge) => {
-          if (edge.data("condition") === "") {
-            return true;
-          }
-          const conditionFunc = eval(edge.data("condition"));
-          return conditionFunc(resultArray[i]);
+          const condition = edge.data("condition");
+          return condition.matches(resultArray[i]);
         });
 
         for (const edge of filteredEdges) {
