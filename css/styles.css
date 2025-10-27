@@ -394,14 +394,105 @@ body {
 
 .edge-condition-input {
   position: absolute;
-  padding: 4px 8px;
-  font-size: 12px;
-  border: 2px solid #4fc3f7;
-  border-radius: 3px;
-  background: #fff;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  padding: 8px;
+  border: 2px solid var(--accent-blue);
+  border-radius: 8px;
+  background-color: var(--bg-secondary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
   z-index: 1000;
-  min-width: 100px;
+  pointer-events: auto;
+}
+
+.matcher-list {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.matcher-button {
+  min-width: 32px;
+  height: 32px;
+  padding: 6px 10px;
+  font-size: 14px;
+  font-weight: bold;
+  border: 2px solid var(--accent-blue);
+  border-radius: 6px;
+  background-color: var(--bg-tertiary);
+  color: var(--accent-blue);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.matcher-button:hover {
+  background-color: var(--accent-blue);
+  color: var(--bg-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(79, 195, 247, 0.4);
+}
+
+.matcher-button:active {
+  transform: translateY(0);
+}
+
+.matcher-add-button {
+  min-width: 32px;
+  height: 32px;
+  padding: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  border: 2px dashed var(--accent-green);
+  border-radius: 6px;
+  background-color: var(--bg-tertiary);
+  color: var(--accent-green);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.matcher-add-button:hover {
+  background-color: var(--accent-green);
+  color: var(--bg-primary);
+  border-style: solid;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(129, 199, 132, 0.4);
+}
+
+.matcher-add-button:active {
+  transform: translateY(0);
+}
+
+.matcher-remove-button {
+  min-width: 32px;
+  height: 32px;
+  padding: 6px;
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1;
+  border: 2px solid var(--accent-red);
+  border-radius: 6px;
+  background-color: var(--bg-tertiary);
+  color: var(--accent-red);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.matcher-remove-button:hover {
+  background-color: var(--accent-red);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(229, 115, 115, 0.4);
+}
+
+.matcher-remove-button:active {
+  transform: translateY(0);
 }
 
 .constant-display {
