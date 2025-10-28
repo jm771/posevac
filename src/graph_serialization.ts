@@ -1,5 +1,6 @@
 // Graph Serialization - Save and load graph structures to/from JSON
 import { NodeSingular } from "cytoscape";
+import { Condition } from "./condition";
 import { EdgeData } from "./edges";
 import { GraphEditorContext } from "./editor_context";
 import {
@@ -8,7 +9,6 @@ import {
   createConstantNode,
   createNodeFromName,
 } from "./nodes";
-import { Condition } from "./condition";
 
 /**
  * Serializable graph structure - excludes animation state
@@ -126,6 +126,8 @@ export function importGraph(
   serializedGraph: SerializedGraph
 ): void {
   const cy = context.cy;
+
+  cy.edges().remove();
 
   if (serializedGraph.levelId !== context.level.id) {
     throw new Error(
