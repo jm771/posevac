@@ -67,7 +67,7 @@ export function EdgeConditionOverlay({ cy }: { cy: Core }) {
     const condition = selectedEdge.data("condition") as Condition;
     const newMatchers = [...condition.matchers];
     // Cycle: Wild -> Zero -> One -> Wild
-    newMatchers[index] = (newMatchers[index] + 1) % 3;
+    newMatchers[index] = (newMatchers[index] + 1) % 5;
     selectedEdge.data("condition", new Condition(newMatchers));
     incConditionVersion();
   }
