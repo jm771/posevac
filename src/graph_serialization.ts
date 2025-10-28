@@ -10,9 +10,8 @@ import {
   createNodeFromName,
 } from "./nodes";
 
-/**
- * Serializable graph structure - excludes animation state
- */
+const SERIALIZATION_VERSION = "1.1.0.0";
+
 export interface SerializedGraph {
   version: string;
   levelId: string;
@@ -36,15 +35,16 @@ export interface SerializedEdge {
   targetTerminalIndex: number;
   condition?: number[];
 }
-
 export function exportGraph(context: GraphEditorContext): SerializedGraph {
   const cy = context.cy;
 
   // Get all user-created nodes (exclude input/output nodes and terminals)
-  const userNodes = cy.nodes().filter((node) => {
-    const nodeType: ComponentType = node.data("type");
-    return nodeType !== "input" && nodeType !== "output";
-  });
+  const userNodes = context.allNodes
+    .map((cn) => cn.node)
+    .filter((node) => {
+      const nodeType: ComponentType = node.data("type");
+      return nodeType !== "input" && nodeType !== "output";
+    });
 
   const serializedNodes: SerializedNode[] = userNodes.map((node) => {
     const nodeSingular = node as NodeSingular;
@@ -101,19 +101,14 @@ export function exportGraph(context: GraphEditorContext): SerializedGraph {
       sourceTerminalIndex: sourceIndex,
       targetNodeId: targetParent.id(),
       targetTerminalIndex: targetIndex,
+      condition: (edge.data("condition") as Condition).matchers,
     };
-
-    // Add condition if it exists
-    const condition = edge.data("condition") as Condition;
-    if (condition && condition.matchers.length > 0) {
-      serialized.condition = condition.matchers;
-    }
 
     return serialized;
   });
 
   return {
-    version: "1.0.0",
+    version: SERIALIZATION_VERSION,
     levelId: context.level.id,
     timestamp: new Date().toISOString(),
     nodes: serializedNodes,
