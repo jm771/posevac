@@ -1,3 +1,4 @@
+import { AnimatePresence } from "framer-motion";
 import React, { useEffect, useState } from "react";
 import {
   CounterAdvanceEvent,
@@ -59,7 +60,7 @@ export function ProgramCounterOverlay({
   }, [evaluationEventSource]);
 
   return (
-    <>
+    <AnimatePresence>
       {mapIterable(programCounters.values(), (pc: ProgramCounter) => (
         <ProgramCounterComponent
           key={pc.id}
@@ -68,6 +69,6 @@ export function ProgramCounterOverlay({
           angle={0}
         />
       ))}
-    </>
+    </AnimatePresence>
   );
 }

@@ -7,7 +7,6 @@ export function ProgramCounterComponent({
   position,
   text,
 }: {
-  startPosition: cytoscape.Position;
   position: cytoscape.Position;
   text: string;
   angle: number;
@@ -17,9 +16,19 @@ export function ProgramCounterComponent({
   return (
     <motion.div
       className="pc-box"
-      animate={motionTargetForPosition(position, panZoom)}
+      style={{
+        display: "flex",
+
+        // transformOrigin: "50% 50%",
+      }}
+      initial={{ ...motionTargetForPosition(position, panZoom, 0) }}
+      exit={{ ...motionTargetForPosition(position, panZoom, 0) }}
+      animate={{
+        // scale: 1,
+        ...motionTargetForPosition(position, panZoom, 1),
+        // transform: "translate(100px, 100px)",
+      }}
       transition={{ duration: 0.5 }}
-      style={{ display: "flex" }}
     >
       {text}
     </motion.div>
