@@ -122,6 +122,8 @@ export function importGraph(
 ): void {
   const cy = context.cy;
 
+  cy.edges().remove();
+
   Assert(
     serializedGraph.version === SERIALIZATION_VERSION,
     "Wrong serialization version"
@@ -132,6 +134,11 @@ export function importGraph(
       `Graph is for level "${serializedGraph.levelId}" but current level is "${context.level.id}"`
     );
   }
+
+  const idMap = new Map<string, string>();
+
+  context.inputNodes.forEach((n) => idMap.set(n.getNodeId(), n.getNodeId()));
+  context.outputNodes.forEach((n) => idMap.set(n.getNodeId(), n.getNodeId()));
 
   for (const serializedNode of serializedGraph.nodes) {
     let newNode: CompNode;
@@ -156,13 +163,18 @@ export function importGraph(
         break;
     }
 
+    idMap.set(serializedNode.id, newNode.getNodeId());
     context.allNodes.push(newNode);
   }
 
   // Recreate edges using terminal mappings
   for (const serializedEdge of serializedGraph.edges) {
-    const sourceCompNode = context.getNodeForId(serializedEdge.sourceNodeId);
-    const targetCompNode = context.getNodeForId(serializedEdge.targetNodeId);
+    const sourceCompNode = context.getNodeForId(
+      NotNull(idMap.get(serializedEdge.sourceNodeId))
+    );
+    const targetCompNode = context.getNodeForId(
+      NotNull(idMap.get(serializedEdge.targetNodeId))
+    );
 
     const sourceTerminal = NotNull(
       sourceCompNode.outputTerminals[serializedEdge.sourceTerminalIndex]
