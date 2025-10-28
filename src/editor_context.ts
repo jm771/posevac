@@ -86,7 +86,13 @@ export class GraphEditorContext implements NodeBuildContext {
     return this.getNodeIndexForNodeId(node.id());
   }
 
-  getCompNodeForNode(node: NodeSingular): CompNode | null {
+  getNodeForId(nodeId: string): CompNode {
+    const idx = this.getNodeIndexForNodeId(nodeId);
+    Assert(idx >= 0, `Couldn't find node ${nodeId}`);
+    return this.allNodes[idx];
+  }
+
+  tryGetCompNodeForNode(node: NodeSingular): CompNode | null {
     const idx = this.getNodeIndexForNode(node);
     return idx === -1 ? null : this.allNodes[idx];
   }

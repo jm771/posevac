@@ -9,7 +9,7 @@ import {
   createConstantNode,
   createNodeFromName,
 } from "./nodes";
-import { Assert } from "./util";
+import { Assert, NotNull } from "./util";
 
 const SERIALIZATION_VERSION = "1.0.1";
 
@@ -116,7 +116,6 @@ export function exportGraph(context: GraphEditorContext): SerializedGraph {
     edges: serializedEdges,
   };
 }
-
 export function importGraph(
   context: GraphEditorContext,
   serializedGraph: SerializedGraph
@@ -128,17 +127,11 @@ export function importGraph(
     "Wrong serialization version"
   );
 
-  cy.edges().remove();
-
   if (serializedGraph.levelId !== context.level.id) {
     throw new Error(
       `Graph is for level "${serializedGraph.levelId}" but current level is "${context.level.id}"`
     );
   }
-
-  const nodeIdMap = new Map<string, CompNode>();
-  context.inputNodes.forEach((n) => nodeIdMap.set(n.getNodeId(), n));
-  context.outputNodes.forEach((n) => nodeIdMap.set(n.getNodeId(), n));
 
   for (const serializedNode of serializedGraph.nodes) {
     let newNode: CompNode;
@@ -164,68 +157,31 @@ export function importGraph(
     }
 
     context.allNodes.push(newNode);
-
-    // Store mapping from old node ID to new CompNode
-    nodeIdMap.set(serializedNode.id, newNode);
   }
 
   // Recreate edges using terminal mappings
   for (const serializedEdge of serializedGraph.edges) {
-    // Find the new CompNodes from the mapping
-    const sourceCompNode = nodeIdMap.get(serializedEdge.sourceNodeId);
-    const targetCompNode = nodeIdMap.get(serializedEdge.targetNodeId);
+    const sourceCompNode = context.getNodeForId(serializedEdge.sourceNodeId);
+    const targetCompNode = context.getNodeForId(serializedEdge.targetNodeId);
 
-    if (!sourceCompNode) {
-      console.warn(`Source node not found: ${serializedEdge.sourceNodeId}`);
-      continue;
-    }
+    const sourceTerminal = NotNull(
+      sourceCompNode.outputTerminals[serializedEdge.sourceTerminalIndex]
+    );
+    const targetTerminal = NotNull(
+      targetCompNode.inputTerminals[serializedEdge.targetTerminalIndex]
+    );
 
-    if (!targetCompNode) {
-      console.warn(`Target node not found: ${serializedEdge.targetNodeId}`);
-      continue;
-    }
-
-    // Get the specific terminals using the indices
-    const sourceTerminal =
-      sourceCompNode.outputTerminals[serializedEdge.sourceTerminalIndex];
-    const targetTerminal =
-      targetCompNode.inputTerminals[serializedEdge.targetTerminalIndex];
-
-    if (!sourceTerminal) {
-      console.warn(
-        `Source terminal ${serializedEdge.sourceTerminalIndex} not found on node ${serializedEdge.sourceNodeId}`
-      );
-      continue;
-    }
-
-    if (!targetTerminal) {
-      console.warn(
-        `Target terminal ${serializedEdge.targetTerminalIndex} not found on node ${serializedEdge.targetNodeId}`
-      );
-      continue;
-    }
-
-    // Create edge between the terminals
     const edgeData: EdgeData = {
       source: sourceTerminal.id(),
       target: targetTerminal.id(),
-      condition: new Condition([]),
+      condition: new Condition(serializedEdge.condition),
     };
-
-    // Restore condition if it exists
-    if (serializedEdge.condition) {
-      edgeData.condition = new Condition(serializedEdge.condition);
-    }
 
     cy.add({
       group: "edges",
       data: edgeData,
     });
   }
-
-  console.log(
-    `Imported ${serializedGraph.nodes.length} nodes and ${serializedGraph.edges.length} edges`
-  );
 }
 
 export function downloadGraphAsJSON(
