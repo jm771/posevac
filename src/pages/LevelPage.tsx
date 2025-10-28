@@ -12,7 +12,7 @@ import { SaveLoadControls } from "../components/SaveLoadControls";
 import { LevelSidebar } from "../components/Sidebar";
 import { TestCasePanel } from "../components/TestCasePanel";
 import { LevelContext } from "../editor_context";
-import { importGraph, SerializedGraph } from "../graph_serialization";
+import { importGraph } from "../graph_serialization";
 import { getLevelById } from "../levels";
 import { ComponentType, createNodeFromName } from "../nodes";
 import { PanZoomContext, PanZoomState } from "../rendered_position";
@@ -53,7 +53,7 @@ function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
 
 export function LevelPage() {
   const { levelId } = useParams<{ levelId: string }>();
-  const serializedGraph: SerializedGraph | undefined =
+  const serializedGraph: string | undefined =
     useLocation().state?.serializedGraph;
 
   const level = getLevelById(NotNull(levelId));
@@ -67,7 +67,7 @@ export function LevelPage() {
 
     setLevelContext(newLevelContext);
     if (serializedGraph) {
-      importGraph(newLevelContext.editorContext, serializedGraph);
+      importGraph(newLevelContext.editorContext, JSON.parse(serializedGraph));
     }
     const cy = newLevelContext.editorContext.cy;
     initializeNodeLabelStyling(cy);

@@ -4,14 +4,14 @@ import { LevelContext } from "../editor_context";
 import { downloadGraphAsJSON, loadGraphFromFile } from "../graph_serialization";
 
 function MakeFileSelectedHandler(
-  naviage: NavigateFunction
+  navigate: NavigateFunction
 ): (event: React.ChangeEvent<HTMLInputElement>) => void {
   return (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     try {
-      loadGraphFromFile(naviage, file);
+      loadGraphFromFile(navigate, file);
     } catch (error) {
       alert(
         `Error loading graph: ${

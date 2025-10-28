@@ -205,31 +205,27 @@ export function downloadGraphAsJSON(
   URL.revokeObjectURL(url);
 }
 
-export function loadGraphFromFile(
-  navigate: NavigateFunction,
-  file: File
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+export function loadGraphFromFile(navigate: NavigateFunction, file: File) {
+  const reader = new FileReader();
 
-    reader.onload = (event) => {
-      try {
-        const json = event.target?.result as string;
-        const serialized = JSON.parse(json) as SerializedGraph;
-        navigate(`/level/${serialized.levelId}`, {
-          state: { serializedGraph: serialized },
-        });
+  reader.onload = (event) => {
+    try {
+      console.log("onload");
+      const json = event.target?.result as string;
+      const serialized = JSON.parse(json) as SerializedGraph;
+      navigate(`/level/${serialized.levelId}`, {
+        state: { serializedGraph: undefined },
+      });
+      console.log("hmmm");
+    } catch (error) {
+      alert(error);
+      // reject(error);
+    }
+  };
 
-        resolve();
-      } catch (error) {
-        reject(error);
-      }
-    };
+  reader.onerror = () => {
+    throw new Error("Failed to read file");
+  };
 
-    reader.onerror = () => {
-      reject(new Error("Failed to read file"));
-    };
-
-    reader.readAsText(file);
-  });
+  reader.readAsText(file);
 }
