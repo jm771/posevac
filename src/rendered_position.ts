@@ -1,6 +1,6 @@
 import cytoscape, { EdgeSingular, NodeSingular } from "cytoscape";
-import { Assert } from "./util";
 import { createContext } from "react";
+import { Assert } from "./util";
 
 export class RenderedPosition {
   x: number;
@@ -62,7 +62,22 @@ export function styleForPosition(
   return {
     left: renderedPos.x,
     top: renderedPos.y,
-    transform: `translate(-50%, -50%) scale(${panZoom.zoom})`,
+    // transform: `translate(-50%, -50%) scale(${panZoom.zoom})`,
+  };
+}
+
+export function motionTargetForPosition(
+  position: cytoscape.Position,
+  panZoom: PanZoomState
+) {
+  // .renderedPosition() might be the more sane thing  here...
+  const renderedPos = getRenderedPosition(position, panZoom);
+  return {
+    top: 0,
+    left: 0,
+    x: renderedPos.x,
+    y: renderedPos.y,
+    // transform: `translate(-50%, -50%) scale(${panZoom.zoom})`,
   };
 }
 
