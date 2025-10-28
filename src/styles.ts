@@ -6,7 +6,7 @@ function formatCondition(ele: EdgeSingular): string {
   if (cond.matchers.length === 0) {
     return "";
   }
-  return "(" + cond.matchers.map((m) => MATCHER_LABELS[m]).join(",") + ")";
+  return "(" + cond.matchers.map((m) => MATCHER_LABELS[m]).join(", ") + ")";
 }
 // Get shared Cytoscape styles (used for main canvas and previews)
 export function getCytoscapeStyles(): StylesheetJson {
@@ -130,7 +130,7 @@ export function getCytoscapeStyles(): StylesheetJson {
         "curve-style": "bezier",
         "arrow-scale": 1.5,
         label: formatCondition,
-        "font-size": "16",
+        "font-size": "24",
         "text-background-color": "#2d2d30",
         "text-background-opacity": 0.8,
         "text-background-padding": "3",

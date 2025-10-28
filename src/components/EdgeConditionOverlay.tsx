@@ -109,16 +109,20 @@ export function EdgeConditionOverlay({ cy }: { cy: Core }) {
         onClick={stopEvent}
       >
         <div className="matcher-list">
+          <span>(</span>
           {condition.matchers.map((matcher, index) => (
-            <button
-              key={index}
-              className="matcher-button"
-              onMouseDown={(e) => handleCycleMatcher(index, e)}
-              onClick={stopEvent}
-            >
-              {MATCHER_LABELS[matcher]}
-            </button>
+            <React.Fragment key={index}>
+              {index != 0 && <span>,</span>}
+              <button
+                className="matcher-button"
+                onMouseDown={(e) => handleCycleMatcher(index, e)}
+                onClick={stopEvent}
+              >
+                {MATCHER_LABELS[matcher]}
+              </button>
+            </React.Fragment>
           ))}
+          <span>)</span>
           <button
             className="matcher-add-button"
             onMouseDown={handleAddMatcherClick}

@@ -407,12 +407,13 @@ body {
   display: flex;
   gap: 6px;
   align-items: center;
+  font-size: 32px;
 }
 
 .matcher-button {
   min-width: 32px;
   height: 32px;
-  padding: 6px 10px;
+  /* padding: 6px 10px; */
   font-size: 14px;
   font-weight: bold;
   border: 2px solid var(--accent-blue);
