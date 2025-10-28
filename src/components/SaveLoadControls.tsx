@@ -5,13 +5,13 @@ import { downloadGraphAsJSON, loadGraphFromFile } from "../graph_serialization";
 
 function MakeFileSelectedHandler(
   naviage: NavigateFunction
-): (event: React.ChangeEvent<HTMLInputElement>) => Promise<void> {
-  return async (event: React.ChangeEvent<HTMLInputElement>) => {
+): (event: React.ChangeEvent<HTMLInputElement>) => void {
+  return (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     try {
-      await loadGraphFromFile(naviage, file);
+      loadGraphFromFile(naviage, file);
     } catch (error) {
       alert(
         `Error loading graph: ${
