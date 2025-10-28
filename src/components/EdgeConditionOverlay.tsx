@@ -1,17 +1,11 @@
 import { Core, EdgeSingular, EventObject } from "cytoscape";
 import React, { useContext, useEffect, useState } from "react";
-import { Condition, Matcher } from "../condition";
+import { Condition, Matcher, MATCHER_LABELS } from "../condition";
 import {
   getEdgeCenter,
   PanZoomContext,
   styleForPosition,
 } from "../rendered_position";
-
-const MATCHER_LABELS = {
-  [Matcher.Wild]: "*",
-  [Matcher.Zero]: "0",
-  [Matcher.One]: "1",
-};
 
 export function EdgeConditionOverlay({ cy }: { cy: Core }) {
   const [selectedEdge, setSelectedEdge] = useState<EdgeSingular | null>(null);

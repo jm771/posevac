@@ -1,6 +1,13 @@
 import { EdgeSingular, StylesheetJson } from "cytoscape";
-import { Condition } from "./condition";
+import { Condition, MATCHER_LABELS } from "./condition";
 
+function formatCondition(ele: EdgeSingular): string {
+  const cond = ele.data("condition") as Condition;
+  if (cond.matchers.length === 0) {
+    return "";
+  }
+  return "(" + cond.matchers.map((m) => MATCHER_LABELS[m]).join(",") + ")";
+}
 // Get shared Cytoscape styles (used for main canvas and previews)
 export function getCytoscapeStyles(): StylesheetJson {
   return [
@@ -122,9 +129,8 @@ export function getCytoscapeStyles(): StylesheetJson {
         "target-arrow-shape": "triangle",
         "curve-style": "bezier",
         "arrow-scale": 1.5,
-        label: (ele: EdgeSingular) =>
-          (ele.data("condition") as Condition).matchers.join(",") + "hi there",
-        "font-size": "10",
+        label: formatCondition,
+        "font-size": "16",
         "text-background-color": "#2d2d30",
         "text-background-opacity": 0.8,
         "text-background-padding": "3",

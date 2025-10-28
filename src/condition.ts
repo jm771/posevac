@@ -4,6 +4,12 @@ export enum Matcher {
   One,
 }
 
+export const MATCHER_LABELS = {
+  [Matcher.Wild]: "*",
+  [Matcher.Zero]: "0",
+  [Matcher.One]: "1",
+};
+
 function matcherMatches(matcher: Matcher, value: unknown) {
   switch (matcher) {
     case Matcher.Wild:
