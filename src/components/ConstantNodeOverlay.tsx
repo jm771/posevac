@@ -1,7 +1,7 @@
 import { Core, EventObject, NodeSingular } from "cytoscape";
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { PanZoomContext, styleForPosition } from "../rendered_position";
 import { ConstantNodeData } from "../nodes";
+import { PanZoomContext, styleForPosition } from "../rendered_position";
 
 export function initializeNodeLabelStyling(cy: Core) {
   // @ts-ignore - nodeHtmlLabel is added by extension
@@ -33,6 +33,14 @@ export function ConstantNodeOverlay({ cy }: { cy: Core }) {
   const [, setNodeDataVer] = useState<number>(0);
   const incNodeDataVer = () => setNodeDataVer((x) => x + 1);
 
+  const selectNode = (node: NodeSingular | null) => {
+    setSelectedNode((old) => {
+      old?.grabify();
+      node?.ungrabify();
+      return node;
+    });
+  };
+
   const panZoom = useContext(PanZoomContext);
 
   useEffect(() => {
@@ -57,20 +65,21 @@ export function ConstantNodeOverlay({ cy }: { cy: Core }) {
   useEffect(() => {
     function backgroundTapHandler(evt: EventObject) {
       if (evt.target === cy) {
-        setSelectedNode(null);
+        selectNode(null);
       }
     }
 
     function edgeTapHandler() {
-      setSelectedNode(null);
+      selectNode(null);
     }
 
     function nodeTapHandler(evt: EventObject) {
       const node = evt.target as NodeSingular;
       if (node.data("type") !== "constant") {
-        setSelectedNode(null);
+        selectNode(null);
       } else {
-        setSelectedNode(node);
+        node.ungrabify();
+        selectNode(node);
       }
     }
 
@@ -113,7 +122,7 @@ export function ConstantNodeOverlay({ cy }: { cy: Core }) {
     setTimeout(() => {
       // Only close if we're not clicking the toggle button
       if (document.activeElement !== toggleRef.current) {
-        setSelectedNode(null);
+        selectNode(null);
       }
     }, 100);
   }

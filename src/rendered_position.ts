@@ -62,7 +62,7 @@ export function styleForPosition(
   return {
     left: renderedPos.x,
     top: renderedPos.y,
-    // transform: `translate(-50%, -50%) scale(${panZoom.zoom})`,
+    transform: `translate(-50%, -50%) scale(${panZoom.zoom})`,
   };
 }
 
