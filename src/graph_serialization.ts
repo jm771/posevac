@@ -213,9 +213,12 @@ export function loadGraphFromFile(navigate: NavigateFunction, file: File) {
       console.log("onload");
       const json = event.target?.result as string;
       const serialized = JSON.parse(json) as SerializedGraph;
-      navigate(`/level/${serialized.levelId}`, {
-        state: { serializedGraph: undefined },
-      });
+      navigate(
+        `/level/${serialized.levelId}`
+        //   {
+        //   state: { serializedGraph: undefined },
+        // }
+      );
       console.log("hmmm");
     } catch (error) {
       alert(error);

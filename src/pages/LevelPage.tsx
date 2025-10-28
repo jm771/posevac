@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useLocation, useParams } from "react-router";
+import { useParams } from "react-router";
 import { AnimationControls } from "../components/AnimationControls";
 import {
   ConstantNodeOverlay,
@@ -53,8 +53,8 @@ function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
 
 export function LevelPage() {
   const { levelId } = useParams<{ levelId: string }>();
-  const serializedGraph: string | undefined =
-    useLocation().state?.serializedGraph;
+  const serializedGraph: string | undefined = undefined;
+  // useLocation().state?.serializedGraph;
 
   const level = getLevelById(NotNull(levelId));
   const [levelContext, setLevelContext] = useState<LevelContext | null>(null);
@@ -83,7 +83,10 @@ export function LevelPage() {
       newLevelContext.destroy();
       // cy.off("zoom pan viewport", updateState);
     };
-  }, [level, serializedGraph]);
+  }, [
+    level,
+    // , serializedGraph
+  ]);
 
   return (
     <PanZoomContext value={panZoom}>
