@@ -9,8 +9,9 @@ import {
   createConstantNode,
   createNodeFromName,
 } from "./nodes";
+import { Assert } from "./util";
 
-const SERIALIZATION_VERSION = "1.1.0.0";
+const SERIALIZATION_VERSION = "1.0.1";
 
 export interface SerializedGraph {
   version: string;
@@ -33,7 +34,7 @@ export interface SerializedEdge {
   sourceTerminalIndex: number;
   targetNodeId: string;
   targetTerminalIndex: number;
-  condition?: number[];
+  condition: number[];
 }
 export function exportGraph(context: GraphEditorContext): SerializedGraph {
   const cy = context.cy;
@@ -121,6 +122,11 @@ export function importGraph(
   serializedGraph: SerializedGraph
 ): void {
   const cy = context.cy;
+
+  Assert(
+    serializedGraph.version === SERIALIZATION_VERSION,
+    "Wrong serialization version"
+  );
 
   cy.edges().remove();
 
