@@ -2,12 +2,16 @@ export enum Matcher {
   Wild,
   Zero,
   One,
+  NotZero,
+  NotOne,
 }
 
 export const MATCHER_LABELS = {
   [Matcher.Wild]: "*",
   [Matcher.Zero]: "0",
   [Matcher.One]: "1",
+  [Matcher.NotZero]: "!1",
+  [Matcher.NotOne]: "!0",
 };
 
 function matcherMatches(matcher: Matcher, value: unknown) {
@@ -18,6 +22,10 @@ function matcherMatches(matcher: Matcher, value: unknown) {
       return value === 0;
     case Matcher.One:
       return value === 1;
+    case Matcher.NotZero:
+      return value !== 0;
+    case Matcher.NotOne:
+      return value !== 1;
   }
 }
 

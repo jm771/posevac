@@ -1,5 +1,7 @@
 // Graph Serialization - Save and load graph structures to/from JSON
 import { NodeSingular } from "cytoscape";
+import { NavigateFunction } from "react-router";
+import { Condition } from "./condition";
 import { EdgeData } from "./edges";
 import { GraphEditorContext } from "./editor_context";
 import {
@@ -8,11 +10,10 @@ import {
   createConstantNode,
   createNodeFromName,
 } from "./nodes";
-import { Condition } from "./condition";
+import { Assert, NotNull } from "./util";
 
-/**
- * Serializable graph structure - excludes animation state
- */
+const SERIALIZATION_VERSION = "1.0.1";
+
 export interface SerializedGraph {
   version: string;
   levelId: string;
@@ -34,17 +35,19 @@ export interface SerializedEdge {
   sourceTerminalIndex: number;
   targetNodeId: string;
   targetTerminalIndex: number;
-  condition?: number[];
+  condition: number[];
 }
 
 export function exportGraph(context: GraphEditorContext): SerializedGraph {
   const cy = context.cy;
 
   // Get all user-created nodes (exclude input/output nodes and terminals)
-  const userNodes = cy.nodes().filter((node) => {
-    const nodeType: ComponentType = node.data("type");
-    return nodeType !== "input" && nodeType !== "output";
-  });
+  const userNodes = context.allNodes
+    .map((cn) => cn.node)
+    .filter((node) => {
+      const nodeType: ComponentType = node.data("type");
+      return nodeType !== "input" && nodeType !== "output";
+    });
 
   const serializedNodes: SerializedNode[] = userNodes.map((node) => {
     const nodeSingular = node as NodeSingular;
@@ -101,19 +104,14 @@ export function exportGraph(context: GraphEditorContext): SerializedGraph {
       sourceTerminalIndex: sourceIndex,
       targetNodeId: targetParent.id(),
       targetTerminalIndex: targetIndex,
+      condition: (edge.data("condition") as Condition).matchers,
     };
-
-    // Add condition if it exists
-    const condition = edge.data("condition") as Condition;
-    if (condition && condition.matchers.length > 0) {
-      serialized.condition = condition.matchers;
-    }
 
     return serialized;
   });
 
   return {
-    version: "1.0.0",
+    version: SERIALIZATION_VERSION,
     levelId: context.level.id,
     timestamp: new Date().toISOString(),
     nodes: serializedNodes,
@@ -127,15 +125,16 @@ export function importGraph(
 ): void {
   const cy = context.cy;
 
+  Assert(
+    serializedGraph.version === SERIALIZATION_VERSION,
+    "Wrong serialization version"
+  );
+
   if (serializedGraph.levelId !== context.level.id) {
     throw new Error(
       `Graph is for level "${serializedGraph.levelId}" but current level is "${context.level.id}"`
     );
   }
-
-  const nodeIdMap = new Map<string, CompNode>();
-  context.inputNodes.forEach((n) => nodeIdMap.set(n.getNodeId(), n));
-  context.outputNodes.forEach((n) => nodeIdMap.set(n.getNodeId(), n));
 
   for (const serializedNode of serializedGraph.nodes) {
     let newNode: CompNode;
@@ -161,68 +160,31 @@ export function importGraph(
     }
 
     context.allNodes.push(newNode);
-
-    // Store mapping from old node ID to new CompNode
-    nodeIdMap.set(serializedNode.id, newNode);
   }
 
   // Recreate edges using terminal mappings
   for (const serializedEdge of serializedGraph.edges) {
-    // Find the new CompNodes from the mapping
-    const sourceCompNode = nodeIdMap.get(serializedEdge.sourceNodeId);
-    const targetCompNode = nodeIdMap.get(serializedEdge.targetNodeId);
+    const sourceCompNode = context.getNodeForId(serializedEdge.sourceNodeId);
+    const targetCompNode = context.getNodeForId(serializedEdge.targetNodeId);
 
-    if (!sourceCompNode) {
-      console.warn(`Source node not found: ${serializedEdge.sourceNodeId}`);
-      continue;
-    }
+    const sourceTerminal = NotNull(
+      sourceCompNode.outputTerminals[serializedEdge.sourceTerminalIndex]
+    );
+    const targetTerminal = NotNull(
+      targetCompNode.inputTerminals[serializedEdge.targetTerminalIndex]
+    );
 
-    if (!targetCompNode) {
-      console.warn(`Target node not found: ${serializedEdge.targetNodeId}`);
-      continue;
-    }
-
-    // Get the specific terminals using the indices
-    const sourceTerminal =
-      sourceCompNode.outputTerminals[serializedEdge.sourceTerminalIndex];
-    const targetTerminal =
-      targetCompNode.inputTerminals[serializedEdge.targetTerminalIndex];
-
-    if (!sourceTerminal) {
-      console.warn(
-        `Source terminal ${serializedEdge.sourceTerminalIndex} not found on node ${serializedEdge.sourceNodeId}`
-      );
-      continue;
-    }
-
-    if (!targetTerminal) {
-      console.warn(
-        `Target terminal ${serializedEdge.targetTerminalIndex} not found on node ${serializedEdge.targetNodeId}`
-      );
-      continue;
-    }
-
-    // Create edge between the terminals
     const edgeData: EdgeData = {
       source: sourceTerminal.id(),
       target: targetTerminal.id(),
-      condition: new Condition([]),
+      condition: new Condition(serializedEdge.condition),
     };
-
-    // Restore condition if it exists
-    if (serializedEdge.condition) {
-      edgeData.condition = new Condition(serializedEdge.condition);
-    }
 
     cy.add({
       group: "edges",
       data: edgeData,
     });
   }
-
-  console.log(
-    `Imported ${serializedGraph.nodes.length} nodes and ${serializedGraph.edges.length} edges`
-  );
 }
 
 export function downloadGraphAsJSON(
@@ -241,15 +203,10 @@ export function downloadGraphAsJSON(
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-
-  console.log("Graph downloaded as JSON");
 }
 
-/**
- * Load graph from JSON file
- */
 export function loadGraphFromFile(
-  context: GraphEditorContext,
+  navigate: NavigateFunction,
   file: File
 ): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -259,7 +216,10 @@ export function loadGraphFromFile(
       try {
         const json = event.target?.result as string;
         const serialized = JSON.parse(json) as SerializedGraph;
-        importGraph(context, serialized);
+        navigate(`/level/${serialized.levelId}`, {
+          state: { serializedGraph: serialized },
+        });
+
         resolve();
       } catch (error) {
         reject(error);
@@ -272,23 +232,4 @@ export function loadGraphFromFile(
 
     reader.readAsText(file);
   });
-}
-
-/**
- * Export graph to JSON string
- */
-export function exportGraphToJSON(context: GraphEditorContext): string {
-  const serialized = exportGraph(context);
-  return JSON.stringify(serialized, null, 2);
-}
-
-/**
- * Import graph from JSON string
- */
-export function importGraphFromJSON(
-  context: GraphEditorContext,
-  json: string
-): void {
-  const serialized = JSON.parse(json) as SerializedGraph;
-  importGraph(context, serialized);
 }

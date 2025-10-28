@@ -1,16 +1,17 @@
 import React, { useRef } from "react";
-import { downloadGraphAsJSON, loadGraphFromFile } from "../graph_serialization";
+import { NavigateFunction, useNavigate } from "react-router";
 import { LevelContext } from "../editor_context";
+import { downloadGraphAsJSON, loadGraphFromFile } from "../graph_serialization";
 
 function MakeFileSelectedHandler(
-  levelContext: LevelContext
+  naviage: NavigateFunction
 ): (event: React.ChangeEvent<HTMLInputElement>) => Promise<void> {
   return async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     try {
-      await loadGraphFromFile(levelContext.editorContext, file);
+      await loadGraphFromFile(naviage, file);
     } catch (error) {
       alert(
         `Error loading graph: ${
@@ -35,6 +36,7 @@ function downloadGraph(context: LevelContext) {
 
 export function SaveLoadControls({ context }: { context: LevelContext }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   return (
     <>
@@ -57,7 +59,7 @@ export function SaveLoadControls({ context }: { context: LevelContext }) {
         <input
           ref={fileInputRef}
           type="file"
-          onChange={MakeFileSelectedHandler(context)}
+          onChange={MakeFileSelectedHandler(navigate)}
           id="fileInput"
           accept=".json"
           style={{ display: "none" }}

@@ -16,7 +16,7 @@ export function LevelSidebar({ levelContext }: { levelContext: LevelContext }) {
   useEffect(() => {
     function dragHandler(evt: EventObject) {
       const node: CompNode | null =
-        levelContext.editorContext.getCompNodeForNode(evt.target);
+        levelContext.editorContext.tryGetCompNodeForNode(evt.target);
 
       if (node === null) return;
 
@@ -30,7 +30,7 @@ export function LevelSidebar({ levelContext }: { levelContext: LevelContext }) {
 
     function freeHandler(evt: EventObject) {
       const context = levelContext.editorContext;
-      const node: CompNode | null = context.getCompNodeForNode(evt.target);
+      const node: CompNode | null = context.tryGetCompNodeForNode(evt.target);
 
       if (node?.deletable && isNodeOverBarRef.current) {
         context.removeNode(node.getNodeId());

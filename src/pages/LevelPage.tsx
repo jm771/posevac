@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router";
+import { useLocation, useParams } from "react-router";
 import { AnimationControls } from "../components/AnimationControls";
 import {
   ConstantNodeOverlay,
@@ -12,6 +12,7 @@ import { SaveLoadControls } from "../components/SaveLoadControls";
 import { LevelSidebar } from "../components/Sidebar";
 import { TestCasePanel } from "../components/TestCasePanel";
 import { LevelContext } from "../editor_context";
+import { importGraph, SerializedGraph } from "../graph_serialization";
 import { getLevelById } from "../levels";
 import { ComponentType, createNodeFromName } from "../nodes";
 import { PanZoomContext, PanZoomState } from "../rendered_position";
@@ -52,20 +53,22 @@ function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
 
 export function LevelPage() {
   const { levelId } = useParams<{ levelId: string }>();
-  if (levelId === undefined) {
-    throw Error("missing level id");
-  }
+  const serializedGraph: SerializedGraph | undefined =
+    useLocation().state?.serializedGraph;
 
-  const level = getLevelById(levelId);
+  const level = getLevelById(NotNull(levelId));
   const [levelContext, setLevelContext] = useState<LevelContext | null>(null);
   const [panZoom, setPanZoom] = useState<PanZoomState>(new PanZoomState());
   const cyDivRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    console.log("Level page effect");
     const newLevelContext = new LevelContext(level, NotNull(cyDivRef.current));
 
     setLevelContext(newLevelContext);
-
+    if (serializedGraph) {
+      importGraph(newLevelContext.editorContext, serializedGraph);
+    }
     const cy = newLevelContext.editorContext.cy;
     initializeNodeLabelStyling(cy);
 
@@ -80,7 +83,7 @@ export function LevelPage() {
       newLevelContext.destroy();
       // cy.off("zoom pan viewport", updateState);
     };
-  }, [level]);
+  }, [level, serializedGraph]);
 
   return (
     <PanZoomContext value={panZoom}>
