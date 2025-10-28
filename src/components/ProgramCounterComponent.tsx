@@ -12,7 +12,7 @@ export function ProgramCounterComponent({
   angle: number;
 }) {
   const panZoom = useContext(PanZoomContext);
-  //style={styleForPosition(position, panZoom)}>
+
   return (
     <motion.div
       className="pc-box"
