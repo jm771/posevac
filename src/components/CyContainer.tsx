@@ -15,10 +15,12 @@ export function CyContainer({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const [isRightDragging, setIsRightDragging] = useState<boolean>(false);
-  const [sourceNode, setSourceNode] = useState<NodeSingular | null>(null);
+  // const [isRightDragging, setIsRightDragging] = useState<boolean>(false);
+  const isRightDraggingRef = useRef<boolean>(false);
+  const sourceNodeRef = useRef<NodeSingular | null>(null);
   const [mousePos, setMousePos] = useState<Position>({ x: 0, y: 0 });
-  const [tempEdge, setTempEdge] = useState<EdgeSingular | null>(null);
+  const tempEdgeRef = useRef<EdgeSingular | null>(null);
+  // const [tempEdge, setTempEdge] = useState<EdgeSingular | null>(null);
 
   function mouseDownHander(e: React.MouseEvent<HTMLElement>) {
     if (levelContext === null || containerRef.current == null) return;
@@ -63,8 +65,8 @@ export function CyContainer({
           e.preventDefault();
           e.stopPropagation();
 
-          setIsRightDragging(true);
-          setSourceNode(node);
+          isRightDraggingRef.current = true;
+          sourceNodeRef.current = node;
           setMousePos({ x: modelX, y: modelY });
 
           // Disable normal node dragging during right-click drag
@@ -78,7 +80,7 @@ export function CyContainer({
     if (levelContext === null || containerRef.current == null) return;
     const cy = levelContext.editorContext.cy;
     const cyContainer = containerRef.current;
-    if (isRightDragging && sourceNode) {
+    if (isRightDraggingRef.current && sourceNodeRef.current) {
       // Convert screen position to model position
       const cyBounds = cyContainer.getBoundingClientRect();
       const renderedX = e.clientX - cyBounds.left;
@@ -93,8 +95,8 @@ export function CyContainer({
       setMousePos({ x: modelX, y: modelY });
 
       // Remove previous temp edge
-      if (tempEdge) {
-        cy.remove(tempEdge);
+      if (tempEdgeRef.current) {
+        cy.remove(tempEdgeRef.current);
       }
 
       const tempTargetId = "temp-target";
@@ -109,18 +111,16 @@ export function CyContainer({
         position: mousePos,
       });
 
-      setTempEdge(
-        cy.add({
-          group: "edges",
-          data: {
-            id: "temp-edge",
-            source: sourceNode.id(),
-            target: tempTargetId,
-            condition: new Condition([]),
-          },
-          classes: "temp",
-        }) as EdgeSingular
-      );
+      tempEdgeRef.current = cy.add({
+        group: "edges",
+        data: {
+          id: "temp-edge",
+          source: sourceNodeRef.current.id(),
+          target: tempTargetId,
+          condition: new Condition([]),
+        },
+        classes: "temp",
+      }) as EdgeSingular;
     }
   }
 
@@ -128,12 +128,12 @@ export function CyContainer({
     if (levelContext === null || containerRef.current == null) return;
     const cy = levelContext.editorContext.cy;
     // const cyContainer = containerRef.current;
-    if (e.button === 2 && isRightDragging) {
+    if (e.button === 2 && isRightDraggingRef.current) {
       // Right button
       // Clean up temp edge
-      if (tempEdge) {
-        cy.remove(tempEdge);
-        setTempEdge(null);
+      if (tempEdgeRef.current) {
+        cy.remove(tempEdgeRef.current);
+        tempEdgeRef.current = null;
       }
       cy.$("#temp-target").remove();
 
@@ -166,20 +166,24 @@ export function CyContainer({
       }
 
       // Create or delete edge if we have a valid target
-      if (sourceNode && targetNode && sourceNode.id() !== targetNode.id()) {
+      if (
+        sourceNodeRef.current &&
+        targetNode &&
+        sourceNodeRef.current.id() !== targetNode.id()
+      ) {
         // Validate edge rules:
         // 1. Source must be an output terminal
         // 2. Target must be an input terminal
         // 3. Can't connect to compound parent (start/stop)
 
-        const sourceType = sourceNode.data("terminalType");
+        const sourceType = sourceNodeRef.current.data("terminalType");
         const targetType = targetNode.data("terminalType");
 
         // Check if source is output and target is input
         if (sourceType === "output" && targetType === "input") {
           // Check if edge already exists
           const existingEdge = cy.edges(
-            `[source="${sourceNode.id()}"][target="${targetNode.id()}"]`
+            `[source="${sourceNodeRef.current.id()}"][target="${targetNode.id()}"]`
           );
 
           if (existingEdge.length > 0) {
@@ -191,7 +195,7 @@ export function CyContainer({
               group: "edges",
               data: {
                 id: `edge-${edgeIdCounter++}`,
-                source: sourceNode.id(),
+                source: sourceNodeRef.current.id(),
                 target: targetNode.id(),
                 condition: new Condition([]),
               },
@@ -203,11 +207,11 @@ export function CyContainer({
             "Edges can only go from output terminals to input terminals"
           );
         }
-        // Reset state
-        setSourceNode(null);
-        setIsRightDragging(false);
-        cy.autoungrabify(false);
       }
+      // Reset state
+      sourceNodeRef.current = null;
+      isRightDraggingRef.current = false;
+      cy.autoungrabify(false);
     }
   }
 
