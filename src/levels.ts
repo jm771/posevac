@@ -57,12 +57,12 @@ const MULTIPLY: Level = {
   description: "Build the multiply component",
   testCases: [
     {
-      inputs: [[3], [5]],
-      expectedOutputs: [[15]],
+      inputs: [[4], [2]],
+      expectedOutputs: [[8]],
     },
     {
-      inputs: [[2], [4]],
-      expectedOutputs: [[8]],
+      inputs: [[5], [3]],
+      expectedOutputs: [[15]],
     },
   ],
   allowedNodes: ["split", "combine", "constant", "plus"],

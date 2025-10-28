@@ -10,8 +10,8 @@ export const MATCHER_LABELS = {
   [Matcher.Wild]: "*",
   [Matcher.Zero]: "0",
   [Matcher.One]: "1",
-  [Matcher.NotZero]: "!1",
-  [Matcher.NotOne]: "!0",
+  [Matcher.NotZero]: "!0",
+  [Matcher.NotOne]: "!1",
 };
 
 function matcherMatches(matcher: Matcher, value: unknown) {
