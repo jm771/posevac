@@ -8,10 +8,10 @@ In there you find your father's project from the 70s, the POSEVAC. Filled with [
 ## Building POSFLOs
 
 (The POSEVAC does not run a program - it evaluates a POSibility FLOw)
-Drag and drop nodes from the sidebar to add them to the design. Drop them back on the sidebar to remove them.
-Right click and drag from an output terminal to an input terminal to connect them. "Reconnect" an edge to remove it.
-Left click an edge to adjust its condition
-Left click a constant node to adjust its settings
+- Drag and drop nodes from the sidebar to add them to the design. Drop them back on the sidebar to remove them.
+- Right click and drag from an output terminal to an input terminal to connect them. "Reconnect" an edge to remove it.
+- Left click an edge to adjust its condition
+- Left click a constant node to adjust its settings
 
 At this point Feel free to dive in and just try stuff out - if you need some explaination (the game currently has no tutorial) it's below:
 
