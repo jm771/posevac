@@ -47,7 +47,7 @@ This is in pre-alpha stage. Lots of the code is messy. It may never get to alpha
 
 ### Known issues
 
-- The overlay for constant nodes seems buggy and finnicky.
+- The overlay for constant nodes seems buggy and finnicky. If it's unplayable on your machine please tell me!
 - Nothing prevents you editing the POSEVAC configuration mid evaluation
 
 ### Known non-issues
