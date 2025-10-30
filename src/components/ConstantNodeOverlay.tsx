@@ -1,35 +1,36 @@
 import { Core, EventObject, NodeSingular } from "cytoscape";
 import React, { useContext, useEffect, useRef, useState } from "react";
+import { ConstantNodeData } from "../nodes";
 import { PanZoomContext, styleForPosition } from "../rendered_position";
 
 export function initializeNodeLabelStyling(cy: Core) {
-  // // @ts-ignore - nodeHtmlLabel is added by extension
-  // cy.nodeHtmlLabel([
-  //   {
-  //     query: 'node[type="constant"]',
-  //     cssClass: "constant-node-display",
-  //     tpl: function (data: ConstantNodeData) {
-  //       const value = data.constantValue !== undefined ? data.constantValue : 0;
-  //       const repeat =
-  //         data.constantRepeat !== undefined ? data.constantRepeat : true;
-  //       const modeIcon = repeat ? "∞" : "1×";
-  //       const modeClass = repeat ? "repeat" : "once";
-  //       return `
-  //               <div class="constant-display">
-  //                   <div class="constant-display-value">${value}</div>
-  //                   <div class="constant-display-mode ${modeClass}">${modeIcon}</div>
-  //               </div>
-  //           `;
-  //     },
-  //   },
-  // ]);
+  // @ts-ignore - nodeHtmlLabel is added by extension
+  cy.nodeHtmlLabel([
+    {
+      query: 'node[type="constant"]',
+      cssClass: "constant-node-display",
+      tpl: function (data: ConstantNodeData) {
+        const value = data.constantValue !== undefined ? data.constantValue : 0;
+        const repeat =
+          data.constantRepeat !== undefined ? data.constantRepeat : true;
+        const modeIcon = repeat ? "∞" : "1×";
+        const modeClass = repeat ? "repeat" : "once";
+        return `
+                <div class="constant-display">
+                    <div class="constant-display-value">${value}</div>
+                    <div class="constant-display-mode ${modeClass}">${modeIcon}</div>
+                </div>
+            `;
+      },
+    },
+  ]);
 }
 
 export function ConstantNodeOverlay({ cy }: { cy: Core }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const toggleRef = useRef<HTMLButtonElement | null>(null);
   const [selectedNode, setSelectedNode] = useState<NodeSingular | null>(null);
-  const [nodeDataVer, setNodeDataVer] = useState<number>(0);
+  const [, setNodeDataVer] = useState<number>(0);
   const incNodeDataVer = () => setNodeDataVer((x) => x + 1);
 
   const selectNode = (node: NodeSingular | null) => {
@@ -42,17 +43,17 @@ export function ConstantNodeOverlay({ cy }: { cy: Core }) {
 
   const panZoom = useContext(PanZoomContext);
 
-  // // useEffect(() => {
-  // //   const dataHandler = () => {
-  // //     // @ts-ignore
-  // //     cy.nodeHtmlLabel("refresh");
-  // //   };
-  // //   cy.on("data", 'node[type="constant"]', dataHandler);
+  useEffect(() => {
+    const dataHandler = () => {
+      // @ts-ignore
+      cy.nodeHtmlLabel("refresh");
+    };
+    cy.on("data", 'node[type="constant"]', dataHandler);
 
-  // //   return () => {
-  // //     cy.off("data", 'node[type="constant"]', dataHandler);
-  // //   };
-  // }, [cy]);
+    return () => {
+      cy.off("data", 'node[type="constant"]', dataHandler);
+    };
+  }, [cy]);
 
   useEffect(() => {
     if (selectedNode) {
@@ -63,7 +64,6 @@ export function ConstantNodeOverlay({ cy }: { cy: Core }) {
 
   useEffect(() => {
     function backgroundTapHandler(evt: EventObject) {
-      console.log("background");
       if (evt.target === cy) {
         selectNode(null);
       }
@@ -74,12 +74,11 @@ export function ConstantNodeOverlay({ cy }: { cy: Core }) {
     }
 
     function nodeTapHandler(evt: EventObject) {
-      console.log("node tap");
       const node = evt.target as NodeSingular;
       if (node.data("type") !== "constant") {
         selectNode(null);
       } else {
-        // node.ungrabify();
+        node.ungrabify();
         selectNode(node);
       }
     }
@@ -108,7 +107,6 @@ export function ConstantNodeOverlay({ cy }: { cy: Core }) {
   }
 
   function handleToggleClick(e: React.MouseEvent<HTMLButtonElement>) {
-    console.log("handle toggle clicked");
     e.stopPropagation();
     selectedNode?.data("constantRepeat", !selectedNode?.data("constantRepeat"));
     incNodeDataVer();

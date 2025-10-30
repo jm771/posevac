@@ -65,7 +65,7 @@ export function ProgramCounterOverlay({
         <ProgramCounterComponent
           key={pc.id}
           position={pc.currentLocation.position()}
-          text={JSON.stringify(pc.contents)}
+          text={String(pc.contents)}
           angle={0}
         />
       ))}
