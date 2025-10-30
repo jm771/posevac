@@ -1,173 +1,59 @@
-# Interactive Graph Tool
+# POSEVAC
 
-An interactive graph editor built with Cytoscape.js and TypeScript, featuring drag-and-drop components, node manipulation, edge creation/deletion, and animated program counter simulation.
+## POSsibility EVAlulating Computer (working title)
 
-## Features
+The University CompSci department's funding is being slashed - you've been put under a lot of pressure to produce incredible research. It's a stressful time, and worst of all - this weekend you've got to clear our your late eccentric genius father's shed.
+In there you find your father's project from the 70s, the POSEVAC. Filled with [vacuum tubes](https://en.wikipedia.org/wiki/Vacuum_tube) and [vacuum tubes](https://en.wikipedia.org/wiki/Pneumatic_tube) the thing looks deranged. But you remember your father talking about it. "A supercomputer that could evalute all possibilities at once". I mean something like that - that wouldn't just solve the university's funding issues - that'd win you a Turing Award! If only you could work out how to use the damn thing!
 
-### Component Palette
-- **Start Node**: Diamond-shaped entry point (1 output)
-- **Stop Node**: Diamond-shaped exit point (1 input)
-- **Plus Node**: Compound node with 2 inputs, 1 output
-- **Combine Node**: Compound node with 2 inputs, 1 output
-- **Split Node**: Compound node with 1 input, 2 outputs
-- **NOP Node**: Pass-through node with 1 input, 1 output
+## Building POSFLOs
 
-### Animation Controls
-- **PC Marker**: Visual program counter showing current execution position
-- **Step Forward**: Advance to next node
-- **Step Backward**: Return to previous node
-- **Reset**: Return to start node
-- PC marker follows pan/zoom and node movements
+(The POSEVAC does not run a program - it evaluates a POSibility FLOw)
+Drag and drop nodes from the sidebar to add them to the design. Drop them back on the sidebar to remove them.
+Right click and drag from an output terminal to an input terminal to connect them. "Reconnect" an edge to remove it.
+Left click an edge to adjust its condition
+Left click a constant node to adjust its settings
 
-### Interactions
+At this point Feel free to dive in and just try stuff out - if you need some explaination (the game currently has no tutorial) it's below:
 
-#### Creating Components
-- Drag components from the sidebar onto the canvas
-- Each drag creates a copy, leaving the original in the sidebar
-- Drop anywhere on the canvas to place the component
+## Operation
 
-#### Moving Components
-- **Left-click + drag** to move nodes around the canvas
-- Compound objects move as a unit with their terminals
+The POSEVAC stores it's values in "Possibility Containers" or PCs. The possibility containers flow around the POSEVAC performing calculations. The system operates in alternating phases.
 
-#### Creating/Deleting Edges
-- **Right-click + drag** from source node to target node
-  - If no edge exists: creates a new directed edge
-  - If edge already exists: deletes the edge
-- Visual feedback shows temporary edge during drag
-- Connections can be made between:
-  - Regular nodes
-  - Terminal nodes (inputs/outputs of compound objects)
-  - Output terminals to input terminals of the same compound object
-- Cannot connect to compound parent nodes directly
-- Cannot connect a terminal to itself
+### Evalaute
 
-#### Deleting Components
-- Drag any node back into the sidebar area to delete it
-- Visual "drop here to delete" indicator activates when dragging over sidebar
-- Deleting a compound object removes all its terminals
-- Connected edges are automatically removed when nodes are deleted
+Every node that has all its input terminals filled. (A node with zero inputs always has all its inputs). And all its output terminals empty, will consume its inputs, evaluate them. Each output terminal will get a Possibilty Container at the start of each (see "conditional flow") edge.
 
-## Development
+### Advance
 
-### Prerequisites
+Every Possibility Container will advance along all connected edges that have their destination terminal empty.
 
-- Node.js (v16 or higher)
-- npm
+### Defined Nodes
 
-### Installation
+- Input - inserts boring real world data (a NormVal) from the test harness into a possibility container
+- Output - converts a Possibility Container back into a NormVal - then the test harness checks it against the expected output
+- Add - adds the inputs
+- Multiply - multiplies the inputs
+- Combine - takes two inputs and packs them into a pair
+- Split - takes a pair and splits them into two outputs
+- Constant - produces a constant valued Possibility Container. In OneShot mode it produces a single Possibility Container. In "infinite" mode it'll repatedly produce Possibility Containers.
 
-```bash
-npm install
-```
+### Conditional flow
 
-This installs TypeScript and Cytoscape type definitions.
+- Left click a node to open the condition editor. This lets you specify matchers. +/- controls the tuple length you're matching against (n.b the current game only has components that produce values (treated the same as 1 length tuples) and pairs. So a matcher of length 3+ won't match anything). Clicking the match condition cycles through what values in that tuple slot will be accepted (any, zero, one, non-zero, non-one).
 
-### Building
+## Warnings
 
-The project is written in TypeScript. Source files are in `src/` and compile to JavaScript in `js/`.
+This is in pre-alpha stage. Lots of the code is messy. It may never get to alpha. Anything and everything may break at any time without warning. (The POSEVAC is highly experimental hardware - just be grateful it mostly doesn't crash parallel universe into eachother)
 
-#### Build once
+### Known issues
 
-```bash
-npm run build
-```
+- The overlay for constant nodes seems buggy and finnicky.
+- Nothing prevents you editing the POSEVAC configuration mid evaluation
 
-#### Watch mode (auto-rebuild on changes)
+### Known non-issues
 
-```bash
-npm run watch
-# or
-npm run dev
-```
+- If several Possibility Containers attempt to move to the same terminal at the same time only one will succeed. Which one succeeds is undefinied behaviour.
 
-## Technical Details
+### Future features
 
-### Technologies
-- **TypeScript** - Type-safe application logic
-- **Cytoscape.js** - Graph visualization and manipulation
-- **HTML5 Drag & Drop API** - Sidebar component dragging
-- **CSS3** - Dark IDE-themed styling
-
-### Color Scheme
-Dark theme inspired by modern IDEs with syntax highlighting colors:
-- Background: Dark charcoal (#1e1e1e)
-- Accents: Blue, Green, Orange, Purple (syntax highlighting palette)
-- Regular nodes: Blue (#4fc3f7)
-- Input terminals: Green (#81c784)
-- Output terminals: Orange (#ffb74d)
-- Compound objects: Purple border (#ba68c8)
-
-### Project Structure
-```
-interactive-graph-tool/
-├── index.html          # Main HTML structure
-├── src/
-│   └── app.ts         # TypeScript source code
-├── js/
-│   └── app.js         # Compiled JavaScript (generated)
-├── css/
-│   └── styles.css     # Dark theme styling
-├── tsconfig.json      # TypeScript configuration
-├── package.json       # Dependencies and scripts
-└── README.md          # Documentation
-```
-
-### Type Safety
-
-The project uses TypeScript for improved maintainability. Key types include:
-
-- `ComponentType`: Valid node component types
-- `NodeData`: Data structure for graph nodes
-- `AnimationState`: State management for PC animation
-- `Position`: 2D coordinates
-- `Waypoint`: Position with angle for animation paths
-
-## Usage
-
-### Running the Application
-
-After building, open `index.html` in a web browser. For development, use a local server:
-
-```bash
-# Using Python 3
-python3 -m http.server 8000
-
-# Using Node.js http-server (install: npm install -g http-server)
-http-server
-
-# Using VS Code Live Server extension
-# Right-click index.html and select "Open with Live Server"
-```
-
-Then navigate to `http://localhost:8000`.
-
-### Using the Tool
-
-1. Build the TypeScript code (see Development section)
-2. Drag components from the left sidebar onto the canvas
-3. Use left-click to move components
-4. Use right-click + drag between terminals to create/delete edges
-5. Drag components back to sidebar to delete them
-6. Use animation controls on the right to step through execution
-
-## Browser Compatibility
-
-Works in modern browsers supporting:
-- ES6 JavaScript
-- HTML5 Drag & Drop API
-- CSS3 features
-
-Tested on Chrome, Firefox, Edge, and Safari.
-
-## Future Enhancements
-
-Potential features for future versions:
-- Save/load graph state
-- Export to JSON/image
-- Undo/redo functionality
-- Custom node labels
-- Multiple edge styles
-- Grid snapping
-- Component library expansion
-- Keyboard shortcuts
+- A "play" button to test your output without spam clicking "step"
