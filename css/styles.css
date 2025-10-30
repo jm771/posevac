@@ -243,7 +243,7 @@ body {
 
 .pc-box {
     position: absolute;
-    width: 35px;
+    min-width: 35px;
     height: 35px;
     background-color: #ffb74d;
     border: 3px solid #fff;
