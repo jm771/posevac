@@ -82,7 +82,55 @@ const FACTORIAL: Level = {
   allowedNodes: ["split", "combine", "constant", "multiply", "plus"],
 };
 
-export const LEVELS: Level[] = [ADDITION, CUM_SUM, MULTIPLY, FACTORIAL];
+const LESS_THAN_FOUR: Level = {
+  id: "lt",
+  name: "Less Than Four",
+  description: "Filter the input to only output those that are less than four",
+  testCases: [
+    {
+      inputs: [[1, 2, 3, 4, 5]],
+      expectedOutputs: [[1, 2, 3]],
+    },
+    {
+      inputs: [[4, 3, 4]],
+      expectedOutputs: [[3]],
+    },
+  ],
+  allowedNodes: ["split", "combine", "constant", "multiply", "plus"],
+};
+
+const MAX: Level = {
+  id: "max",
+  name: "Maximum",
+  description: "Work out the maxium of two numbers - how hard can it be?",
+  testCases: [
+    {
+      inputs: [[1], [2]],
+      expectedOutputs: [[2]],
+    },
+    {
+      inputs: [[0], [1]],
+      expectedOutputs: [[1]],
+    },
+    {
+      inputs: [
+        [1, 2, 3],
+        [3, 2, 1],
+      ],
+      expectedOutputs: [[3, 2, 3]],
+    },
+  ],
+  allowedNodes: ["split", "combine", "constant", "multiply", "plus"],
+};
+
+export const LEVELS: Level[] = [
+  ADDITION,
+  CUM_SUM,
+  MULTIPLY,
+  FACTORIAL,
+  LESS_THAN_FOUR,
+  MAX,
+];
 
 export function getLevelById(id: string): Level {
   const ret = LEVELS.find((level) => level.id === id);
