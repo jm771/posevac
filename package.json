@@ -4,7 +4,7 @@
   "description": "Interactive graph visualization tool with animation support",
   "main": "js/app.js",
   "scripts": {
-    "build": "tsc",
+    "build": "vite build",
     "watch": "tsc --watch",
     "dev": "vite",
     "preview": "vite preview"
