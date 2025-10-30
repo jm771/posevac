@@ -57,3 +57,21 @@ This is in pre-alpha stage. Lots of the code is messy. It may never get to alpha
 ### Future features
 
 - A "play" button to test your output without spam clicking "step"
+- Providing some metrics like "runtime" on level completion for people who wish to to optimise
+
+## Developing
+
+I think (please test and tell me) that:
+
+```
+npm install
+npm run dev
+```
+
+Is enough to run it locally.
+
+Adding a new level should be easy `src/levels.ts`
+Adding a new Node should be achievable - I will make it easy in future.
+For now I'll merge pretty much any PR adding some of either - would take delight in people playing it.
+
+Feel free to contact me if you'd like to work together on some of this. Definitely contact me if you'd like to work on anything more advanced than ^
