@@ -262,7 +262,7 @@ class CompNodeInternal<TState> {
     const newPcs: Array<ProgramCounter> = [];
 
     if (result != undefined) {
-      let resultArray;
+      let resultArray: unknown[];
 
       if (this.outputTerminals.length == 1) {
         resultArray = [result];

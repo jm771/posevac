@@ -3,7 +3,7 @@ import React, { useRef, useState } from "react";
 import { Condition } from "../condition";
 import { LevelContext } from "../editor_context";
 
-// Should move into state??
+// TODO Should move into state??
 let edgeIdCounter = 0;
 
 export function CyContainer({
@@ -22,56 +22,54 @@ export function CyContainer({
   const tempEdgeRef = useRef<EdgeSingular | null>(null);
   // const [tempEdge, setTempEdge] = useState<EdgeSingular | null>(null);
 
-  function mouseDownHander(e: React.MouseEvent<HTMLElement>) {
+  function handleStartMakeEdge(e: React.MouseEvent<HTMLElement>) {
     if (levelContext === null || containerRef.current == null) return;
     const cy = levelContext.editorContext.cy;
     const cyContainer = containerRef.current;
-    if (e.button === 2) {
-      const cyBounds = cyContainer.getBoundingClientRect();
-      const renderedX = e.clientX - cyBounds.left;
-      const renderedY = e.clientY - cyBounds.top;
+    const cyBounds = cyContainer.getBoundingClientRect();
+    const renderedX = e.clientX - cyBounds.left;
+    const renderedY = e.clientY - cyBounds.top;
 
-      const pan = cy.pan();
-      const zoom = cy.zoom();
-      const modelX = (renderedX - pan.x) / zoom;
-      const modelY = (renderedY - pan.y) / zoom;
+    const pan = cy.pan();
+    const zoom = cy.zoom();
+    const modelX = (renderedX - pan.x) / zoom;
+    const modelY = (renderedY - pan.y) / zoom;
 
-      const elements = cy.elements().filter(function (ele) {
-        if (ele.isNode()) {
-          const bb = ele.boundingBox();
-          return (
-            modelX >= bb.x1 &&
-            modelX <= bb.x2 &&
-            modelY >= bb.y1 &&
-            modelY <= bb.y2
-          );
-        }
-        return false;
+    const elements = cy.elements().filter(function (ele) {
+      if (ele.isNode()) {
+        const bb = ele.boundingBox();
+        return (
+          modelX >= bb.x1 &&
+          modelX <= bb.x2 &&
+          modelY >= bb.y1 &&
+          modelY <= bb.y2
+        );
+      }
+      return false;
+    });
+
+    if (elements.length > 0) {
+      // Sort by size and pick smallest
+      const sorted = elements.sort(function (a, b) {
+        const aBox = a.boundingBox();
+        const bBox = b.boundingBox();
+        const aArea = (aBox.x2 - aBox.x1) * (aBox.y2 - aBox.y1);
+        const bArea = (bBox.x2 - bBox.x1) * (bBox.y2 - bBox.y1);
+        return aArea - bArea;
       });
+      const node = sorted[0] as NodeSingular;
 
-      if (elements.length > 0) {
-        // Sort by size and pick smallest
-        const sorted = elements.sort(function (a, b) {
-          const aBox = a.boundingBox();
-          const bBox = b.boundingBox();
-          const aArea = (aBox.x2 - aBox.x1) * (aBox.y2 - aBox.y1);
-          const bArea = (bBox.x2 - bBox.x1) * (bBox.y2 - bBox.y1);
-          return aArea - bArea;
-        });
-        const node = sorted[0] as NodeSingular;
+      // Only allow connections to start from output terminals
+      if (node.data("terminalType") === "output") {
+        e.preventDefault();
+        e.stopPropagation();
 
-        // Only allow connections to start from output terminals
-        if (node.data("terminalType") === "output") {
-          e.preventDefault();
-          e.stopPropagation();
+        isRightDraggingRef.current = true;
+        sourceNodeRef.current = node;
+        setMousePos({ x: modelX, y: modelY });
 
-          isRightDraggingRef.current = true;
-          sourceNodeRef.current = node;
-          setMousePos({ x: modelX, y: modelY });
-
-          // Disable normal node dragging during right-click drag
-          cy.autoungrabify(true);
-        }
+        // Disable normal node dragging during right-click drag
+        cy.autoungrabify(true);
       }
     }
   }
@@ -124,94 +122,103 @@ export function CyContainer({
     }
   }
 
-  function mouseUpHandler(e: React.MouseEvent<HTMLElement>) {
+  // function mouseUpHandler(e: React.MouseEvent<HTMLElement>) {
+  function handleEndMakeEdge() {
     if (levelContext === null || containerRef.current == null) return;
     const cy = levelContext.editorContext.cy;
     // const cyContainer = containerRef.current;
-    if (e.button === 2 && isRightDraggingRef.current) {
-      // Right button
-      // Clean up temp edge
-      if (tempEdgeRef.current) {
-        cy.remove(tempEdgeRef.current);
-        tempEdgeRef.current = null;
-      }
-      cy.$("#temp-target").remove();
+    // Right button
+    // Clean up temp edge
+    if (tempEdgeRef.current) {
+      cy.remove(tempEdgeRef.current);
+      tempEdgeRef.current = null;
+    }
+    cy.$("#temp-target").remove();
 
-      // Find what node is at the current mouse position
-      const elements = cy.elements().filter(function (ele) {
-        if (ele.isNode()) {
-          const bb = ele.boundingBox();
-          return (
-            mousePos.x >= bb.x1 &&
-            mousePos.x <= bb.x2 &&
-            mousePos.y >= bb.y1 &&
-            mousePos.y <= bb.y2
-          );
-        }
-        return false;
+    // Find what node is at the current mouse position
+    const elements = cy.elements().filter(function (ele) {
+      if (ele.isNode()) {
+        const bb = ele.boundingBox();
+        return (
+          mousePos.x >= bb.x1 &&
+          mousePos.x <= bb.x2 &&
+          mousePos.y >= bb.y1 &&
+          mousePos.y <= bb.y2
+        );
+      }
+      return false;
+    });
+
+    // Get the top-most node (smallest one, likely a terminal or regular node)
+    let targetNode: NodeSingular | null = null;
+    if (elements.length > 0) {
+      // Sort by size (area) and pick the smallest
+      const sorted = elements.sort(function (a, b) {
+        const aBox = a.boundingBox();
+        const bBox = b.boundingBox();
+        const aArea = (aBox.x2 - aBox.x1) * (aBox.y2 - aBox.y1);
+        const bArea = (bBox.x2 - bBox.x1) * (bBox.y2 - bBox.y1);
+        return aArea - bArea;
       });
+      targetNode = sorted[0] as NodeSingular;
+    }
 
-      // Get the top-most node (smallest one, likely a terminal or regular node)
-      let targetNode: NodeSingular | null = null;
-      if (elements.length > 0) {
-        // Sort by size (area) and pick the smallest
-        const sorted = elements.sort(function (a, b) {
-          const aBox = a.boundingBox();
-          const bBox = b.boundingBox();
-          const aArea = (aBox.x2 - aBox.x1) * (aBox.y2 - aBox.y1);
-          const bArea = (bBox.x2 - bBox.x1) * (bBox.y2 - bBox.y1);
-          return aArea - bArea;
-        });
-        targetNode = sorted[0] as NodeSingular;
-      }
+    // Create or delete edge if we have a valid target
+    if (
+      sourceNodeRef.current &&
+      targetNode &&
+      sourceNodeRef.current.id() !== targetNode.id()
+    ) {
+      // Validate edge rules:
+      // 1. Source must be an output terminal
+      // 2. Target must be an input terminal
+      // 3. Can't connect to compound parent (start/stop)
 
-      // Create or delete edge if we have a valid target
-      if (
-        sourceNodeRef.current &&
-        targetNode &&
-        sourceNodeRef.current.id() !== targetNode.id()
-      ) {
-        // Validate edge rules:
-        // 1. Source must be an output terminal
-        // 2. Target must be an input terminal
-        // 3. Can't connect to compound parent (start/stop)
+      const sourceType = sourceNodeRef.current.data("terminalType");
+      const targetType = targetNode.data("terminalType");
 
-        const sourceType = sourceNodeRef.current.data("terminalType");
-        const targetType = targetNode.data("terminalType");
+      // Check if source is output and target is input
+      if (sourceType === "output" && targetType === "input") {
+        // Check if edge already exists
+        const existingEdge = cy.edges(
+          `[source="${sourceNodeRef.current.id()}"][target="${targetNode.id()}"]`
+        );
 
-        // Check if source is output and target is input
-        if (sourceType === "output" && targetType === "input") {
-          // Check if edge already exists
-          const existingEdge = cy.edges(
-            `[source="${sourceNodeRef.current.id()}"][target="${targetNode.id()}"]`
-          );
-
-          if (existingEdge.length > 0) {
-            // Delete existing edge
-            existingEdge.remove();
-          } else {
-            // Create new edge
-            cy.add({
-              group: "edges",
-              data: {
-                id: `edge-${edgeIdCounter++}`,
-                source: sourceNodeRef.current.id(),
-                target: targetNode.id(),
-                condition: new Condition([]),
-              },
-            });
-          }
+        if (existingEdge.length > 0) {
+          // Delete existing edge
+          existingEdge.remove();
         } else {
-          // Invalid connection direction
-          console.log(
-            "Edges can only go from output terminals to input terminals"
-          );
+          // Create new edge
+          cy.add({
+            group: "edges",
+            data: {
+              id: `edge-${edgeIdCounter++}`,
+              source: sourceNodeRef.current.id(),
+              target: targetNode.id(),
+              condition: new Condition([]),
+            },
+          });
         }
+      } else {
+        // Invalid connection direction
+        console.log(
+          "Edges can only go from output terminals to input terminals"
+        );
       }
-      // Reset state
-      sourceNodeRef.current = null;
-      isRightDraggingRef.current = false;
-      cy.autoungrabify(false);
+    }
+    // Reset state
+    sourceNodeRef.current = null;
+    isRightDraggingRef.current = false;
+    cy.autoungrabify(false);
+  }
+
+  function mouseDownHander(e: React.MouseEvent<HTMLElement>) {
+    if (e.button === 0) {
+      if (isRightDraggingRef.current == true) {
+        handleEndMakeEdge();
+      } else {
+        handleStartMakeEdge(e);
+      }
     }
   }
 
@@ -221,7 +228,6 @@ export function CyContainer({
       className="canvas-container"
       onMouseDown={mouseDownHander}
       onMouseMove={mouseMoveHandler}
-      onMouseUp={mouseUpHandler}
       onContextMenu={(e) => e.preventDefault()}
     >
       {children}
