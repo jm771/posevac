@@ -96,7 +96,7 @@ const LESS_THAN_FOUR: Level = {
       expectedOutputs: [[3]],
     },
   ],
-  allowedNodes: ["split", "combine", "constant", "multiply", "plus"],
+  allowedNodes: ["split", "combine", "constant", "multiply", "plus", "nop"],
 };
 
 const MAX: Level = {
@@ -120,7 +120,7 @@ const MAX: Level = {
       expectedOutputs: [[3, 2, 3]],
     },
   ],
-  allowedNodes: ["split", "combine", "constant", "multiply", "plus"],
+  allowedNodes: ["split", "combine", "constant", "multiply", "plus", "nop"],
 };
 
 export const LEVELS: Level[] = [
