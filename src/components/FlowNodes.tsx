@@ -82,7 +82,7 @@ export function InputNode({ data }: NodeProps<FlowNodeData>) {
   return (
     <div className="flow-node-input">
       {data.label}
-      <Handle type="source" position={Position.Right} id="output-0" />
+      <OutputTerminals count={1} />
     </div>
   );
 }
@@ -90,7 +90,7 @@ export function InputNode({ data }: NodeProps<FlowNodeData>) {
 export function OutputNode({ data }: NodeProps<FlowNodeData>) {
   return (
     <div className="flow-node-output">
-      <Handle type="target" position={Position.Left} id="input-0" />
+      <InputTerminals count={1} />
       {data.label}
     </div>
   );

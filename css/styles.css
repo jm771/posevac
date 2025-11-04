@@ -744,68 +744,43 @@ body {
   background: var(--border-color);
 }
 
-/* React Flow Node Styles */
-.flow-node-compound {
+.flow-node-compound, .flow-node-input, .flow-node-output, .flow-node-constant {
   background-color: #2d2d30;
   border: 2px solid #ba68c8;
   border-radius: 8px;
   padding: 15px 20px;
   color: #d4d4d4;
-  font-size: 11px;
+  font-size: 12px;
   min-width: 80px;
   min-height: 60px;
   text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.flow-node-compound {
+  background-color: #2d2d30;
+  border: 2px solid #ba68c8;
 }
 
 .flow-node-input {
   background-color: #81c784;
   border: 3px solid #81c784;
-  border-radius: 8px;
-  padding: 15px 20px;
   color: white;
-  font-size: 12px;
-  font-weight: bold;
-  min-width: 80px;
-  min-height: 50px;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+
 }
 
 .flow-node-output {
   background-color: #e57373;
   border: 3px solid #e57373;
-  border-radius: 8px;
-  padding: 15px 20px;
   color: white;
-  font-size: 12px;
-  font-weight: bold;
-  min-width: 80px;
-  min-height: 50px;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .flow-node-constant {
   background-color: #4a4a4a;
   border: 2px solid #64b5f6;
-  border-radius: 8px;
-  padding: 15px 20px;
-  color: #d4d4d4;
-  font-size: 11px;
-  min-width: 80px;
-  min-height: 60px;
-  text-align: center;
-  display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   gap: 4px;
 }
 
