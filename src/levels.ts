@@ -114,10 +114,10 @@ const MAX: Level = {
     },
     {
       inputs: [
-        [1, 2, 3],
-        [3, 2, 1],
+        [2],
+        [4],
       ],
-      expectedOutputs: [[3, 2, 3]],
+      expectedOutputs: [[4]],
     },
   ],
   allowedNodes: ["split", "combine", "constant", "multiply", "plus", "nop"],
