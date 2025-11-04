@@ -84,6 +84,7 @@ export function FlowContainer({
       id: edge.id(),
       source: edge.source().id(),
       target: edge.target().id(),
+      type: "straight",
       sourceHandle: findHandleId(edge.source().id(), "output"),
       targetHandle: findHandleId(edge.target().id(), "input"),
       data: { condition: edge.data("condition") },
@@ -162,6 +163,7 @@ export function FlowContainer({
           addEdge(
             {
               ...connection,
+              type: "straight",
               id: newEdge.id(),
               data: { condition: new Condition([]) },
             },
