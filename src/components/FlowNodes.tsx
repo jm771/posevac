@@ -1,5 +1,5 @@
+import { Handle, NodeProps, Position } from "@xyflow/react";
 import React from "react";
-import { Handle, Position, NodeProps } from "@xyflow/react";
 
 export type FlowNodeData = {
   label: string;
@@ -10,12 +10,13 @@ export type FlowNodeData = {
   constantRepeat?: boolean;
 };
 
-export function CompoundNode({ data }: NodeProps<FlowNodeData>) {
-  const inputHandles = Array.from({ length: data.inputCount }, (_, i) => i);
-  const outputHandles = Array.from({ length: data.outputCount }, (_, i) => i);
+const topTerminalOffset = 10;
+const terminalOffset = 30;
 
+function InputTerminals({ count }: { count: number }) {
+  const inputHandles = Array.from({ length: count }, (_, i) => i);
   return (
-    <div className="flow-node-compound">
+    <>
       {inputHandles.map((i) => (
         <Handle
           key={`input-${i}`}
@@ -23,11 +24,22 @@ export function CompoundNode({ data }: NodeProps<FlowNodeData>) {
           position={Position.Left}
           id={`input-${i}`}
           style={{
-            top: `${((i + 1) * 100) / (inputHandles.length + 1)}%`,
+            top: `${
+              (100 * (terminalOffset * i + topTerminalOffset)) /
+              (2 * topTerminalOffset + terminalOffset * (count - 1))
+            }%`,
           }}
         />
       ))}
-      {data.label}
+    </>
+  );
+}
+
+function OutputTerminals({ count }: { count: number }) {
+  const outputHandles = Array.from({ length: count }, (_, i) => i);
+
+  return (
+    <>
       {outputHandles.map((i) => (
         <Handle
           key={`output-${i}`}
@@ -35,10 +47,33 @@ export function CompoundNode({ data }: NodeProps<FlowNodeData>) {
           position={Position.Right}
           id={`output-${i}`}
           style={{
-            top: `${((i + 1) * 100) / (outputHandles.length + 1)}%`,
+            top: `${
+              (100 * (terminalOffset * i + topTerminalOffset)) /
+              (2 * topTerminalOffset + terminalOffset * (count - 1))
+            }%`,
           }}
         />
       ))}
+    </>
+  );
+}
+
+export function CompoundNode({ data }: { data: FlowNodeData }) {
+  const nodesToFit = Math.max(data.inputCount, data.outputCount);
+  const heightTotalOffset = topTerminalOffset * 2 + 24; //12px in css
+  const height = (nodesToFit - 1) * terminalOffset + heightTotalOffset;
+
+  return (
+    <div
+      className="flow-node-compound"
+      style={{
+        height: height,
+        width: 120,
+      }}
+    >
+      <InputTerminals count={data.inputCount} />
+      {data.label}
+      <OutputTerminals count={data.outputCount} />
     </div>
   );
 }
@@ -47,11 +82,7 @@ export function InputNode({ data }: NodeProps<FlowNodeData>) {
   return (
     <div className="flow-node-input">
       {data.label}
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="output-0"
-      />
+      <Handle type="source" position={Position.Right} id="output-0" />
     </div>
   );
 }
@@ -59,11 +90,7 @@ export function InputNode({ data }: NodeProps<FlowNodeData>) {
 export function OutputNode({ data }: NodeProps<FlowNodeData>) {
   return (
     <div className="flow-node-output">
-      <Handle
-        type="target"
-        position={Position.Left}
-        id="input-0"
-      />
+      <Handle type="target" position={Position.Left} id="input-0" />
       {data.label}
     </div>
   );
@@ -82,11 +109,7 @@ export function ConstantNode({ data }: NodeProps<FlowNodeData>) {
           {data.constantRepeat ? "repeat" : "once"}
         </div>
       )}
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="output-0"
-      />
+      <Handle type="source" position={Position.Right} id="output-0" />
     </div>
   );
 }
