@@ -1,6 +1,6 @@
 import cytoscape, { Core, NodeSingular } from "cytoscape";
 // @ts-ignore - no types available
-import nodeHtmlLabel from "cytoscape-node-html-label";
+// import nodeHtmlLabel from "cytoscape-node-html-label";
 import { EvaluationListenerHolder, Evaluator } from "./evaluation";
 import { Level } from "./levels";
 import {
@@ -15,10 +15,10 @@ import { getCytoscapeStyles } from "./styles";
 import { Tester, TesterListenerHolder } from "./tester";
 import { Assert, NotNull } from "./util";
 
-// Register the node-html-label extension
-if (typeof cytoscape !== "undefined") {
-  nodeHtmlLabel(cytoscape);
-}
+// // Register the node-html-label extension
+// if (typeof cytoscape !== "undefined") {
+//   nodeHtmlLabel(cytoscape);
+// }
 
 export interface NodeBuildContext {
   cy: Core;
@@ -34,15 +34,10 @@ export class GraphEditorContext implements NodeBuildContext {
   public nodeIdCounter = 0;
   testValuesContext: TestValuesContext;
 
-  constructor(
-    level: Level,
-    testValuesContext: TestValuesContext,
-    container: HTMLElement
-  ) {
+  constructor(level: Level, testValuesContext: TestValuesContext) {
     this.level = level;
     this.testValuesContext = testValuesContext;
     this.cy = cytoscape({
-      container: container,
       style: getCytoscapeStyles(),
       // layout: {
       //   name: "preset",
@@ -157,8 +152,8 @@ export class LevelContext implements TestValuesContext {
   testerListenerHolder: TesterListenerHolder;
   tester: Tester | null;
   evaluator: Evaluator | null;
-  constructor(level: Level, container: HTMLElement) {
-    this.editorContext = new GraphEditorContext(level, this, container);
+  constructor(level: Level) {
+    this.editorContext = new GraphEditorContext(level, this);
     this.evaluationListenerHolder = new EvaluationListenerHolder();
     this.evaluator = null;
     this.testerListenerHolder = new TesterListenerHolder();

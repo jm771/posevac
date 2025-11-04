@@ -25,10 +25,9 @@ export function LevelPage() {
   const level = getLevelById(levelId);
   const [levelContext, setLevelContext] = useState<LevelContext | null>(null);
   const [panZoom, setPanZoom] = useState<PanZoomState>(new PanZoomState());
-  const cyDivRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const newLevelContext = new LevelContext(level, NotNull(cyDivRef.current));
+    const newLevelContext = new LevelContext(level);
 
     setLevelContext(newLevelContext);
 
@@ -50,12 +49,6 @@ export function LevelPage() {
         {levelContext !== null && <LevelSidebar levelContext={levelContext} />}
 
         <div className="level-page-main">
-          {/* Hidden cytoscape container for backend */}
-          <div
-            ref={cyDivRef}
-            className="cy-container cy-container-hidden"
-          />
-
           {/* React Flow UI */}
           <div className="flow-ui-wrapper">
             <FlowContainerWrapper
@@ -68,7 +61,9 @@ export function LevelPage() {
                     <EdgeConditionOverlay cy={levelContext.editorContext.cy} />
                     <ConstantNodeOverlay cy={levelContext.editorContext.cy} />
                     <ProgramCounterOverlay
-                      evaluationEventSource={levelContext.evaluationListenerHolder}
+                      evaluationEventSource={
+                        levelContext.evaluationListenerHolder
+                      }
                     />
                   </>
                 )}

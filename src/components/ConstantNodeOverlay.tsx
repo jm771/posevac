@@ -1,29 +1,28 @@
 import { Core, EventObject, NodeSingular } from "cytoscape";
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { ConstantNodeData } from "../nodes";
 import { PanZoomContext, styleForPosition } from "../rendered_position";
 
 export function initializeNodeLabelStyling(cy: Core) {
-  // @ts-ignore - nodeHtmlLabel is added by extension
-  cy.nodeHtmlLabel([
-    {
-      query: 'node[type="constant"]',
-      cssClass: "constant-node-display",
-      tpl: function (data: ConstantNodeData) {
-        const value = data.constantValue !== undefined ? data.constantValue : 0;
-        const repeat =
-          data.constantRepeat !== undefined ? data.constantRepeat : true;
-        const modeIcon = repeat ? "∞" : "1×";
-        const modeClass = repeat ? "repeat" : "once";
-        return `
-                <div class="constant-display">
-                    <div class="constant-display-value">${value}</div>
-                    <div class="constant-display-mode ${modeClass}">${modeIcon}</div>
-                </div>
-            `;
-      },
-    },
-  ]);
+  // // @ts-ignore - nodeHtmlLabel is added by extension
+  // cy.nodeHtmlLabel([
+  //   {
+  //     query: 'node[type="constant"]',
+  //     cssClass: "constant-node-display",
+  //     tpl: function (data: ConstantNodeData) {
+  //       const value = data.constantValue !== undefined ? data.constantValue : 0;
+  //       const repeat =
+  //         data.constantRepeat !== undefined ? data.constantRepeat : true;
+  //       const modeIcon = repeat ? "∞" : "1×";
+  //       const modeClass = repeat ? "repeat" : "once";
+  //       return `
+  //               <div class="constant-display">
+  //                   <div class="constant-display-value">${value}</div>
+  //                   <div class="constant-display-mode ${modeClass}">${modeIcon}</div>
+  //               </div>
+  //           `;
+  //     },
+  //   },
+  // ]);
 }
 
 export function ConstantNodeOverlay({ cy }: { cy: Core }) {
