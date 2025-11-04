@@ -47,9 +47,7 @@ export function LevelPage() {
     <PanZoomContext value={panZoom}>
       <div className="container">
         {levelContext !== null && <LevelSidebar levelContext={levelContext} />}
-
         <div className="level-page-main">
-          {/* React Flow UI */}
           <div className="flow-ui-wrapper">
             <FlowContainerWrapper
               levelContext={levelContext}
