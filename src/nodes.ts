@@ -16,8 +16,8 @@ export type ComponentType =
 export type NodeData = {
   id: string;
   label: string;
-  type: string;
-  style: string;
+  type: ComponentType;
+  style: NodeStyle;
 };
 
 export type ConstantNodeData = NodeData & {

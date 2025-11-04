@@ -1,37 +1,29 @@
-import React, { useCallback, useRef, useState } from "react";
 import {
-  ReactFlow,
-  Background,
-  Controls,
-  Node,
-  Edge,
-  Connection,
   addEdge,
-  useNodesState,
-  useEdgesState,
+  Background,
+  Connection,
+  Controls,
+  Edge,
+  Node,
   NodeTypes,
   OnConnect,
+  ReactFlow,
   ReactFlowProvider,
+  useEdgesState,
+  useNodesState,
   useReactFlow,
   Viewport,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import {
-  CompoundNode,
-  InputNode,
-  OutputNode,
-  ConstantNode,
-  FlowNodeData,
-} from "./FlowNodes";
-import { LevelContext } from "../editor_context";
+import React, { useCallback, useRef, useState } from "react";
 import { Condition } from "../condition";
-import { ComponentType, createNodeFromName } from "../nodes";
+import { LevelContext } from "../editor_context";
+import { ComponentType, ConstantNodeData, createNodeFromName } from "../nodes";
 import { PanZoomState } from "../rendered_position";
+import { CompoundNode, ConstantNode, FlowNodeData } from "./FlowNodes";
 
 const nodeTypes: NodeTypes = {
   compound: CompoundNode,
-  input: InputNode,
-  output: OutputNode,
   constant: ConstantNode,
 };
 
@@ -46,8 +38,10 @@ export function FlowContainer({
   children: React.JSX.Element;
   onViewportChange?: (panZoom: PanZoomState) => void;
 }) {
-  const [nodes, setNodes, onNodesChange] = useNodesState<FlowNodeData>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<FlowNodeData>>(
+    []
+  );
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useReactFlow();
   const [updateCounter, setUpdateCounter] = useState(0);
@@ -61,20 +55,19 @@ export function FlowContainer({
     levelContext.editorContext.allNodes.forEach((compNode) => {
       const cyNode = compNode.node;
       const pos = cyNode.position();
-      const data = cyNode.data();
 
-      let nodeType = "compound";
-      if (data.style === "input") nodeType = "input";
-      else if (data.style === "output") nodeType = "output";
-      else if (data.style === "constant") nodeType = "constant";
+      // Don't think this is actually true
+      const data: ConstantNodeData = cyNode.data();
+
+      const nodeType = data.type === "constant" ? "constant" : "compound";
 
       flowNodes.push({
         id: cyNode.id(),
         type: nodeType,
         position: { x: pos.x, y: pos.y },
         data: {
-          label: data.label || "",
-          type: data.type || "",
+          label: data.label,
+          style: data.style,
           inputCount: compNode.inputTerminals.length,
           outputCount: compNode.outputTerminals.length,
           constantValue: data.constantValue,
@@ -124,8 +117,10 @@ export function FlowContainer({
       const cy = levelContext.editorContext.cy;
 
       // Extract handle indices from the connection
-      const sourceHandleIdx = connection.sourceHandle?.replace("output-", "") || "0";
-      const targetHandleIdx = connection.targetHandle?.replace("input-", "") || "0";
+      const sourceHandleIdx =
+        connection.sourceHandle?.replace("output-", "") || "0";
+      const targetHandleIdx =
+        connection.targetHandle?.replace("input-", "") || "0";
 
       // Find the actual terminal IDs in the Cytoscape graph
       const sourceTerminalId = `${connection.source}-output${sourceHandleIdx}`;

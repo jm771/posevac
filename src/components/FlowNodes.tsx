@@ -1,9 +1,10 @@
-import { Handle, NodeProps, Position } from "@xyflow/react";
+import { Handle, Position } from "@xyflow/react";
 import React from "react";
+import { NodeStyle } from "../nodes";
 
 export type FlowNodeData = {
   label: string;
-  type: string;
+  style: NodeStyle;
   inputCount: number;
   outputCount: number;
   constantValue?: unknown;
@@ -65,7 +66,7 @@ export function CompoundNode({ data }: { data: FlowNodeData }) {
 
   return (
     <div
-      className="flow-node-compound"
+      className={`flow-node-${data.style}`}
       style={{
         height: height,
         width: 120,
@@ -78,25 +79,25 @@ export function CompoundNode({ data }: { data: FlowNodeData }) {
   );
 }
 
-export function InputNode({ data }: NodeProps<FlowNodeData>) {
-  return (
-    <div className="flow-node-input">
-      {data.label}
-      <OutputTerminals count={1} />
-    </div>
-  );
-}
+// export function InputNode({ data }: { data: FlowNodeData }) {
+//   return (
+//     <div className="flow-node-input">
+//       {data.label}
+//       <OutputTerminals count={1} />
+//     </div>
+//   );
+// }
 
-export function OutputNode({ data }: NodeProps<FlowNodeData>) {
-  return (
-    <div className="flow-node-output">
-      <InputTerminals count={1} />
-      {data.label}
-    </div>
-  );
-}
+// export function OutputNode({ data }: { data: FlowNodeData }) {
+//   return (
+//     <div className="flow-node-output">
+//       <InputTerminals count={1} />
+//       {data.label}
+//     </div>
+//   );
+// }
 
-export function ConstantNode({ data }: NodeProps<FlowNodeData>) {
+export function ConstantNode({ data }: { data: FlowNodeData }) {
   return (
     <div className="flow-node-constant">
       {data.constantValue !== undefined && (

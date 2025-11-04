@@ -11,7 +11,6 @@ import {
   OutputChecker,
   TestValuesContext,
 } from "./nodes";
-import { getCytoscapeStyles } from "./styles";
 import { Tester, TesterListenerHolder } from "./tester";
 import { Assert, NotNull } from "./util";
 
@@ -38,7 +37,7 @@ export class GraphEditorContext implements NodeBuildContext {
     this.level = level;
     this.testValuesContext = testValuesContext;
     this.cy = cytoscape({
-      style: getCytoscapeStyles(),
+      // style: getCytoscapeStyles(),
       // layout: {
       //   name: "preset",
       // },
