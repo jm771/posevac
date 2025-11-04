@@ -126,8 +126,8 @@ const MAX: Level = {
 export const LEVELS: Level[] = [
   ADDITION,
   CUM_SUM,
-  MULTIPLY,
   FACTORIAL,
+  MULTIPLY,
   LESS_THAN_FOUR,
   MAX,
 ];
