@@ -3,12 +3,11 @@ import {
   EvaluationEvent,
   EvaluationListener,
   NodeEvaluateEvent,
-  ProgramCounterId,
 } from "./evaluation_listeners";
 import { ComputeNode, NodeId } from "./nodes";
-import { PosFlo, TerminalId } from "./pos_flow";
-import { ProgramCounter } from "./program_counter";
-import { Assert, DefaultMap } from "./util";
+import { PosFlo } from "./pos_flow";
+import { PCStore, ProgramCounter } from "./program_counter";
+import { Assert } from "./util";
 
 enum Stage {
   AdvanceCounter,
@@ -23,36 +22,8 @@ type State =
     }
   | { stage: Stage.Evaluate; nodeIndex: number };
 
-class PCStore {
-  private programCounters: ProgramCounter[];
-
-  constructor() {
-    this.terminalToProgramCounters = new DefaultMap<
-      TerminalId,
-      ProgramCounter[]
-    >(() => new Array<ProgramCounter>());
-  }
-
-  Add(pc: ProgramCounter) {}
-
-  Remove(pc: ProgramCounter) {}
-
-  GetById(id: ProgramCounterId): ProgramCounter {}
-
-  GetByTerminal(id: TerminalId): ProgramCounter[] {}
-
-  AdvancePc(pc: ProgramCounter) {
-    pc.currentLocation = pc.currentEdge!.dest;
-    pc.currentEdge = null;
-  }
-
-  GetAll(): ProgramCounter[] {}
-}
-
 export class Evaluator {
-  // private programCounters: Map<string, ProgramCounter>;
   private programCounters: PCStore;
-  // private terminalToProgramCounters: DefaultMap<TerminalId, ProgramCounter[]>;
   private nodeStates: Map<string, unknown>;
   private nodeSettings: Map<NodeId, unknown>;
   private evaluationState: State;
