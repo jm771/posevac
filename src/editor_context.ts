@@ -18,43 +18,6 @@ export interface NodeBuildContext {
   nodeIdCounter: number;
 }
 
-type NodeId = string;
-type TerminalIndex = number;
-
-export enum TerminalType {
-  Input,
-  Output,
-}
-
-export type TerminalId = {
-  // type: TerminalType
-  nodeId: NodeId;
-  terminalIndex: TerminalIndex;
-};
-
-export type Connection = {
-  source: TerminalId;
-  dest: TerminalId;
-};
-
-export class PosFlo {
-  nodes: CompNode[];
-  connections: Connection[];
-
-  constructor(initalNodes: CompNode[] = []) {
-    this.nodes = initalNodes;
-    this.connections = [];
-  }
-
-  AddNode(node: CompNode) {}
-
-  AddNode(node: CompNode) {}
-
-  AddConnection(connection: Connection) {}
-
-  RemoveConnection(connection: Connection) {}
-}
-
 export class GraphEditorContext implements NodeBuildContext {
   public cy: Core;
   public level: Level;
