@@ -16,7 +16,6 @@ export type ConstantNodeData = NodeData & {
 };
 
 // Honestly this should not exist - will remove later
-export type NodeStyle = "compound" | "input" | "output" | "constant";
 
 export class EvaluateOutput {
   pcsDestroyed: Array<ProgramCounter>;
@@ -34,31 +33,6 @@ export class EvaluateOutput {
 export interface TestValuesContext {
   getInputProvider(): InputProvider;
   getOutputChecker(): OutputChecker;
-}
-
-interface NodeFunction<TState> {
-  makeState(): TState;
-  evaluate(
-    state: TState,
-    nodedata: CollectionData,
-    args: Array<unknown>
-  ): unknown;
-}
-
-class PureNodeFunction implements NodeFunction<void> {
-  private func: Function;
-
-  constructor(func: Function) {
-    this.func = func;
-  }
-
-  makeState() {
-    return null;
-  }
-
-  evaluate(_: unknown, __: CollectionData, args: Array<unknown>) {
-    return this.func(...args);
-  }
 }
 
 export interface InputProvider {
