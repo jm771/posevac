@@ -3,16 +3,6 @@ import { NodeBuildContext } from "./editor_context";
 import { ProgramCounter } from "./program_counter";
 import { Assert, DefaultMap, getOrThrow } from "./util";
 
-export type ComponentType =
-  | "input"
-  | "output"
-  | "plus"
-  | "multiply"
-  | "combine"
-  | "split"
-  | "nop"
-  | "constant";
-
 export type NodeData = {
   id: string;
   label: string;

@@ -24,6 +24,55 @@ export interface NodeBuildContext {
   nodeIdCounter: number;
 }
 
+type NodeId = string;
+type TerminalIndex = number;
+
+export enum TerminalType {
+  Input,
+  Output,
+}
+
+export type TerminalId {
+  // type: TerminalType
+  nodeId: NodeId,
+  terminalIndex: TerminalIndex
+}
+
+export type Connection = {
+  source: TerminalId
+  dest: TerminalId
+}
+
+export class PosFlo {
+  nodes: CompNode[]
+  connections: Connection[]
+
+  constructor(initalNodes: CompNode[] = []) 
+  {
+    this.nodes = initalNodes;
+    this.connections = []
+  }
+
+  AddNode(node: CompNode) {
+    
+  }
+
+  AddNode(node: CompNode) {
+    
+  }
+
+  AddConnection(connection: Connection) {
+
+  }
+
+  RemoveConnection(connection: Connection) {
+    
+  }
+
+
+
+}
+
 export class GraphEditorContext implements NodeBuildContext {
   public cy: Core;
   public level: Level;
@@ -36,18 +85,7 @@ export class GraphEditorContext implements NodeBuildContext {
   constructor(level: Level, testValuesContext: TestValuesContext) {
     this.level = level;
     this.testValuesContext = testValuesContext;
-    this.cy = cytoscape({
-      // style: getCytoscapeStyles(),
-      // layout: {
-      //   name: "preset",
-      // },
-      minZoom: 0.5,
-      maxZoom: 2,
-      autoungrabify: false,
-      userPanningEnabled: true,
-      userZoomingEnabled: true,
-      boxSelectionEnabled: false,
-    });
+    this.cy = cytoscape();
 
     const testCases = level.testCases;
 
@@ -73,10 +111,6 @@ export class GraphEditorContext implements NodeBuildContext {
   }
 
   private getNodeIndexForNode(node: NodeSingular): number {
-    // while (node.isChild()) {
-    //   node = node.parent() as NodeSingular;
-    // }
-
     return this.getNodeIndexForNodeId(node.id());
   }
 
