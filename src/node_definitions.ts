@@ -90,7 +90,7 @@ const ConstantNodeDefinition: NodeDefinitionImpl<
   },
 };
 
-type NodeDefinition = NodeDefinitionImpl<unknown, unknown>;
+export type NodeDefinition = NodeDefinitionImpl<unknown, unknown>;
 
 const typeToDefinitionMap = new Map<RegularComponentType, NodeDefinition>([
   [

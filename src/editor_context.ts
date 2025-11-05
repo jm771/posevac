@@ -14,13 +14,7 @@ import {
 import { Tester, TesterListenerHolder } from "./tester";
 import { Assert, NotNull } from "./util";
 
-// // Register the node-html-label extension
-// if (typeof cytoscape !== "undefined") {
-//   nodeHtmlLabel(cytoscape);
-// }
-
 export interface NodeBuildContext {
-  cy: Core;
   nodeIdCounter: number;
 }
 
@@ -32,45 +26,33 @@ export enum TerminalType {
   Output,
 }
 
-export type TerminalId {
+export type TerminalId = {
   // type: TerminalType
-  nodeId: NodeId,
-  terminalIndex: TerminalIndex
-}
+  nodeId: NodeId;
+  terminalIndex: TerminalIndex;
+};
 
 export type Connection = {
-  source: TerminalId
-  dest: TerminalId
-}
+  source: TerminalId;
+  dest: TerminalId;
+};
 
 export class PosFlo {
-  nodes: CompNode[]
-  connections: Connection[]
+  nodes: CompNode[];
+  connections: Connection[];
 
-  constructor(initalNodes: CompNode[] = []) 
-  {
+  constructor(initalNodes: CompNode[] = []) {
     this.nodes = initalNodes;
-    this.connections = []
+    this.connections = [];
   }
 
-  AddNode(node: CompNode) {
-    
-  }
+  AddNode(node: CompNode) {}
 
-  AddNode(node: CompNode) {
-    
-  }
+  AddNode(node: CompNode) {}
 
-  AddConnection(connection: Connection) {
+  AddConnection(connection: Connection) {}
 
-  }
-
-  RemoveConnection(connection: Connection) {
-    
-  }
-
-
-
+  RemoveConnection(connection: Connection) {}
 }
 
 export class GraphEditorContext implements NodeBuildContext {

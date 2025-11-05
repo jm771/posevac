@@ -14,6 +14,8 @@ export type FlowNodeData = {
 const topTerminalOffset = 10;
 const terminalOffset = 30;
 
+// classname relative - tristain link
+
 function InputTerminals({ count }: { count: number }) {
   const inputHandles = Array.from({ length: count }, (_, i) => i);
   return (
