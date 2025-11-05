@@ -1,4 +1,7 @@
 import { Connection, TerminalId } from "./pos_flow";
+import { Assert, NotNull } from "./util";
+
+export type ProgramCounterId = string;
 
 export class ProgramCounter {
   contents: unknown;
@@ -20,27 +23,36 @@ export class ProgramCounter {
 }
 
 export class PCStore {
-  private programCounters: ProgramCounter[];
+  private programCounters: ProgramCounter[] = [];
 
-  constructor() {
-    this.terminalToProgramCounters = new DefaultMap<
-      TerminalId,
-      ProgramCounter[]
-    >(() => new Array<ProgramCounter>());
+  constructor() {}
+
+  Add(pc: ProgramCounter) {
+    this.programCounters.push(pc);
   }
 
-  Add(pc: ProgramCounter) {}
+  Remove(pc: ProgramCounter) {
+    const idx = this.programCounters.findIndex((pc1) => pc1.id === pc.id);
+    Assert(idx !== -1);
+    this.programCounters.splice(idx, 1);
+  }
 
-  Remove(pc: ProgramCounter) {}
+  GetById(id: ProgramCounterId): ProgramCounter {
+    return NotNull(this.programCounters.find((pc) => pc.id === id));
+  }
 
-  GetById(id: ProgramCounterId): ProgramCounter {}
-
-  GetByTerminal(id: TerminalId): ProgramCounter[] {}
+  GetByTerminal(id: TerminalId): ProgramCounter[] {
+    return NotNull(
+      this.programCounters.filter((pc) => pc.currentLocation === id)
+    );
+  }
 
   AdvancePc(pc: ProgramCounter) {
-    pc.currentLocation = pc.currentEdge!.dest;
+    pc.currentLocation = NotNull(pc.currentEdge).dest;
     pc.currentEdge = null;
   }
 
-  GetAll(): ProgramCounter[] {}
+  GetAll(): ProgramCounter[] {
+    return this.programCounters;
+  }
 }

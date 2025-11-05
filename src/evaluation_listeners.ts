@@ -1,8 +1,6 @@
 import { NodeId } from "./nodes";
 import { TerminalId } from "./pos_flow";
-import { ProgramCounter } from "./program_counter";
-
-export type ProgramCounterId = string;
+import { ProgramCounter, ProgramCounterId } from "./program_counter";
 
 export type CounterAdvanceEvent = {
   programCounterId: ProgramCounterId;

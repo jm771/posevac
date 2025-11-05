@@ -1,126 +1,42 @@
-import cytoscape, { Core, NodeSingular } from "cytoscape";
 // @ts-ignore - no types available
 // import nodeHtmlLabel from "cytoscape-node-html-label";
 import { EvaluationListenerHolder, Evaluator } from "./evaluation";
-import { Level } from "./levels";
+import { MakeInputNode, MakeOutputNode } from "./input_output_nodes";
+import { Level, nInputs, nOutputs } from "./levels";
+import { GetNodeDefinition, RegularComponentType } from "./node_definitions";
 import {
-  CompNode,
-  createInputNode,
-  createOutputNode,
+  ComputeNode,
   InputProvider,
   OutputChecker,
   TestValuesContext,
 } from "./nodes";
+import { PosFlo } from "./pos_flow";
 import { Tester, TesterListenerHolder } from "./tester";
-import { Assert, NotNull } from "./util";
+import { NotNull, range } from "./util";
 
-export interface NodeBuildContext {
-  nodeIdCounter: number;
-}
-
-export class GraphEditorContext implements NodeBuildContext {
-  public cy: Core;
+export class GraphEditorContext {
   public level: Level;
-  public inputNodes: CompNode[] = [];
-  public outputNodes: CompNode[] = [];
-  public allNodes: CompNode[] = [];
-  public nodeIdCounter = 0;
+  posFlow: PosFlo;
   testValuesContext: TestValuesContext;
 
   constructor(level: Level, testValuesContext: TestValuesContext) {
     this.level = level;
     this.testValuesContext = testValuesContext;
-    this.cy = cytoscape();
+    this.posFlow = new PosFlo();
+  }
 
-    const testCases = level.testCases;
-
-    // TODO maybe this moves somewhere else
-    Assert(testCases.length > 0, "No test cases");
-    Assert(
-      testCases.every((tc) => tc.inputs.length == testCases[0].inputs.length),
-      "Not all test cases have same number of inputs"
-    );
-    Assert(
-      testCases.every(
-        (tc) => tc.expectedOutputs.length == testCases[0].expectedOutputs.length
-      ),
-      "Not all test cases have same number of outputs"
+  AddInputOutputNodes() {
+    range(nInputs(this.level)).forEach((idx) =>
+      this.posFlow.AddNode(MakeInputNode(idx, this.testValuesContext))
     );
 
-    this.initializeInputOutputNodes(level);
-  }
-
-  private getNodeIndexForNodeId(nodeId: string): number {
-    const nodeIndex = this.allNodes.findIndex((n) => n.getNodeId() === nodeId);
-    return nodeIndex;
-  }
-
-  private getNodeIndexForNode(node: NodeSingular): number {
-    return this.getNodeIndexForNodeId(node.id());
-  }
-
-  getNodeForId(nodeId: string): CompNode {
-    const idx = this.getNodeIndexForNodeId(nodeId);
-    Assert(idx >= 0, `Couldn't find node ${nodeId}`);
-    return this.allNodes[idx];
-  }
-
-  tryGetCompNodeForNode(node: NodeSingular): CompNode | null {
-    const idx = this.getNodeIndexForNode(node);
-    return idx === -1 ? null : this.allNodes[idx];
-  }
-
-  removeNode(nodeId: string) {
-    const idx = this.getNodeIndexForNodeId(nodeId);
-    Assert(idx !== -1, `node ${nodeId} not found for delete`);
-
-    this.allNodes[idx].destroy();
-    this.allNodes.splice(idx, 1);
-  }
-
-  private initializeInputOutputNodes(level: Level): void {
-    const spacing = 150;
-    const startY = 100;
-
-    level.testCases[0].inputs.forEach(
-      (_inputData: Array<unknown>, index: number) => {
-        const x = 100;
-        const y = startY + index * spacing;
-        const inputNode = createInputNode(
-          this,
-          this.testValuesContext,
-          x,
-          y,
-          index
-        );
-
-        this.inputNodes.push(inputNode);
-        this.allNodes.push(inputNode);
-      }
-    );
-
-    level.testCases[0].expectedOutputs.forEach(
-      (_outputs: Array<unknown>, index: number) => {
-        const x = 700;
-        const y = startY + index * spacing;
-        const outputNode = createOutputNode(
-          this,
-          this.testValuesContext,
-          x,
-          y,
-          index
-        );
-
-        this.outputNodes.push(outputNode);
-        this.allNodes.push(outputNode);
-      }
+    range(nOutputs(this.level)).forEach((idx) =>
+      this.posFlow.AddNode(MakeOutputNode(idx, this.testValuesContext))
     );
   }
 
-  destroy(): void {
-    if (this.cy) {
-      this.cy.destroy();
-    }
+  AddNode(type: RegularComponentType): ComputeNode {
+    return this.posFlow.AddNode(GetNodeDefinition(type));
   }
 }
 

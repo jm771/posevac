@@ -1,4 +1,5 @@
 import { Condition } from "./condition";
+import { NodeDefinition } from "./node_definitions";
 import { ComputeNode } from "./nodes";
 
 type NodeId = string;
@@ -24,6 +25,7 @@ export type Connection = {
 export class PosFlo {
   nodes: ComputeNode[];
   connections: Connection[];
+  private nodeIdCounter = 0;
 
   constructor(initalNodes: ComputeNode[] = []) {
     this.nodes = initalNodes;
@@ -38,7 +40,11 @@ export class PosFlo {
     }
   }
 
-  //   AddNode(node: CompNode) {}
+  AddNode(defn: NodeDefinition): ComputeNode {
+    const ret = new ComputeNode(defn, `node-${this.nodeIdCounter++}`);
+    this.nodes.push(ret);
+    return ret;
+  }
 
   //   AddNode(node: CompNode) {}
 

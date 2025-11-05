@@ -1,4 +1,5 @@
 import { ComponentType } from "./nodes";
+import { Assert } from "./util";
 
 export type TestCase = {
   inputs: unknown[][]; // Array of arrays - each inner array represents inputs for one input node
@@ -113,10 +114,7 @@ const MAX: Level = {
       expectedOutputs: [[1]],
     },
     {
-      inputs: [
-        [2],
-        [4],
-      ],
+      inputs: [[2], [4]],
       expectedOutputs: [[4]],
     },
   ],
@@ -139,3 +137,31 @@ export function getLevelById(id: string): Level {
   }
   return ret;
 }
+
+export function nInputs(level: Level) {
+  const ret = level.testCases[0].inputs.length;
+  Assert(level.testCases.every((tc) => tc.inputs.length === ret));
+  return ret;
+}
+
+export function nOutputs(level: Level) {
+  const ret = level.testCases[0].expectedOutputs.length;
+  Assert(level.testCases.every((tc) => tc.expectedOutputs.length === ret));
+  return ret;
+}
+
+function ValidateTestCases(testCases: TestCase[]) {
+  Assert(testCases.length > 0, "No test cases");
+  Assert(
+    testCases.every((tc) => tc.inputs.length == testCases[0].inputs.length),
+    "Not all test cases have same number of inputs"
+  );
+  Assert(
+    testCases.every(
+      (tc) => tc.expectedOutputs.length == testCases[0].expectedOutputs.length
+    ),
+    "Not all test cases have same number of outputs"
+  );
+}
+
+LEVELS.forEach((level) => ValidateTestCases(level.testCases));

@@ -1,7 +1,7 @@
 import { NodeDefinitionImpl, NodeStyle } from "./node_definitions";
 import { TestValuesContext } from "./nodes";
 
-function MakeInputNode(
+export function MakeInputNode(
   index: number,
   valuesContext: TestValuesContext
 ): NodeDefinitionImpl<void, void> {
@@ -19,7 +19,7 @@ function MakeInputNode(
   };
 }
 
-function MakeOutputNode(
+export function MakeOutputNode(
   index: number,
   valuesContext: TestValuesContext
 ): NodeDefinitionImpl<void, void> {
