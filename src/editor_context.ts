@@ -1,6 +1,5 @@
-// @ts-ignore - no types available
-// import nodeHtmlLabel from "cytoscape-node-html-label";
-import { EvaluationListenerHolder, Evaluator } from "./evaluation";
+import { Evaluator } from "./evaluation";
+import { EvaluationListenerHolder } from "./evaluation_listeners";
 import { MakeInputNode, MakeOutputNode } from "./input_output_nodes";
 import { Level, nInputs, nOutputs } from "./levels";
 import { GetNodeDefinition, RegularComponentType } from "./node_definitions";
@@ -82,6 +81,5 @@ export class LevelContext implements TestValuesContext {
 
   destroy(): void {
     this.evaluator?.destroy();
-    this.editorContext.destroy();
   }
 }

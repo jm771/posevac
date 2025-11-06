@@ -1,6 +1,7 @@
 import { Condition } from "./condition";
 import { NodeDefinition } from "./node_definitions";
 import { ComputeNode } from "./nodes";
+import { Assert } from "./util";
 
 type NodeId = string;
 type TerminalIndex = number;
@@ -46,9 +47,23 @@ export class PosFlo {
     return ret;
   }
 
-  //   AddNode(node: CompNode) {}
+  private GetEdgeIndex(connection: Connection): number {
+    return this.connections.findIndex(
+      (con) => con.dest === connection.dest && con.source === connection.source
+    );
+  }
 
-  //   AddConnection(connection: Connection) {}
+  AddConnection(connection: Connection) {
+    this.connections.push(connection);
+  }
 
-  //   RemoveConnection(connection: Connection) {}
+  HasConnection(connection: Connection) {
+    return this.GetEdgeIndex(connection) !== -1;
+  }
+
+  RemoveConnection(connection: Connection) {
+    const idx = this.GetEdgeIndex(connection);
+    Assert(idx !== -1);
+    this.connections.splice(idx, 1);
+  }
 }

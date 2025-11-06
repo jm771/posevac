@@ -1,4 +1,4 @@
-import { ComponentType } from "./nodes";
+import { RegularComponentType } from "./node_definitions";
 import { Assert } from "./util";
 
 export type TestCase = {
@@ -11,7 +11,7 @@ export interface Level {
   name: string;
   description: string;
   testCases: TestCase[];
-  allowedNodes: ComponentType[];
+  allowedNodes: RegularComponentType[];
 }
 
 const ADDITION: Level = {
@@ -35,7 +35,7 @@ const ADDITION: Level = {
       expectedOutputs: [[3, 7, 11]],
     },
   ],
-  allowedNodes: ["plus"],
+  allowedNodes: [RegularComponentType.Plus],
 };
 
 const CUM_SUM: Level = {
@@ -49,7 +49,7 @@ const CUM_SUM: Level = {
       expectedOutputs: [[1, 3, 6, 10, 15]],
     },
   ],
-  allowedNodes: ["plus", "constant"],
+  allowedNodes: [RegularComponentType.Plus, RegularComponentType.Constant],
 };
 
 const MULTIPLY: Level = {
@@ -66,7 +66,12 @@ const MULTIPLY: Level = {
       expectedOutputs: [[15]],
     },
   ],
-  allowedNodes: ["split", "combine", "constant", "plus"],
+  allowedNodes: [
+    RegularComponentType.Split,
+    RegularComponentType.Combine,
+    RegularComponentType.Constant,
+    RegularComponentType.Plus,
+  ],
 };
 
 const FACTORIAL: Level = {
@@ -80,7 +85,13 @@ const FACTORIAL: Level = {
       expectedOutputs: [[24]],
     },
   ],
-  allowedNodes: ["split", "combine", "constant", "multiply", "plus"],
+  allowedNodes: [
+    RegularComponentType.Split,
+    RegularComponentType.Combine,
+    RegularComponentType.Constant,
+    RegularComponentType.Multiply,
+    RegularComponentType.Plus,
+  ],
 };
 
 const LESS_THAN_FOUR: Level = {
@@ -97,7 +108,14 @@ const LESS_THAN_FOUR: Level = {
       expectedOutputs: [[3]],
     },
   ],
-  allowedNodes: ["split", "combine", "constant", "multiply", "plus", "nop"],
+  allowedNodes: [
+    RegularComponentType.Split,
+    RegularComponentType.Combine,
+    RegularComponentType.Constant,
+    RegularComponentType.Multiply,
+    RegularComponentType.Plus,
+    RegularComponentType.Nop,
+  ],
 };
 
 const MAX: Level = {
@@ -118,7 +136,14 @@ const MAX: Level = {
       expectedOutputs: [[4]],
     },
   ],
-  allowedNodes: ["split", "combine", "constant", "multiply", "plus", "nop"],
+  allowedNodes: [
+    RegularComponentType.Split,
+    RegularComponentType.Combine,
+    RegularComponentType.Constant,
+    RegularComponentType.Multiply,
+    RegularComponentType.Plus,
+    RegularComponentType.Nop,
+  ],
 };
 
 export const LEVELS: Level[] = [

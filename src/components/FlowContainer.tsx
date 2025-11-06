@@ -1,7 +1,6 @@
-import {
+import Flow, {
   addEdge,
   Background,
-  Connection,
   Controls,
   Edge,
   Node,
@@ -18,23 +17,48 @@ import "@xyflow/react/dist/style.css";
 import React, { useCallback, useRef, useState } from "react";
 import { Condition } from "../condition";
 import { LevelContext } from "../editor_context";
-import { ComponentType, ConstantNodeData, createNodeFromName } from "../nodes";
+import { ComponentType, createNodeFromName } from "../nodes";
+import { Connection, TerminalType } from "../pos_flow";
 import { PanZoomState } from "../rendered_position";
+import { NotNull } from "../util";
 import { CompoundNode, ConstantNode, FlowNodeData } from "./FlowNodes";
+
+function ConvertConnection(connection: Flow.Connection): Connection {
+  const sourceHandleIdx = parseInt(
+    NotNull(connection.sourceHandle).replace("output-", "")
+  );
+  const targetHandleIdx = parseInt(
+    NotNull(connection.targetHandle?.replace("input-", ""))
+  );
+
+  return {
+    source: {
+      type: TerminalType.Output,
+      nodeId: NotNull(connection.source),
+      terminalIndex: sourceHandleIdx,
+    },
+    dest: {
+      type: TerminalType.Input,
+      nodeId: NotNull(connection.target),
+      terminalIndex: targetHandleIdx,
+    },
+    condition: new Condition([]),
+  };
+}
 
 const nodeTypes: NodeTypes = {
   compound: CompoundNode,
   constant: ConstantNode,
 };
 
-let edgeIdCounter = 0;
+const edgeIdCounter = 0;
 
 export function FlowContainer({
   levelContext,
   children,
   onViewportChange,
 }: {
-  levelContext: LevelContext | null;
+  levelContext: LevelContext;
   children: React.JSX.Element;
   onViewportChange?: (panZoom: PanZoomState) => void;
 }) {
@@ -46,133 +70,86 @@ export function FlowContainer({
   const reactFlowInstance = useReactFlow();
   const [updateCounter, setUpdateCounter] = useState(0);
 
+  const posFlow = levelContext.editorContext.posFlow;
+
   // Function to sync nodes and edges from backend
-  const syncFromBackend = useCallback(() => {
-    if (!levelContext) return;
+  // const syncFromBackend = useCallback(() => {
+  //   if (!levelContext) return;
 
-    const flowNodes: Node<FlowNodeData>[] = [];
+  //   const flowNodes: Node<FlowNodeData>[] = [];
 
-    levelContext.editorContext.allNodes.forEach((compNode) => {
-      const cyNode = compNode.node;
-      const pos = cyNode.position();
+  //   levelContext.editorContext.posFlow.nodes.forEach((compNode) => {
+  // const cyNode = compNode.node;
+  // const pos = cyNode.position();
+  // // Don't think this is actually true
+  // const data: ConstantNodeData = cyNode.data();
+  //data.type === "constant" ? "constant" : "compound";
+  // flowNodes.push({
+  //   id: compNode.id,
+  //   type: compNode.definition.style.style,
+  //   position: { x: pos.x, y: pos.y },
+  //   data: {
+  //     label: data.label,
+  //     style: data.style,
+  //     inputCount: compNode.inputTerminals.length,
+  //     outputCount: compNode.outputTerminals.length,
+  //     constantValue: data.constantValue,
+  //     constantRepeat: data.constantRepeat,
+  //   },
+  // });
+  //   });
 
-      // Don't think this is actually true
-      const data: ConstantNodeData = cyNode.data();
+  //   setNodes(flowNodes);
 
-      const nodeType = data.type === "constant" ? "constant" : "compound";
+  //   // Sync edges
+  //   const cy = levelContext.editorContext.cy;
+  //   const flowEdges: Edge[] = cy.edges().map((edge) => ({
+  //     id: edge.id(),
+  //     source: edge.source().id(),
+  //     target: edge.target().id(),
+  //     type: "straight",
+  //     sourceHandle: findHandleId(edge.source().id(), "output"),
+  //     targetHandle: findHandleId(edge.target().id(), "input"),
+  //     data: { condition: edge.data("condition") },
+  //   }));
 
-      flowNodes.push({
-        id: cyNode.id(),
-        type: nodeType,
-        position: { x: pos.x, y: pos.y },
-        data: {
-          label: data.label,
-          style: data.style,
-          inputCount: compNode.inputTerminals.length,
-          outputCount: compNode.outputTerminals.length,
-          constantValue: data.constantValue,
-          constantRepeat: data.constantRepeat,
-        },
-      });
-    });
-
-    setNodes(flowNodes);
-
-    // Sync edges
-    const cy = levelContext.editorContext.cy;
-    const flowEdges: Edge[] = cy.edges().map((edge) => ({
-      id: edge.id(),
-      source: edge.source().id(),
-      target: edge.target().id(),
-      type: "straight",
-      sourceHandle: findHandleId(edge.source().id(), "output"),
-      targetHandle: findHandleId(edge.target().id(), "input"),
-      data: { condition: edge.data("condition") },
-    }));
-
-    setEdges(flowEdges);
-  }, [levelContext, setNodes, setEdges]);
+  //   setEdges(flowEdges);
+  // }, [levelContext, setNodes, setEdges]);
 
   // Sync nodes from backend to React Flow
-  React.useEffect(() => {
-    syncFromBackend();
-  }, [levelContext, updateCounter, syncFromBackend]);
+  // React.useEffect(() => {
+  //   syncFromBackend();
+  // }, [levelContext, updateCounter, syncFromBackend]);
 
-  function findHandleId(terminalId: string, type: "input" | "output"): string {
-    if (!levelContext) return `${type}-0`;
+  // function findHandleId(terminalId: string, type: "input" | "output"): string {
+  //   if (!levelContext) return `${type}-0`;
 
-    // Terminal IDs are like "node-0-output0" or "node-0-input0"
-    // Extract the index from the terminal ID
-    const match = terminalId.match(new RegExp(`${type}(\\d+)$`));
-    if (match) {
-      return `${type}-${match[1]}`;
-    }
-    return `${type}-0`;
-  }
+  //   // Terminal IDs are like "node-0-output0" or "node-0-input0"
+  //   // Extract the index from the terminal ID
+  //   const match = terminalId.match(new RegExp(`${type}(\\d+)$`));
+  //   if (match) {
+  //     return `${type}-${match[1]}`;
+  //   }
+  //   return `${type}-0`;
+  // }
 
   // Handle new connections between nodes
   const onConnect: OnConnect = useCallback(
-    (connection: Connection) => {
-      if (!levelContext || !connection.source || !connection.target) return;
+    (flowCon: Flow.Connection) => {
+      if (!flowCon.source || !flowCon.target) return;
 
-      const cy = levelContext.editorContext.cy;
+      const connection = ConvertConnection(flowCon);
 
-      // Extract handle indices from the connection
-      const sourceHandleIdx =
-        connection.sourceHandle?.replace("output-", "") || "0";
-      const targetHandleIdx =
-        connection.targetHandle?.replace("input-", "") || "0";
-
-      // Find the actual terminal IDs in the Cytoscape graph
-      const sourceTerminalId = `${connection.source}-output${sourceHandleIdx}`;
-      const targetTerminalId = `${connection.target}-input${targetHandleIdx}`;
-
-      // Check if edge already exists
-      const existingEdge = cy.edges(
-        `[source="${sourceTerminalId}"][target="${targetTerminalId}"]`
-      );
-
-      if (existingEdge.length > 0) {
-        // Delete existing edge
-        existingEdge.remove();
-        setEdges((eds) =>
-          eds.filter(
-            (e) =>
-              !(
-                e.source === connection.source &&
-                e.target === connection.target &&
-                e.sourceHandle === connection.sourceHandle &&
-                e.targetHandle === connection.targetHandle
-              )
-          )
-        );
+      if (posFlow.HasConnection(connection)) {
+        posFlow.RemoveConnection(connection);
+        // TODO
+        setEdges((eds) => removeEdge({}, eds));
       } else {
-        // Create new edge in Cytoscape
-        const newEdge = cy.add({
-          group: "edges",
-          data: {
-            id: `edge-${edgeIdCounter++}`,
-            source: sourceTerminalId,
-            target: targetTerminalId,
-            condition: new Condition([]),
-          },
-        });
-
-        // Add to React Flow
-        setEdges((eds) =>
-          addEdge(
-            {
-              ...connection,
-              type: "straight",
-              id: newEdge.id(),
-              data: { condition: new Condition([]) },
-            },
-            eds
-          )
-        );
+        posFlow.AddConnection(connection);
+        setEdges((eds) => addEdge({}, eds));
       }
     },
-    [levelContext, setEdges]
+    [posFlow, levelContext, setEdges]
   );
 
   // Update node positions in the backend when dragged
@@ -271,7 +248,7 @@ export function FlowContainer({
 }
 
 export function FlowContainerWrapper(props: {
-  levelContext: LevelContext | null;
+  levelContext: LevelContext;
   children: React.JSX.Element;
   onViewportChange?: (panZoom: PanZoomState) => void;
 }) {
