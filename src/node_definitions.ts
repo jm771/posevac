@@ -17,7 +17,9 @@ export type ConstantNodeSettings = {
 
 export type StyleData =
   | { style: NodeStyle.Compound; label: string }
-  | { style: NodeStyle };
+  | { style: NodeStyle.Input }
+  | { style: NodeStyle.Output }
+  | { style: NodeStyle.Constant };
 
 export enum RegularComponentType {
   Plus = "plus",

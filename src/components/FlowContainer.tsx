@@ -14,14 +14,19 @@ import Flow, {
   Viewport,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useRef } from "react";
 import { Condition } from "../condition";
 import { LevelContext } from "../editor_context";
-import { ComponentType, createNodeFromName } from "../nodes";
+import { RegularComponentType } from "../node_definitions";
 import { Connection, TerminalType } from "../pos_flow";
 import { PanZoomState } from "../rendered_position";
 import { NotNull } from "../util";
-import { CompoundNode, ConstantNode, FlowNodeData } from "./FlowNodes";
+import {
+  CompoundNode,
+  ConstantNode,
+  FlowNodeData,
+  getFlowNodeDataFromDefintion,
+} from "./FlowNodes";
 
 function ConvertConnection(connection: Flow.Connection): Connection {
   const sourceHandleIdx = parseInt(
@@ -51,7 +56,14 @@ const nodeTypes: NodeTypes = {
   constant: ConstantNode,
 };
 
-const edgeIdCounter = 0;
+function edgeMatches(e1: Flow.Edge, e2: Flow.Connection): boolean {
+  return (
+    e1.source === e2.source &&
+    e1.sourceHandle === e2.sourceHandle &&
+    e1.target === e2.target &&
+    e1.targetHandle === e2.targetHandle
+  );
+}
 
 export function FlowContainer({
   levelContext,
@@ -68,7 +80,7 @@ export function FlowContainer({
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useReactFlow();
-  const [updateCounter, setUpdateCounter] = useState(0);
+  // const [updateCounter, setUpdateCounter] = useState(0);
 
   const posFlow = levelContext.editorContext.posFlow;
 
@@ -142,31 +154,33 @@ export function FlowContainer({
 
       if (posFlow.HasConnection(connection)) {
         posFlow.RemoveConnection(connection);
-        // TODO
-        setEdges((eds) => removeEdge({}, eds));
+        setEdges((eds) => eds.filter((e) => !edgeMatches(e, flowCon)));
       } else {
         posFlow.AddConnection(connection);
-        setEdges((eds) => addEdge({}, eds));
+        setEdges((eds) => addEdge(flowCon, eds));
       }
     },
-    [posFlow, levelContext, setEdges]
+    [posFlow, setEdges]
   );
 
   // Update node positions in the backend when dragged
-  const onNodeDragStop = useCallback(
-    (_event: React.MouseEvent, node: Node) => {
-      if (!levelContext) return;
+  // const onNodeDragStop = useCallback(
+  //   (_event: React.MouseEvent, node: Node) => {
+  //     const compNode = levelContext.editorContext.allNodes.find(
+  //       (n) => n.getNodeId() === node.id
+  //     );
 
-      const compNode = levelContext.editorContext.allNodes.find(
-        (n) => n.getNodeId() === node.id
-      );
+  //     if (compNode) {
+  //       compNode.node.position({ x: node.position.x, y: node.position.y });
+  //     }
+  //   },
+  //   [levelContext]
+  // );
 
-      if (compNode) {
-        compNode.node.position({ x: node.position.x, y: node.position.y });
-      }
-    },
-    [levelContext]
-  );
+  // const onNodesChange = useCallback(
+  //   (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
+  //   []
+  // );
 
   // Handle viewport changes
   const handleViewportChange = useCallback(
@@ -190,12 +204,11 @@ export function FlowContainer({
     (e: React.DragEvent) => {
       e.preventDefault();
 
-      if (!levelContext || !reactFlowWrapper.current) return;
+      if (!reactFlowWrapper.current) return;
 
       const componentType = e.dataTransfer.getData(
         "component-type"
-      ) as ComponentType;
-      if (!componentType) return;
+      ) as RegularComponentType;
 
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
       const position = reactFlowInstance.screenToFlowPosition({
@@ -203,20 +216,19 @@ export function FlowContainer({
         y: e.clientY - reactFlowBounds.top,
       });
 
-      // Create node in the backend
-      const newNode = createNodeFromName(
-        levelContext.editorContext,
-        componentType,
-        position.x,
-        position.y
-      );
+      const compNode = levelContext.editorContext.AddNode(componentType);
 
-      levelContext.editorContext.allNodes.push(newNode);
-
-      // Trigger a re-sync
-      setUpdateCounter((c) => c + 1);
+      setNodes((nds) => [
+        ...nds,
+        {
+          id: compNode.id,
+          type: compNode.definition.style.style,
+          position: position,
+          data: getFlowNodeDataFromDefintion(compNode.definition),
+        },
+      ]);
     },
-    [levelContext, reactFlowInstance, setUpdateCounter]
+    [levelContext, reactFlowInstance, setNodes]
   );
 
   return (
@@ -232,7 +244,7 @@ export function FlowContainer({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onNodeDragStop={onNodeDragStop}
+        // onNodeDragStop={onNodeDragStop}
         onMove={(_event, viewport) => handleViewportChange(viewport)}
         nodeTypes={nodeTypes}
         fitView

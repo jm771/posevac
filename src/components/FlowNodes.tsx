@@ -1,6 +1,6 @@
 import { Handle, Position } from "@xyflow/react";
 import React from "react";
-import { NodeStyle } from "../nodes";
+import { NodeDefinition, NodeStyle } from "../node_definitions";
 
 export type FlowNodeData = {
   label: string;
@@ -10,6 +10,34 @@ export type FlowNodeData = {
   constantValue?: unknown;
   constantRepeat?: boolean;
 };
+
+export function getFlowNodeDataFromDefintion(
+  defn: NodeDefinition
+): FlowNodeData {
+  let label = "N/A";
+
+  switch (defn.style.style) {
+    case NodeStyle.Compound:
+      ({ label } = defn.style);
+      break;
+    case NodeStyle.Input:
+      label = "input";
+      break;
+    case NodeStyle.Output:
+      label = "output";
+      break;
+  }
+
+  return {
+    label: label,
+    // Unsure if used
+    style: defn.style.style,
+    inputCount: defn.nInputs,
+    outputCount: defn.nOutputs,
+    constantValue: undefined,
+    constantRepeat: undefined,
+  };
+}
 
 const topTerminalOffset = 10;
 const terminalOffset = 30;
