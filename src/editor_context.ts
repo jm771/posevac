@@ -1,27 +1,70 @@
+import Flow, { addEdge, Node, XYPosition } from "@xyflow/react";
+import { Dispatch, SetStateAction } from "react";
+import {
+  FlowNodeData,
+  getFlowNodeDataFromDefintion,
+} from "./components/FlowNodes";
+import { Condition } from "./condition";
 import { Evaluator } from "./evaluation";
 import { EvaluationListenerHolder } from "./evaluation_listeners";
 import { MakeInputNode, MakeOutputNode } from "./input_output_nodes";
 import { Level, nInputs, nOutputs } from "./levels";
 import { GetNodeDefinition, RegularComponentType } from "./node_definitions";
-import {
-  ComputeNode,
-  InputProvider,
-  OutputChecker,
-  TestValuesContext,
-} from "./nodes";
-import { PosFlo } from "./pos_flow";
+import { InputProvider, OutputChecker, TestValuesContext } from "./nodes";
+import { Connection, PosFlo, TerminalType } from "./pos_flow";
 import { Tester, TesterListenerHolder } from "./tester";
 import { NotNull, range } from "./util";
+
+export function convertConnection(connection: Flow.Connection): Connection {
+  const sourceHandleIdx = parseInt(
+    NotNull(connection.sourceHandle).replace("output-", "")
+  );
+  const targetHandleIdx = parseInt(
+    NotNull(connection.targetHandle?.replace("input-", ""))
+  );
+
+  return {
+    source: {
+      type: TerminalType.Output,
+      nodeId: NotNull(connection.source),
+      terminalIndex: sourceHandleIdx,
+    },
+    dest: {
+      type: TerminalType.Input,
+      nodeId: NotNull(connection.target),
+      terminalIndex: targetHandleIdx,
+    },
+    condition: new Condition([]),
+  };
+}
+
+function edgeMatches(e1: Flow.Edge, e2: Flow.Connection): boolean {
+  return (
+    e1.source === e2.source &&
+    e1.sourceHandle === e2.sourceHandle &&
+    e1.target === e2.target &&
+    e1.targetHandle === e2.targetHandle
+  );
+}
 
 export class GraphEditorContext {
   public level: Level;
   posFlow: PosFlo;
   testValuesContext: TestValuesContext;
+  setNodes: Dispatch<SetStateAction<Node<FlowNodeData>[]>>;
+  setEdges: Dispatch<SetStateAction<Flow.Edge[]>>;
 
-  constructor(level: Level, testValuesContext: TestValuesContext) {
+  constructor(
+    level: Level,
+    testValuesContext: TestValuesContext,
+    setNodes: Dispatch<SetStateAction<Node<FlowNodeData>[]>>,
+    setEdges: Dispatch<SetStateAction<Flow.Edge[]>>
+  ) {
     this.level = level;
     this.testValuesContext = testValuesContext;
     this.posFlow = new PosFlo();
+    this.setNodes = setNodes;
+    this.setEdges = setEdges;
   }
 
   AddInputOutputNodes() {
@@ -34,9 +77,33 @@ export class GraphEditorContext {
     );
   }
 
-  AddNode(type: RegularComponentType): ComputeNode {
-    return this.posFlow.AddNode(GetNodeDefinition(type));
+  AddConnection(flowCon: Flow.Connection) {
+    const connection = convertConnection(flowCon);
+    this.posFlow.AddConnection(connection);
+    this.setEdges((eds) => addEdge(flowCon, eds));
   }
+
+  RemoveConnection(flowCon: Flow.Connection) {
+    const connection = convertConnection(flowCon);
+    this.posFlow.RemoveConnection(connection);
+    this.setEdges((eds) => eds.filter((e) => !edgeMatches(e, flowCon)));
+  }
+
+  AddNode(componentType: RegularComponentType, position: XYPosition) {
+    const compNode = this.posFlow.AddNode(GetNodeDefinition(componentType));
+
+    this.setNodes((nds) => [
+      ...nds,
+      {
+        id: compNode.id,
+        type: compNode.definition.style.style,
+        position: position,
+        data: getFlowNodeDataFromDefintion(compNode.definition),
+      },
+    ]);
+  }
+
+  RemoveNode() {}
 }
 
 export class LevelContext implements TestValuesContext {
@@ -45,8 +112,17 @@ export class LevelContext implements TestValuesContext {
   testerListenerHolder: TesterListenerHolder;
   tester: Tester | null;
   evaluator: Evaluator | null;
-  constructor(level: Level) {
-    this.editorContext = new GraphEditorContext(level, this);
+  constructor(
+    level: Level,
+    setNodes: Dispatch<SetStateAction<Node<FlowNodeData>[]>>,
+    setEdges: Dispatch<SetStateAction<Flow.Edge[]>>
+  ) {
+    this.editorContext = new GraphEditorContext(
+      level,
+      this,
+      setNodes,
+      setEdges
+    );
     this.evaluationListenerHolder = new EvaluationListenerHolder();
     this.evaluator = null;
     this.testerListenerHolder = new TesterListenerHolder();

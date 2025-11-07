@@ -1,30 +1,23 @@
-import React, { useEffect, useRef } from "react";
-import { LevelContext, NodeBuildContext } from "../editor_context";
-import {
-  COMPONENT_REGISTRY,
-  ComponentType,
-  createNodeFromName,
-} from "../nodes";
 import cytoscape from "cytoscape";
+import React, { useEffect, useRef } from "react";
+import { LevelContext } from "../editor_context";
+import { RegularComponentType } from "../node_definitions";
 import { getCytoscapeStyles } from "../styles";
 import { Assert } from "../util";
 
 export function ComponentBar({ levelContext }: { levelContext: LevelContext }) {
   return (
     <div className="components-list">
-      {Array.from(COMPONENT_REGISTRY.keys())
-        .filter((type) =>
-          levelContext.editorContext.level.allowedNodes.includes(type)
-        )
-        .map((type) => (
-          <SidebarElement key={type} type={type} />
-        ))}
+      {levelContext.editorContext.level.allowedNodes.map((type) => (
+        <SidebarElement key={type} type={type} />
+      ))}
     </div>
   );
 }
-export function SidebarElement({ type }: { type: ComponentType }) {
+export function SidebarElement({ type }: { type: RegularComponentType }) {
   const divRef = useRef<HTMLDivElement>(null);
 
+  // TODO - should remove this cytoscape too
   useEffect(() => {
     Assert(divRef.current !== null);
     const previewCy = cytoscape({
@@ -36,9 +29,9 @@ export function SidebarElement({ type }: { type: ComponentType }) {
       autoungrabify: true,
     });
 
-    const context: NodeBuildContext = { cy: previewCy, nodeIdCounter: 0 };
+    // const context: NodeBuildContext = { cy: previewCy, nodeIdCounter: 0 };
 
-    createNodeFromName(context, type, 0, 0);
+    // createNodeFromName(context, type, 0, 0);
 
     previewCy.fit(undefined, 10);
   }, [divRef, type]);

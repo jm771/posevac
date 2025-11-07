@@ -3,12 +3,7 @@ import { NodeSingular } from "cytoscape";
 import { Condition } from "./condition";
 import { EdgeData } from "./edges";
 import { GraphEditorContext } from "./editor_context";
-import {
-  CompNode,
-  ComponentType,
-  createConstantNode,
-  createNodeFromName,
-} from "./nodes";
+
 import { Assert, NotNull } from "./util";
 
 const SERIALIZATION_VERSION = "1.0.1";

@@ -1,7 +1,6 @@
 import { EventObject } from "cytoscape";
 import React, { useEffect, useRef, useState } from "react";
 import { LevelContext } from "../editor_context";
-import { CompNode } from "../nodes";
 import { getRenderedPositionOfNode } from "../rendered_position";
 import { ComponentBar } from "./ComponentBar";
 import { DeleteArea } from "./DeleteArea";

@@ -6,7 +6,7 @@ import {
   EvaluationEventSource,
   EvaluationListener,
   NodeEvaluateEvent,
-} from "../evaluation";
+} from "../evaluation_listeners";
 import { ProgramCounter } from "../program_counter";
 import { mapIterable } from "../util";
 import { ProgramCounterComponent } from "./ProgramCounterComponent";
@@ -64,7 +64,9 @@ export function ProgramCounterOverlay({
       {mapIterable(programCounters.values(), (pc: ProgramCounter) => (
         <ProgramCounterComponent
           key={pc.id}
-          position={pc.currentLocation.position()}
+          // TODO fix
+          position={{ x: 0, y: 0 }}
+          // position={pc.currentLocation.position()}
           text={JSON.stringify(pc.contents)}
           angle={0}
         />

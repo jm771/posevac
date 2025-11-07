@@ -9,6 +9,7 @@ export function MakeInputNode(
     style: { style: NodeStyle.Constant },
     nInputs: 0,
     nOutputs: 1,
+    deletable: false,
     makeState: () => {
       return { index: 0 };
     },
@@ -27,6 +28,7 @@ export function MakeOutputNode(
     style: { style: NodeStyle.Constant },
     nInputs: 1,
     nOutputs: 0,
+    deletable: false,
     makeState: () => {
       return { index: 0 };
     },

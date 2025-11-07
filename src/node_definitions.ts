@@ -41,6 +41,7 @@ export type NodeDefinitionImpl<TState, TSettings> = {
   style: StyleData;
   nInputs: number;
   nOutputs: number;
+  deletable: boolean;
 
   makeState(): TState;
   evaluate(
@@ -60,6 +61,7 @@ function MakeStandardNodeDefinition(
     style: { style: NodeStyle.Compound, label: label },
     nInputs: nInputs,
     nOutputs: nOutputs,
+    deletable: true,
     makeState: () => {},
     evaluate: (_state: unknown, _settings: unknown, args: unknown[]) =>
       func(args),
@@ -77,6 +79,7 @@ const ConstantNodeDefinition: NodeDefinitionImpl<
   style: { style: NodeStyle.Constant },
   nInputs: 0,
   nOutputs: 1,
+  deletable: true,
   makeState: () => {
     return { hasEvaluated: false };
   },

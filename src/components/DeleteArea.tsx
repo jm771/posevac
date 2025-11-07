@@ -1,17 +1,17 @@
 import React from "react";
-import { CompNode } from "../nodes";
+import { ComputeNode } from "../nodes";
 
 export function DeleteArea({
   draggedNode,
   nodeIsOverBar,
 }: {
-  draggedNode: CompNode | null;
+  draggedNode: ComputeNode | null;
   nodeIsOverBar: boolean;
 }) {
   return (
     <div
       className={`delete-zone ${
-        draggedNode?.deletable && nodeIsOverBar ? "active" : ""
+        draggedNode?.definition?.deletable && nodeIsOverBar ? "active" : ""
       }`}
       id="deleteZone"
     >
