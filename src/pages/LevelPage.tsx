@@ -9,6 +9,7 @@ import { TestCasePanel } from "../components/TestCasePanel";
 import { LevelContext } from "../editor_context";
 import { getLevelById } from "../levels";
 import { PanZoomContext, PanZoomState } from "../rendered_position";
+import { PosFloProvider } from "../components/GraphProvider";
 
 export function LevelPage() {
   const { levelId } = useParams<{ levelId: string }>();
@@ -29,6 +30,7 @@ export function LevelPage() {
 
   return (
     <PanZoomContext value={panZoom}>
+      <PosFloProvider>
       <div className="container">
         <LevelSidebar levelContext={levelContext} />
         <div className="level-page-main">
@@ -53,6 +55,7 @@ export function LevelPage() {
         </aside>
         <TestCasePanel levelContext={levelContext} />
       </div>
+      </PosFloProvider>
     </PanZoomContext>
   );
 }

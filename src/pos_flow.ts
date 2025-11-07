@@ -26,11 +26,13 @@ export type Connection = {
 export class PosFlo {
   nodes: ComputeNode[];
   connections: Connection[];
+  onUpdate: Function;
   private nodeIdCounter = 0;
 
   constructor(initalNodes: ComputeNode[] = []) {
     this.nodes = initalNodes;
     this.connections = [];
+    this.onUpdate = () => {}
   }
 
   GetConnectionsForTerminal(terminal: TerminalId): Connection[] {
