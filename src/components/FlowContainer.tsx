@@ -2,23 +2,20 @@ import Flow, {
   addEdge,
   Background,
   Controls,
-  Edge,
-  Node,
   NodeTypes,
   OnConnect,
   ReactFlow,
   ReactFlowProvider,
-  useEdgesState,
-  useNodesState,
   useReactFlow,
   Viewport,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useContext, useRef } from "react";
+import { FlowPropsContext } from "../contexts/flow_props_context";
 import { convertConnection, LevelContext } from "../editor_context";
 import { RegularComponentType } from "../node_definitions";
 import { PanZoomState } from "../rendered_position";
-import { CompoundNode, ConstantNode, FlowNodeData } from "./FlowNodes";
+import { CompoundNode, ConstantNode } from "./FlowNodes";
 
 const nodeTypes: NodeTypes = {
   compound: CompoundNode,
@@ -34,10 +31,7 @@ export function FlowContainer({
   children: React.JSX.Element;
   onViewportChange?: (panZoom: PanZoomState) => void;
 }) {
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node<FlowNodeData>>(
-    []
-  );
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const flowProps = useContext(FlowPropsContext);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useReactFlow();
 
@@ -105,12 +99,8 @@ export function FlowContainer({
       onDrop={onDrop}
     >
       <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
+        {...flowProps}
         onConnect={onConnect}
-        // onNodeDragStop={onNodeDragStop}
         onMove={(_event, viewport) => handleViewportChange(viewport)}
         nodeTypes={nodeTypes}
         fitView

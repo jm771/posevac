@@ -1,19 +1,14 @@
-import Flow, { addEdge, Node, XYPosition } from "@xyflow/react";
+import Flow, { Node } from "@xyflow/react";
 import { Dispatch, SetStateAction } from "react";
-import {
-  FlowNodeData,
-  getFlowNodeDataFromDefintion,
-} from "./components/FlowNodes";
+import { FlowNodeData } from "./components/FlowNodes";
 import { Condition } from "./condition";
 import { Evaluator } from "./evaluation";
 import { EvaluationListenerHolder } from "./evaluation_listeners";
-import { MakeInputNode, MakeOutputNode } from "./input_output_nodes";
-import { Level, nInputs, nOutputs } from "./levels";
-import { GetNodeDefinition, RegularComponentType } from "./node_definitions";
+import { Level } from "./levels";
 import { InputProvider, OutputChecker, TestValuesContext } from "./nodes";
-import { Connection, PosFlo, TerminalType } from "./pos_flow";
+import { Connection, TerminalType } from "./pos_flow";
 import { Tester, TesterListenerHolder } from "./tester";
-import { NotNull, range } from "./util";
+import { NotNull } from "./util";
 
 export function convertConnection(connection: Flow.Connection): Connection {
   const sourceHandleIdx = parseInt(
@@ -47,64 +42,64 @@ function edgeMatches(e1: Flow.Edge, e2: Flow.Connection): boolean {
   );
 }
 
-export class GraphEditorContext {
-  public level: Level;
-  posFlow: PosFlo;
-  testValuesContext: TestValuesContext;
-  setNodes: Dispatch<SetStateAction<Node<FlowNodeData>[]>>;
-  setEdges: Dispatch<SetStateAction<Flow.Edge[]>>;
+// export class GraphEditorContext {
+//   public level: Level;
+//   posFlow: PosFlo;
+//   testValuesContext: TestValuesContext;
+//   setNodes: Dispatch<SetStateAction<Node<FlowNodeData>[]>>;
+//   setEdges: Dispatch<SetStateAction<Flow.Edge[]>>;
 
-  constructor(
-    level: Level,
-    testValuesContext: TestValuesContext,
-    setNodes: Dispatch<SetStateAction<Node<FlowNodeData>[]>>,
-    setEdges: Dispatch<SetStateAction<Flow.Edge[]>>
-  ) {
-    this.level = level;
-    this.testValuesContext = testValuesContext;
-    this.posFlow = new PosFlo();
-    this.setNodes = setNodes;
-    this.setEdges = setEdges;
-  }
+//   constructor(
+//     level: Level,
+//     testValuesContext: TestValuesContext,
+//     setNodes: Dispatch<SetStateAction<Node<FlowNodeData>[]>>,
+//     setEdges: Dispatch<SetStateAction<Flow.Edge[]>>
+//   ) {
+//     this.level = level;
+//     this.testValuesContext = testValuesContext;
+//     this.posFlow = new PosFlo();
+//     this.setNodes = setNodes;
+//     this.setEdges = setEdges;
+//   }
 
-  AddInputOutputNodes() {
-    range(nInputs(this.level)).forEach((idx) =>
-      this.posFlow.AddNode(MakeInputNode(idx, this.testValuesContext))
-    );
+//   AddInputOutputNodes() {
+//     range(nInputs(this.level)).forEach((idx) =>
+//       this.posFlow.AddNode(MakeInputNode(idx, this.testValuesContext))
+//     );
 
-    range(nOutputs(this.level)).forEach((idx) =>
-      this.posFlow.AddNode(MakeOutputNode(idx, this.testValuesContext))
-    );
-  }
+//     range(nOutputs(this.level)).forEach((idx) =>
+//       this.posFlow.AddNode(MakeOutputNode(idx, this.testValuesContext))
+//     );
+//   }
 
-  AddConnection(flowCon: Flow.Connection) {
-    const connection = convertConnection(flowCon);
-    this.posFlow.AddConnection(connection);
-    this.setEdges((eds) => addEdge(flowCon, eds));
-  }
+//   AddConnection(flowCon: Flow.Connection) {
+//     const connection = convertConnection(flowCon);
+//     this.posFlow.AddConnection(connection);
+//     this.setEdges((eds) => addEdge(flowCon, eds));
+//   }
 
-  RemoveConnection(flowCon: Flow.Connection) {
-    const connection = convertConnection(flowCon);
-    this.posFlow.RemoveConnection(connection);
-    this.setEdges((eds) => eds.filter((e) => !edgeMatches(e, flowCon)));
-  }
+//   RemoveConnection(flowCon: Flow.Connection) {
+//     const connection = convertConnection(flowCon);
+//     this.posFlow.RemoveConnection(connection);
+//     this.setEdges((eds) => eds.filter((e) => !edgeMatches(e, flowCon)));
+//   }
 
-  AddNode(componentType: RegularComponentType, position: XYPosition) {
-    const compNode = this.posFlow.AddNode(GetNodeDefinition(componentType));
+//   AddNode(componentType: RegularComponentType, position: XYPosition) {
+//     const compNode = this.posFlow.AddNode(GetNodeDefinition(componentType));
 
-    this.setNodes((nds) => [
-      ...nds,
-      {
-        id: compNode.id,
-        type: compNode.definition.style.style,
-        position: position,
-        data: getFlowNodeDataFromDefintion(compNode.definition),
-      },
-    ]);
-  }
+//     this.setNodes((nds) => [
+//       ...nds,
+//       {
+//         id: compNode.id,
+//         type: compNode.definition.style.style,
+//         position: position,
+//         data: getFlowNodeDataFromDefintion(compNode.definition),
+//       },
+//     ]);
+//   }
 
-  RemoveNode() {}
-}
+//   RemoveNode() {}
+// }
 
 export class LevelContext implements TestValuesContext {
   editorContext: GraphEditorContext;

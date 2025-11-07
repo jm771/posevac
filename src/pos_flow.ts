@@ -1,7 +1,7 @@
+import { Edge, Node } from "@xyflow/react";
 import { Condition } from "./condition";
 import { NodeDefinition } from "./node_definitions";
-import { ComputeNode } from "./nodes";
-import { Assert } from "./util";
+import { NotNull } from "./util";
 
 type NodeId = string;
 type TerminalIndex = number;
@@ -24,48 +24,23 @@ export type Connection = {
 };
 
 export class PosFlo {
-  nodes: ComputeNode[];
-  connections: Connection[];
-  onUpdate: Function;
-  private nodeIdCounter = 0;
+  nodes: Node<NodeDefinition>[];
+  connections: Edge<Connection>[];
 
-  constructor(initalNodes: ComputeNode[] = []) {
-    this.nodes = initalNodes;
-    this.connections = [];
-    this.onUpdate = () => {}
+  constructor(nodes: Node<NodeDefinition>[], connections: Edge<Connection>[]) {
+    this.nodes = nodes;
+    this.connections = connections;
   }
 
   GetConnectionsForTerminal(terminal: TerminalId): Connection[] {
     if (terminal.type === TerminalType.Input) {
-      return this.connections.filter((c) => c.source == terminal);
+      return this.connections
+        .filter((c) => NotNull(c.data).source == terminal)
+        .map((conn) => NotNull(conn.data));
     } else {
-      return this.connections.filter((c) => c.dest == terminal);
+      return this.connections
+        .filter((c) => NotNull(c.data).dest == terminal)
+        .map((conn) => NotNull(conn.data));
     }
-  }
-
-  AddNode(defn: NodeDefinition): ComputeNode {
-    const ret = new ComputeNode(defn, `node-${this.nodeIdCounter++}`);
-    this.nodes.push(ret);
-    return ret;
-  }
-
-  private GetEdgeIndex(connection: Connection): number {
-    return this.connections.findIndex(
-      (con) => con.dest === connection.dest && con.source === connection.source
-    );
-  }
-
-  AddConnection(connection: Connection) {
-    this.connections.push(connection);
-  }
-
-  HasConnection(connection: Connection) {
-    return this.GetEdgeIndex(connection) !== -1;
-  }
-
-  RemoveConnection(connection: Connection) {
-    const idx = this.GetEdgeIndex(connection);
-    Assert(idx !== -1);
-    this.connections.splice(idx, 1);
   }
 }
