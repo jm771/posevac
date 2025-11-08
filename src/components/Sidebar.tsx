@@ -1,21 +1,28 @@
+import { Node } from "@xyflow/react";
 import { EventObject } from "cytoscape";
-import React, { useEffect, useRef, useState } from "react";
-import { LevelContext } from "../editor_context";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { GraphEditorContext } from "../contexts/graph_editor_context";
+import { Level } from "../levels";
+import { NodeDefinition } from "../node_definitions";
 import { getRenderedPositionOfNode } from "../rendered_position";
 import { ComponentBar } from "./ComponentBar";
 import { DeleteArea } from "./DeleteArea";
 
-export function LevelSidebar({ levelContext }: { levelContext: LevelContext }) {
-  const level = levelContext.editorContext.level;
+export function LevelSidebar({ level }: { level: Level }) {
   const sideBarRef = useRef<HTMLBaseElement | null>(null);
-  const [draggedNode, setDraggedNode] = useState<CompNode | null>(null);
+  const [draggedNode, setDraggedNode] = useState<Node<NodeDefinition> | null>(
+    null
+  );
   const isNodeOverBarRef = useRef<boolean>(false);
   const [isNodeOverBar, setIsNodeOverBar] = useState<boolean>(false);
 
+  const graphEditor = useContext(GraphEditorContext);
+
+  // Need to work out how to hook this up to flow
+
   useEffect(() => {
     function dragHandler(evt: EventObject) {
-      const node: CompNode | null =
-        levelContext.editorContext.tryGetCompNodeForNode(evt.target);
+      const node: CompNode | null = evt.target;
 
       if (node === null) return;
 
@@ -28,24 +35,15 @@ export function LevelSidebar({ levelContext }: { levelContext: LevelContext }) {
     }
 
     function freeHandler(evt: EventObject) {
-      const context = levelContext.editorContext;
-      const node: CompNode | null = context.tryGetCompNodeForNode(evt.target);
+      const node: Node<NodeDefinition> = evt.target;
 
       if (node?.deletable && isNodeOverBarRef.current) {
-        context.removeNode(node.getNodeId());
+        graphEditor.RemoveNode(node);
         isNodeOverBarRef.current = false;
         setIsNodeOverBar(false);
       }
     }
-
-    levelContext.editorContext.cy.on("free", "node", freeHandler);
-    levelContext.editorContext.cy.on("drag", "node", dragHandler);
-
-    return () => {
-      levelContext.editorContext.cy.off("free", "node", freeHandler);
-      levelContext.editorContext.cy.off("drag", "node", dragHandler);
-    };
-  }, [levelContext]);
+  }, []);
 
   return (
     <aside ref={sideBarRef} className="sidebar" id="sidebar">
@@ -54,7 +52,7 @@ export function LevelSidebar({ levelContext }: { levelContext: LevelContext }) {
         <p id="levelDescription">{level.description}</p>
       </div>
       <h3>Components</h3>
-      <ComponentBar levelContext={levelContext} />
+      <ComponentBar level={level} />
       <DeleteArea draggedNode={draggedNode} nodeIsOverBar={isNodeOverBar} />
     </aside>
   );

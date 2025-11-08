@@ -1,5 +1,4 @@
 import Flow, {
-  addEdge,
   Background,
   Controls,
   NodeTypes,
@@ -12,7 +11,8 @@ import Flow, {
 import "@xyflow/react/dist/style.css";
 import React, { useCallback, useContext, useRef } from "react";
 import { FlowPropsContext } from "../contexts/flow_props_context";
-import { convertConnection, LevelContext } from "../editor_context";
+import { GraphEditorContext } from "../contexts/graph_editor_context";
+import { LevelContext } from "../editor_context";
 import { RegularComponentType } from "../node_definitions";
 import { PanZoomState } from "../rendered_position";
 import { CompoundNode, ConstantNode } from "./FlowNodes";
@@ -23,34 +23,25 @@ const nodeTypes: NodeTypes = {
 };
 
 export function FlowContainer({
-  levelContext,
+  // levelContext,
   children,
   onViewportChange,
 }: {
-  levelContext: LevelContext;
+  // levelContext: LevelContext;
   children: React.JSX.Element;
   onViewportChange?: (panZoom: PanZoomState) => void;
 }) {
   const flowProps = useContext(FlowPropsContext);
+  const graphEditor = useContext(GraphEditorContext);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useReactFlow();
 
   const onConnect: OnConnect = useCallback(
     (flowCon: Flow.Connection) => {
-      const posFlow = levelContext.editorContext.posFlow;
       if (!flowCon.source || !flowCon.target) return;
-
-      const connection = convertConnection(flowCon);
-
-      if (posFlow.HasConnection(connection)) {
-        levelContext.editorContext.RemoveConnection(flowCon);
-      } else {
-        // TODO
-        posFlow.AddConnection(connection);
-        setEdges((eds) => addEdge(flowCon, eds));
-      }
+      graphEditor.HandleConnectionAttempt(flowCon);
     },
-    [levelContext, setEdges]
+    [graphEditor]
   );
 
   // Handle viewport changes
@@ -86,9 +77,9 @@ export function FlowContainer({
         y: e.clientY - reactFlowBounds.top,
       });
 
-      levelContext.editorContext.AddNode(componentType, position);
+      graphEditor.AddNode(componentType, position);
     },
-    [levelContext, reactFlowInstance]
+    [graphEditor, reactFlowInstance]
   );
 
   return (
@@ -115,14 +106,14 @@ export function FlowContainer({
   );
 }
 
-export function FlowContainerWrapper(props: {
-  levelContext: LevelContext;
-  children: React.JSX.Element;
-  onViewportChange?: (panZoom: PanZoomState) => void;
-}) {
-  return (
-    <ReactFlowProvider>
-      <FlowContainer {...props} />
-    </ReactFlowProvider>
-  );
-}
+// export function FlowContainerWrapper(props: {
+//   levelContext: LevelContext;
+//   children: React.JSX.Element;
+//   onViewportChange?: (panZoom: PanZoomState) => void;
+// }) {
+//   return (
+//     <ReactFlowProvider>
+//       <FlowContainer {...props} />
+//     </ReactFlowProvider>
+//   );
+// }

@@ -1,14 +1,14 @@
 import cytoscape from "cytoscape";
 import React, { useEffect, useRef } from "react";
-import { LevelContext } from "../editor_context";
+import { Level } from "../levels";
 import { RegularComponentType } from "../node_definitions";
 import { getCytoscapeStyles } from "../styles";
 import { Assert } from "../util";
 
-export function ComponentBar({ levelContext }: { levelContext: LevelContext }) {
+export function ComponentBar({ level }: { level: Level }) {
   return (
     <div className="components-list">
-      {levelContext.editorContext.level.allowedNodes.map((type) => (
+      {level.allowedNodes.map((type) => (
         <SidebarElement key={type} type={type} />
       ))}
     </div>
@@ -28,10 +28,6 @@ export function SidebarElement({ type }: { type: RegularComponentType }) {
       boxSelectionEnabled: false,
       autoungrabify: true,
     });
-
-    // const context: NodeBuildContext = { cy: previewCy, nodeIdCounter: 0 };
-
-    // createNodeFromName(context, type, 0, 0);
 
     previewCy.fit(undefined, 10);
   }, [divRef, type]);

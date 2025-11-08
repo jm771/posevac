@@ -1,15 +1,14 @@
 import React, { useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { AnimationControls } from "../components/AnimationControls";
-import { FlowContainerWrapper } from "../components/FlowContainer";
+import { FlowContainer } from "../components/FlowContainer";
+import { GraphProvider } from "../components/GraphProvider";
 import { ProgramCounterOverlay } from "../components/ProgramCounterOverlay";
 import { SaveLoadControls } from "../components/SaveLoadControls";
 import { LevelSidebar } from "../components/Sidebar";
 import { TestCasePanel } from "../components/TestCasePanel";
-import { LevelContext } from "../editor_context";
 import { getLevelById } from "../levels";
 import { PanZoomContext, PanZoomState } from "../rendered_position";
-import { PosFloProvider } from "../components/GraphProvider";
 
 export function LevelPage() {
   const { levelId } = useParams<{ levelId: string }>();
@@ -17,45 +16,42 @@ export function LevelPage() {
     throw Error("missing level id");
   }
 
-  const levelContext = useMemo(
-    () => new LevelContext(getLevelById(levelId)),
-    [levelId]
-  );
+  const level = useMemo(() => getLevelById(levelId), [levelId]);
 
   const [panZoom, setPanZoom] = useState<PanZoomState>(new PanZoomState());
+  const testValuesContext = "TODO";
 
-  const handleViewportChange = (newPanZoom: PanZoomState) => {
-    setPanZoom(newPanZoom);
-  };
+  // const handleViewportChange = (newPanZoom: PanZoomState) => {
+  //   setPanZoom(newPanZoom);
+  // };
 
   return (
     <PanZoomContext value={panZoom}>
-      <PosFloProvider>
-      <div className="container">
-        <LevelSidebar levelContext={levelContext} />
-        <div className="level-page-main">
-          <div className="flow-ui-wrapper">
-            <FlowContainerWrapper
-              levelContext={levelContext}
-              onViewportChange={handleViewportChange}
-            >
-              <>
-                {/* <EdgeConditionOverlay cy={levelContext.editorContext.cy} /> */}
-                {/* <ConstantNodeOverlay cy={levelContext.editorContext.cy} /> */}
-                <ProgramCounterOverlay
-                  evaluationEventSource={levelContext.evaluationListenerHolder}
-                />
-              </>
-            </FlowContainerWrapper>
+      <GraphProvider level={level} testValuesContext={testValuesContext}>
+        <div className="container">
+          <LevelSidebar levelContext={levelContext} />
+          <div className="level-page-main">
+            <div className="flow-ui-wrapper">
+              <FlowContainer>
+                <>
+                  {/* <EdgeConditionOverlay cy={levelContext.editorContext.cy} /> */}
+                  {/* <ConstantNodeOverlay cy={levelContext.editorContext.cy} /> */}
+                  <ProgramCounterOverlay
+                    evaluationEventSource={
+                      levelContext.evaluationListenerHolder
+                    }
+                  />
+                </>
+              </FlowContainer>
+            </div>
           </div>
+          <aside className="controls-panel" id="controlsPanel">
+            <AnimationControls levelContext={levelContext} />
+            <SaveLoadControls context={levelContext} />
+          </aside>
+          <TestCasePanel levelContext={levelContext} />
         </div>
-        <aside className="controls-panel" id="controlsPanel">
-          <AnimationControls levelContext={levelContext} />
-          <SaveLoadControls context={levelContext} />
-        </aside>
-        <TestCasePanel levelContext={levelContext} />
-      </div>
-      </PosFloProvider>
+      </GraphProvider>
     </PanZoomContext>
   );
 }

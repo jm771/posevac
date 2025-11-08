@@ -1,17 +1,18 @@
+import { Node } from "@xyflow/react";
 import React from "react";
-import { ComputeNode } from "../nodes";
+import { NodeDefinition } from "../node_definitions";
 
 export function DeleteArea({
   draggedNode,
   nodeIsOverBar,
 }: {
-  draggedNode: ComputeNode | null;
+  draggedNode: Node<NodeDefinition> | null;
   nodeIsOverBar: boolean;
 }) {
   return (
     <div
       className={`delete-zone ${
-        draggedNode?.definition?.deletable && nodeIsOverBar ? "active" : ""
+        draggedNode?.data?.deletable && nodeIsOverBar ? "active" : ""
       }`}
       id="deleteZone"
     >
