@@ -6,7 +6,7 @@ export function MakeInputNode(
   valuesContext: TestValuesContext
 ): NodeDefinitionImpl<void, void> {
   return {
-    style: { style: NodeStyle.Constant },
+    style: { style: NodeStyle.Input },
     nInputs: 0,
     nOutputs: 1,
     deletable: false,
@@ -25,7 +25,7 @@ export function MakeOutputNode(
   valuesContext: TestValuesContext
 ): NodeDefinitionImpl<void, void> {
   return {
-    style: { style: NodeStyle.Constant },
+    style: { style: NodeStyle.Output },
     nInputs: 1,
     nOutputs: 0,
     deletable: false,

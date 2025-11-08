@@ -15,7 +15,7 @@ import {
 import { PosFloContext } from "../contexts/pos_flo_context";
 import { MakeInputNode, MakeOutputNode } from "../input_output_nodes";
 import { Level, nInputs, nOutputs } from "../levels";
-import { NodeDefinition } from "../node_definitions";
+import { NodeDefinition, NodeStyle } from "../node_definitions";
 import { TestValuesContext } from "../nodes";
 import { Connection, PosFlo } from "../pos_flow";
 import { range } from "../util";
@@ -48,9 +48,25 @@ function MakeNodeFromDefn(
   defn: NodeDefinition,
   position: XYPosition
 ) {
+  let label = "";
+  switch (defn.style.style) {
+    case NodeStyle.Compound:
+      label = defn.style.label;
+      break;
+    case NodeStyle.Input:
+      label = "Input";
+      break;
+    case NodeStyle.Output:
+      label = "Output";
+      break;
+    case NodeStyle.Constant:
+  }
+
   return {
     id: `node-${ref.current++}`,
-    type: defn.style.style,
+    // type: defn.style.style === NodeStyle.Constant ? "constant" : "compound",
+    // style: defn.style.style,
+    type: defn.style.style === NodeStyle.Constant ? "constant" : "compound",
     position: position,
     data: defn,
   };

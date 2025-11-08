@@ -1,43 +1,44 @@
 import { Handle, Position } from "@xyflow/react";
 import React from "react";
 import { NodeDefinition, NodeStyle } from "../node_definitions";
+// import { NodeDefinition, NodeStyle } from "../node_definitions";
 
-export type FlowNodeData = {
-  label: string;
-  style: NodeStyle;
-  inputCount: number;
-  outputCount: number;
-  constantValue?: unknown;
-  constantRepeat?: boolean;
-};
+// export type FlowNodeData = {
+//   label: string;
+//   style: NodeStyle;
+//   inputCount: number;
+//   outputCount: number;
+//   constantValue?: unknown;
+//   constantRepeat?: boolean;
+// };
 
-export function getFlowNodeDataFromDefintion(
-  defn: NodeDefinition
-): FlowNodeData {
-  let label = "N/A";
+// export function getFlowNodeDataFromDefintion(
+//   defn: NodeDefinition
+// ): FlowNodeData {
+//   let label = "N/A";
 
-  switch (defn.style.style) {
-    case NodeStyle.Compound:
-      ({ label } = defn.style);
-      break;
-    case NodeStyle.Input:
-      label = "input";
-      break;
-    case NodeStyle.Output:
-      label = "output";
-      break;
-  }
+//   switch (defn.style.style) {
+//     case NodeStyle.Compound:
+//       ({ label } = defn.style);
+//       break;
+//     case NodeStyle.Input:
+//       label = "input";
+//       break;
+//     case NodeStyle.Output:
+//       label = "output";
+//       break;
+//   }
 
-  return {
-    label: label,
-    // Unsure if used
-    style: defn.style.style,
-    inputCount: defn.nInputs,
-    outputCount: defn.nOutputs,
-    constantValue: undefined,
-    constantRepeat: undefined,
-  };
-}
+//   return {
+//     label: label,
+//     // Unsure if used
+//     style: defn.style.style,
+//     inputCount: defn.nInputs,
+//     outputCount: defn.nOutputs,
+//     constantValue: undefined,
+//     constantRepeat: undefined,
+//   };
+// }
 
 const topTerminalOffset = 10;
 const terminalOffset = 30;
@@ -89,22 +90,36 @@ function OutputTerminals({ count }: { count: number }) {
   );
 }
 
-export function CompoundNode({ data }: { data: FlowNodeData }) {
-  const nodesToFit = Math.max(data.inputCount, data.outputCount);
+export function CompoundNode({ data }: { data: NodeDefinition }) {
+  const nodesToFit = Math.max(data.nInputs, data.nOutputs);
   const heightTotalOffset = topTerminalOffset * 2 + 24; //12px in css
   const height = (nodesToFit - 1) * terminalOffset + heightTotalOffset;
 
+  let label = "";
+  switch (data.style.style) {
+    case NodeStyle.Compound:
+      label = data.style.label;
+      break;
+    case NodeStyle.Input:
+      label = "Input";
+      break;
+    case NodeStyle.Output:
+      label = "Output";
+      break;
+    case NodeStyle.Constant:
+  }
+
   return (
     <div
-      className={`flow-node-${data.style}`}
+      className={`flow-node-${data.style.style}`}
       style={{
         height: height,
         width: 120,
       }}
     >
-      <InputTerminals count={data.inputCount} />
-      {data.label}
-      <OutputTerminals count={data.outputCount} />
+      <InputTerminals count={data.nInputs} />
+      {label}
+      <OutputTerminals count={data.nOutputs} />
     </div>
   );
 }
@@ -127,10 +142,10 @@ export function CompoundNode({ data }: { data: FlowNodeData }) {
 //   );
 // }
 
-export function ConstantNode({ data }: { data: FlowNodeData }) {
+export function ConstantNode({ data }: { data: NodeDefinition }) {
   return (
     <div className="flow-node-constant">
-      {data.constantValue !== undefined && (
+      {/* {data.constantValue !== undefined && (
         <div className="flow-node-constant-value">
           {String(data.constantValue)}
         </div>
@@ -139,7 +154,8 @@ export function ConstantNode({ data }: { data: FlowNodeData }) {
         <div className="flow-node-constant-mode">
           {data.constantRepeat ? "repeat" : "once"}
         </div>
-      )}
+      )} */}
+      Constant!
       <Handle type="source" position={Position.Right} id="output-0" />
     </div>
   );
