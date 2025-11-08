@@ -8,9 +8,11 @@ import Flow, {
 } from "@xyflow/react";
 import React, { useRef } from "react";
 import { FlowPropsContext } from "../contexts/flow_props_context";
-import { GraphEditor } from "../contexts/graph_editor_context";
+import {
+  GraphEditor,
+  GraphEditorContext,
+} from "../contexts/graph_editor_context";
 import { PosFloContext } from "../contexts/pos_flo_context";
-import { GraphEditorContext } from "../editor_context";
 import { MakeInputNode, MakeOutputNode } from "../input_output_nodes";
 import { Level, nInputs, nOutputs } from "../levels";
 import { NodeDefinition } from "../node_definitions";

@@ -2,9 +2,11 @@
 import { NodeSingular } from "cytoscape";
 import { Condition } from "./condition";
 import { EdgeData } from "./edges";
-import { GraphEditorContext } from "./editor_context";
 
+import { GraphEditor } from "./contexts/graph_editor_context";
+import { ComponentType } from "./node_definitions";
 import { Assert, NotNull } from "./util";
+import { PosFlo } from "./pos_flow";
 
 const SERIALIZATION_VERSION = "1.0.1";
 
@@ -31,9 +33,7 @@ export interface SerializedEdge {
   targetTerminalIndex: number;
   condition: number[];
 }
-export function exportGraph(context: GraphEditorContext): SerializedGraph {
-  const cy = context.cy;
-
+export function exportGraph(posFlo: PosFlo): SerializedGraph {
   // Get all user-created nodes (exclude input/output nodes and terminals)
   const userNodes = context.allNodes
     .map((cn) => cn.node)
@@ -112,7 +112,7 @@ export function exportGraph(context: GraphEditorContext): SerializedGraph {
   };
 }
 export function importGraph(
-  context: GraphEditorContext,
+  context: GraphEditor,
   serializedGraph: SerializedGraph
 ): void {
   const cy = context.cy;

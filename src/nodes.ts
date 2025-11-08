@@ -1,3 +1,4 @@
+import { Node } from "@xyflow/react";
 import { NodeDefinition } from "./node_definitions";
 import { TerminalId, TerminalType } from "./pos_flow";
 import { ProgramCounter } from "./program_counter";
@@ -38,28 +39,32 @@ export type NodeId = string;
 
 // }
 
-export class ComputeNode {
-  definition: NodeDefinition;
-  id: NodeId;
+// export class ComputeNode {
+//   definition: NodeDefinition;
+//   id: NodeId;
 
-  constructor(nodeDefinition: NodeDefinition, id: NodeId) {
-    this.definition = nodeDefinition;
-    this.id = id;
-  }
+//   constructor(nodeDefinition: NodeDefinition, id: NodeId) {
+//     this.definition = nodeDefinition;
+//     this.id = id;
+//   }
 
-  GetInputTerminals(): TerminalId[] {
-    return range(this.definition.nInputs).map((idx) => {
-      return { type: TerminalType.Input, nodeId: this.id, terminalIndex: idx };
-    });
-  }
+export type ComputeNode = Node<NodeDefinition>;
 
-  GetOutputTerminals(): TerminalId[] {
-    return range(this.definition.nOutputs).map((idx) => {
-      return { type: TerminalType.Output, nodeId: this.id, terminalIndex: idx };
-    });
-  }
+export function GetInputTerminals(node: Node<NodeDefinition>): TerminalId[] {
+  return range(node.data.nInputs).map((idx) => {
+    return { type: TerminalType.Input, nodeId: node.id, terminalIndex: idx };
+  });
+}
 
-  GetOutputTerminal(idx: number): TerminalId {
-    return { type: TerminalType.Output, nodeId: this.id, terminalIndex: idx };
-  }
+export function GetOutputTerminals(node: Node<NodeDefinition>): TerminalId[] {
+  return range(node.data.nOutputs).map((idx) => {
+    return { type: TerminalType.Output, nodeId: node.id, terminalIndex: idx };
+  });
+}
+
+export function GetOutputTerminal(
+  node: Node<NodeDefinition>,
+  idx: number
+): TerminalId {
+  return { type: TerminalType.Output, nodeId: node.id, terminalIndex: idx };
 }

@@ -22,7 +22,7 @@ export function LevelSidebar({ level }: { level: Level }) {
 
   useEffect(() => {
     function dragHandler(evt: EventObject) {
-      const node: CompNode | null = evt.target;
+      const node: Node<NodeDefinition> | null = evt.target;
 
       if (node === null) return;
 
@@ -35,7 +35,7 @@ export function LevelSidebar({ level }: { level: Level }) {
     }
 
     function freeHandler(evt: EventObject) {
-      const node: Node<NodeDefinition> = evt.target;
+      const node: Node<NodeDefinition> | null = evt.target;
 
       if (node?.deletable && isNodeOverBarRef.current) {
         graphEditor.RemoveNode(node);

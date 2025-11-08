@@ -35,7 +35,7 @@ export enum InputOutputComponentType {
   Output = "output",
 }
 
-type ComponentType = RegularComponentType | InputOutputComponentType;
+export type ComponentType = RegularComponentType | InputOutputComponentType;
 
 export type NodeDefinitionImpl<TState, TSettings> = {
   style: StyleData;

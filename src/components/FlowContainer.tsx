@@ -4,7 +4,6 @@ import Flow, {
   NodeTypes,
   OnConnect,
   ReactFlow,
-  ReactFlowProvider,
   useReactFlow,
   Viewport,
 } from "@xyflow/react";
@@ -12,7 +11,6 @@ import "@xyflow/react/dist/style.css";
 import React, { useCallback, useContext, useRef } from "react";
 import { FlowPropsContext } from "../contexts/flow_props_context";
 import { GraphEditorContext } from "../contexts/graph_editor_context";
-import { LevelContext } from "../editor_context";
 import { RegularComponentType } from "../node_definitions";
 import { PanZoomState } from "../rendered_position";
 import { CompoundNode, ConstantNode } from "./FlowNodes";

@@ -1,10 +1,18 @@
+import { Node } from "@xyflow/react";
 import {
   CounterAdvanceEvent,
   EvaluationEvent,
   EvaluationListener,
   NodeEvaluateEvent,
 } from "./evaluation_listeners";
-import { ComputeNode, NodeId } from "./nodes";
+import { NodeDefinition } from "./node_definitions";
+import {
+  ComputeNode,
+  GetInputTerminals,
+  GetOutputTerminal,
+  GetOutputTerminals,
+  NodeId,
+} from "./nodes";
 import { PosFlo } from "./pos_flow";
 import { PCStore, ProgramCounter } from "./program_counter";
 import { Assert } from "./util";
@@ -41,8 +49,8 @@ export class Evaluator {
     this.posFlo = posFlo;
     this.nodeSettings = nodeSettings;
     this.nodeStates = new Map<string, unknown>();
-    posFlo.nodes.forEach((n: ComputeNode) => {
-      this.nodeStates.set(n.id, n.definition.makeState());
+    posFlo.nodes.forEach((n: Node<NodeDefinition>) => {
+      this.nodeStates.set(n.id, n.data.makeState());
     });
 
     // TODO - sensible place?
@@ -50,9 +58,9 @@ export class Evaluator {
   }
 
   getCountersForNode(node: ComputeNode): ProgramCounter[] | null {
-    const inputCounters = node
-      .GetInputTerminals()
-      .map((term) => this.programCounters.GetByTerminal(term));
+    const inputCounters = GetInputTerminals(node).map((term) =>
+      this.programCounters.GetByTerminal(term)
+    );
 
     Assert(inputCounters.every((arr) => arr.length <= 1));
     if (inputCounters.some((arr) => arr.length === 0)) {
@@ -63,13 +71,12 @@ export class Evaluator {
   }
 
   isAnyOutputBlocked(node: ComputeNode): boolean {
-    return node
-      .GetOutputTerminals()
+    return GetOutputTerminals(node)
       .map((term) => this.programCounters.GetByTerminal(term))
       .some((arr) => arr.length > 0);
   }
 
-  evaluateNode(node: ComputeNode): void {
+  evaluateNode(node: Node<NodeDefinition>): void {
     if (this.isAnyOutputBlocked(node)) {
       return;
     }
@@ -81,7 +88,7 @@ export class Evaluator {
 
     const inputValues = inputCounters.map((c) => c.contents);
 
-    const result = node.definition.evaluate(
+    const result = node.data.evaluate(
       this.nodeStates.get(node.id),
       this.nodeSettings.get(node.id),
       inputValues
@@ -90,11 +97,11 @@ export class Evaluator {
     const newPcs: ProgramCounter[] = [];
 
     if (result !== null) {
-      Assert(result.length === node.definition.nOutputs);
+      Assert(result.length === node.data.nOutputs);
 
       result.flatMap((val: unknown, idx: number) =>
         this.posFlo
-          .GetConnectionsForTerminal(node.GetOutputTerminal(idx))
+          .GetConnectionsForTerminal(GetOutputTerminal(node, idx))
           .filter((conn) => conn.condition.matches(val))
           .map((conn) => new ProgramCounter(conn.source, conn, val))
       );
