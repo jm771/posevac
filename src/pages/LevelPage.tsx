@@ -7,6 +7,7 @@ import { ProgramCounterOverlay } from "../components/ProgramCounterOverlay";
 import { SaveLoadControls } from "../components/SaveLoadControls";
 import { LevelSidebar } from "../components/Sidebar";
 import { TestCasePanel } from "../components/TestCasePanel";
+import { LevelContext } from "../editor_context";
 import { getLevelById } from "../levels";
 import { PanZoomContext, PanZoomState } from "../rendered_position";
 
@@ -17,9 +18,10 @@ export function LevelPage() {
   }
 
   const level = useMemo(() => getLevelById(levelId), [levelId]);
+  // This is maybe dubious?
+  const [levelContext] = useState<LevelContext>(new LevelContext());
 
   const [panZoom, setPanZoom] = useState<PanZoomState>(new PanZoomState());
-  const testValuesContext = "TODO";
 
   // const handleViewportChange = (newPanZoom: PanZoomState) => {
   //   setPanZoom(newPanZoom);
@@ -27,9 +29,9 @@ export function LevelPage() {
 
   return (
     <PanZoomContext value={panZoom}>
-      <GraphProvider level={level} testValuesContext={testValuesContext}>
+      <GraphProvider level={level} testValuesContext={levelContext}>
         <div className="container">
-          <LevelSidebar levelContext={levelContext} />
+          <LevelSidebar level={level} />
           <div className="level-page-main">
             <div className="flow-ui-wrapper">
               <FlowContainer>
@@ -47,9 +49,12 @@ export function LevelPage() {
           </div>
           <aside className="controls-panel" id="controlsPanel">
             <AnimationControls levelContext={levelContext} />
-            <SaveLoadControls context={levelContext} />
+            <SaveLoadControls />
           </aside>
-          <TestCasePanel levelContext={levelContext} />
+          <TestCasePanel
+            level={level}
+            testerEventSource={levelContext.testerListenerHolder}
+          />
         </div>
       </GraphProvider>
     </PanZoomContext>
