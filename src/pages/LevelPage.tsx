@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useParams } from "react-router";
 import { AnimationControls } from "../components/AnimationControls";
 import { FlowContainer } from "../components/FlowContainer";
@@ -7,7 +7,7 @@ import { ProgramCounterOverlay } from "../components/ProgramCounterOverlay";
 import { SaveLoadControls } from "../components/SaveLoadControls";
 import { LevelSidebar } from "../components/Sidebar";
 import { TestCasePanel } from "../components/TestCasePanel";
-import { LevelContext } from "../editor_context";
+import { LevelContext, LevelContextContext } from "../editor_context";
 import { getLevelById } from "../levels";
 import { PanZoomContext, PanZoomState } from "../rendered_position";
 
@@ -18,8 +18,9 @@ export function LevelPage() {
   }
 
   const level = useMemo(() => getLevelById(levelId), [levelId]);
+  // const levelContextRef = useRef(new LevelContext());
   // This is maybe dubious?
-  const [levelContext] = useState<LevelContext>(new LevelContext());
+  const [levelContext] = useState<LevelContext>(new LevelContext(level));
 
   const [panZoom, setPanZoom] = useState<PanZoomState>(new PanZoomState());
 
@@ -28,6 +29,7 @@ export function LevelPage() {
   // };
 
   return (
+    // <LevelContextContext value={levelContext}>
     <PanZoomContext value={panZoom}>
       <GraphProvider level={level} testValuesContext={levelContext}>
         <div className="container">
@@ -58,5 +60,6 @@ export function LevelPage() {
         </div>
       </GraphProvider>
     </PanZoomContext>
+    // </LevelContextContext>
   );
 }

@@ -1,12 +1,13 @@
 import { LevelContext } from "./editor_context";
 import { Evaluator } from "./evaluation";
 import { NodeId } from "./nodes";
+import { PosFlo } from "./pos_flow";
 import { Tester } from "./tester";
 
-export function stepForward(levelContext: LevelContext) {
+export function stepForward(levelContext: LevelContext, posFlo: PosFlo) {
   if (levelContext.tester == null) {
     levelContext.tester = new Tester(
-      levelContext.editorContext.level.testCases,
+      levelContext.level.testCases,
       levelContext.testerListenerHolder
     );
   }
@@ -15,7 +16,7 @@ export function stepForward(levelContext: LevelContext) {
 
   if (levelContext.evaluator == null) {
     levelContext.evaluator = new Evaluator(
-      levelContext.editorContext.posFlow,
+      posFlo,
       levelContext.evaluationListenerHolder,
       new Map<NodeId, unknown>()
     );

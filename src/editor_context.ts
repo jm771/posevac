@@ -2,6 +2,7 @@ import Flow from "@xyflow/react";
 import { createContext } from "react";
 import { Evaluator } from "./evaluation";
 import { EvaluationListenerHolder } from "./evaluation_listeners";
+import { Level } from "./levels";
 import { InputProvider, OutputChecker, TestValuesContext } from "./nodes";
 import { Tester, TesterListenerHolder } from "./tester";
 import { NotNull } from "./util";
@@ -79,11 +80,13 @@ export class LevelContext implements TestValuesContext {
   testerListenerHolder: TesterListenerHolder;
   tester: Tester | null;
   evaluator: Evaluator | null;
-  constructor() {
+  level: Level;
+  constructor(level: Level) {
     this.evaluationListenerHolder = new EvaluationListenerHolder();
     this.evaluator = null;
     this.testerListenerHolder = new TesterListenerHolder();
     this.tester = null;
+    this.level = level;
 
     const lc = this;
 

@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useContext } from "react";
 import { useNavigate } from "react-router";
 import { resetAnimation, stepForward } from "../animation";
+import { PosFloContext } from "../contexts/pos_flo_context";
 import { LevelContext } from "../editor_context";
 
 export function AnimationControls({
@@ -9,6 +10,8 @@ export function AnimationControls({
   levelContext: LevelContext;
 }) {
   const navigate = useNavigate();
+
+  const posFlo = useContext(PosFloContext);
 
   return (
     <>
@@ -24,7 +27,7 @@ export function AnimationControls({
         <button
           id="forwardBtn"
           className="control-btn"
-          onClick={() => stepForward(levelContext)}
+          onClick={() => stepForward(levelContext, posFlo)}
         >
           ► Forward
         </button>
