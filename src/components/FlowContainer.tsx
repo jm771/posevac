@@ -98,6 +98,7 @@ export function FlowContainer({
         onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         nodeTypes={nodeTypes}
+        autoPanOnNodeDrag={false}
         fitView
         minZoom={0.5}
         maxZoom={2}
