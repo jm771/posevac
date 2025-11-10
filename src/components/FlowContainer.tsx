@@ -24,10 +24,14 @@ export function FlowContainer({
   // levelContext,
   children,
   onViewportChange,
+  onNodeDrag,
+  onNodeDragStop,
 }: {
   // levelContext: LevelContext;
   children: React.JSX.Element;
   onViewportChange?: (panZoom: PanZoomState) => void;
+  onNodeDrag?: (event: React.MouseEvent, node: Flow.Node<Record<string, unknown>>, nodes: Flow.Node<Record<string, unknown>>[]) => void;
+  onNodeDragStop?: (event: React.MouseEvent, node: Flow.Node<Record<string, unknown>>, nodes: Flow.Node<Record<string, unknown>>[]) => void;
 }) {
   const flowProps = useContext(FlowPropsContext);
   const graphEditor = useContext(GraphEditorContext);
@@ -91,6 +95,8 @@ export function FlowContainer({
         {...flowProps}
         onConnect={onConnect}
         onMove={(_event, viewport) => handleViewportChange(viewport)}
+        onNodeDrag={onNodeDrag}
+        onNodeDragStop={onNodeDragStop}
         nodeTypes={nodeTypes}
         fitView
         minZoom={0.5}
