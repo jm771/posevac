@@ -1,7 +1,11 @@
-import React from "react";
-import { ReactFlow, ReactFlowProvider, Node } from "@xyflow/react";
+import { Node, ReactFlow, ReactFlowProvider } from "@xyflow/react";
+import React, { useMemo } from "react";
 import { Level } from "../levels";
-import { GetNodeDefinition, NodeStyle, RegularComponentType } from "../node_definitions";
+import {
+  GetNodeDefinition,
+  NodeStyle,
+  RegularComponentType,
+} from "../node_definitions";
 import { CompoundNode, ConstantNode } from "./FlowNodes";
 
 const nodeTypes = {
@@ -22,14 +26,17 @@ export function ComponentBar({ level }: { level: Level }) {
 export function SidebarElement({ type }: { type: RegularComponentType }) {
   const nodeDefinition = GetNodeDefinition(type);
 
-  const nodeType = nodeDefinition.style.style === NodeStyle.Constant ? "constant" : "compound";
+  const nodeType =
+    nodeDefinition.style.style === NodeStyle.Constant ? "constant" : "compound";
 
-  const previewNode: Node = {
-    id: `preview-${type}`,
-    type: nodeType,
-    position: { x: 0, y: 0 },
-    data: nodeDefinition,
-  };
+  const previewNode: Node = useMemo(() => {
+    return {
+      id: `preview-${type}`,
+      type: nodeType,
+      position: { x: 0, y: 0 },
+      data: nodeDefinition,
+    };
+  }, [nodeDefinition, nodeType, type]);
 
   return (
     <div
@@ -56,8 +63,7 @@ export function SidebarElement({ type }: { type: RegularComponentType }) {
           proOptions={{ hideAttribution: true }}
           fitView
           fitViewOptions={{ padding: 0.2 }}
-        >
-        </ReactFlow>
+        ></ReactFlow>
       </ReactFlowProvider>
     </div>
   );
