@@ -1,9 +1,13 @@
-import cytoscape from "cytoscape";
-import React, { useEffect, useRef } from "react";
+import React from "react";
+import { ReactFlow, ReactFlowProvider, Node } from "@xyflow/react";
 import { Level } from "../levels";
-import { RegularComponentType } from "../node_definitions";
-import { getCytoscapeStyles } from "../styles";
-import { Assert } from "../util";
+import { GetNodeDefinition, NodeStyle, RegularComponentType } from "../node_definitions";
+import { CompoundNode, ConstantNode } from "./FlowNodes";
+
+const nodeTypes = {
+  compound: CompoundNode,
+  constant: ConstantNode,
+};
 
 export function ComponentBar({ level }: { level: Level }) {
   return (
@@ -14,27 +18,21 @@ export function ComponentBar({ level }: { level: Level }) {
     </div>
   );
 }
+
 export function SidebarElement({ type }: { type: RegularComponentType }) {
-  const divRef = useRef<HTMLDivElement>(null);
+  const nodeDefinition = GetNodeDefinition(type);
 
-  // TODO - should remove this cytoscape too
-  useEffect(() => {
-    Assert(divRef.current !== null);
-    const previewCy = cytoscape({
-      container: divRef.current,
-      style: getCytoscapeStyles(),
-      userPanningEnabled: false,
-      userZoomingEnabled: false,
-      boxSelectionEnabled: false,
-      autoungrabify: true,
-    });
+  const nodeType = nodeDefinition.style.style === NodeStyle.Constant ? "constant" : "compound";
 
-    previewCy.fit(undefined, 10);
-  }, [divRef, type]);
+  const previewNode: Node = {
+    id: `preview-${type}`,
+    type: nodeType,
+    position: { x: 0, y: 0 },
+    data: nodeDefinition,
+  };
 
   return (
     <div
-      ref={divRef}
       className="component-template"
       id={`preview-${type}`}
       draggable="true"
@@ -42,6 +40,23 @@ export function SidebarElement({ type }: { type: RegularComponentType }) {
         e.dataTransfer.setData("component-type", type);
         e.dataTransfer.effectAllowed = "copy";
       }}
-    />
+    >
+      <ReactFlowProvider>
+        <ReactFlow
+          nodes={[previewNode]}
+          nodeTypes={nodeTypes}
+          nodesDraggable={false}
+          nodesConnectable={false}
+          elementsSelectable={false}
+          zoomOnScroll={false}
+          panOnScroll={false}
+          panOnDrag={false}
+          zoomOnDoubleClick={false}
+          preventScrolling={false}
+          fitView
+          fitViewOptions={{ padding: 0.2 }}
+        />
+      </ReactFlowProvider>
+    </div>
   );
 }
