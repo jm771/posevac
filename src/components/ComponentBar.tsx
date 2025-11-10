@@ -53,9 +53,11 @@ export function SidebarElement({ type }: { type: RegularComponentType }) {
           panOnDrag={false}
           zoomOnDoubleClick={false}
           preventScrolling={false}
+          proOptions={{ hideAttribution: true }}
           fitView
           fitViewOptions={{ padding: 0.2 }}
-        />
+        >
+        </ReactFlow>
       </ReactFlowProvider>
     </div>
   );
