@@ -54,7 +54,7 @@ const CUM_SUM: Level = {
 const MULTIPLY: Level = {
   id: "multiply",
   name: "Multiply",
-  description: "Build the multiply component",
+  description: "Build the multiply component - multiply two non-negative integers",
   testCases: [
     {
       inputs: [[4], [2]],
@@ -85,7 +85,7 @@ const FACTORIAL: Level = {
 const LESS_THAN_FOUR: Level = {
   id: "lt",
   name: "Less Than Four",
-  description: "Filter the input to only output those that are less than four",
+  description: "Filter the input to only output those that are less than four (inputs will be non negative integers)",
   testCases: [
     {
       inputs: [[1, 2, 3, 4, 5, 1]],
@@ -102,7 +102,7 @@ const LESS_THAN_FOUR: Level = {
 const MAX: Level = {
   id: "max",
   name: "Maximum",
-  description: "Work out the maxium of two numbers - how hard can it be?",
+  description: "Work out the maxium of two numbers - how hard can it be? (inputs will be non negative integers)",
   testCases: [
     {
       inputs: [[1], [2]],
