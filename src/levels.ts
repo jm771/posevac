@@ -88,8 +88,8 @@ const LESS_THAN_FOUR: Level = {
   description: "Filter the input to only output those that are less than four",
   testCases: [
     {
-      inputs: [[1, 2, 3, 4, 5]],
-      expectedOutputs: [[1, 2, 3]],
+      inputs: [[1, 2, 3, 4, 5, 1]],
+      expectedOutputs: [[1, 2, 3, 1]],
     },
     {
       inputs: [[4, 3, 4]],
