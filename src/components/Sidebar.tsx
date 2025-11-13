@@ -1,76 +1,69 @@
 import { Node } from "@xyflow/react";
-import React, { forwardRef, useContext, useEffect, useRef, useState } from "react";
+import React, {
+  MouseEvent,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { GraphEditorContext } from "../contexts/graph_editor_context";
+import { NodeCallbackContext } from "../contexts/node_callbacks_context";
 import { Level } from "../levels";
 import { NodeDefinition } from "../node_definitions";
 import { ComponentBar } from "./ComponentBar";
 import { DeleteArea } from "./DeleteArea";
 
-export const LevelSidebar = forwardRef<
-  HTMLElement,
-  {
-    level: Level;
-    draggedNode: Node<NodeDefinition> | null;
-    dragPosition: { x: number; y: number } | null;
-  }
->(({ level, draggedNode, dragPosition }, ref) => {
+export function LevelSidebar({ level }: { level: Level }) {
   const sideBarRef = useRef<HTMLElement | null>(null);
-  const [isNodeOverBar, setIsNodeOverBar] = useState<boolean>(false);
-  const prevDraggedNodeRef = useRef<Node<NodeDefinition> | null>(null);
-
-  const graphEditor = useContext(GraphEditorContext);
+  const [canDelete, setCanDelete] = useState<boolean>(false);
+  const callbacks = useContext(NodeCallbackContext);
+  const graphContext = useContext(GraphEditorContext);
 
   useEffect(() => {
-    // Handle deletion when drag stops over sidebar
-    if (prevDraggedNodeRef.current && !draggedNode && isNodeOverBar) {
-      const node = prevDraggedNodeRef.current;
-      if (node.deletable !== false) {
-        graphEditor.RemoveNode(node);
+    function onDrag(
+      _event: MouseEvent,
+      node: Node<NodeDefinition>,
+      _nodes: Node<NodeDefinition>[]
+    ) {
+      const leftLimit = sideBarRef.current?.getBoundingClientRect()?.x ?? 10000;
+      setCanDelete(node.data.deletable && node.position.x < leftLimit);
+    }
+
+    function onDragEnd(
+      _event: MouseEvent,
+      node: Node<NodeDefinition>,
+      _nodes: Node<NodeDefinition>[]
+    ) {
+      const leftLimit = sideBarRef.current?.getBoundingClientRect()?.x ?? 10000;
+      const canDelete = node.data.deletable && node.position.x < leftLimit;
+
+      if (canDelete) {
+        graphContext.RemoveNode(node);
       }
+
+      setCanDelete(false);
     }
 
-    prevDraggedNodeRef.current = draggedNode;
-  }, [draggedNode, isNodeOverBar, graphEditor]);
+    callbacks.OnNodeDragCallbacks.add(onDrag);
+    callbacks.OnNodeDragEndCallbacks.add(onDragEnd);
 
-  useEffect(() => {
-    if (!draggedNode || !dragPosition) {
-      setIsNodeOverBar(false);
-      return;
-    }
-
-    const sidebar = (ref as React.RefObject<HTMLElement>)?.current || sideBarRef.current;
-    if (!sidebar) {
-      setIsNodeOverBar(false);
-      return;
-    }
-
-    const sidebarBounds = sidebar.getBoundingClientRect();
-    const isOver = dragPosition.x < sidebarBounds.right;
-    setIsNodeOverBar(isOver);
-  }, [draggedNode, dragPosition, ref]);
+    return () => {
+      callbacks.OnNodeDragCallbacks.delete(onDrag);
+      callbacks.OnNodeDragEndCallbacks.delete(onDragEnd);
+    };
+  }, [setCanDelete, callbacks]);
 
   return (
-    <aside
-      ref={(node) => {
-        sideBarRef.current = node;
-        if (typeof ref === 'function') {
-          ref(node);
-        } else if (ref) {
-          (ref as React.MutableRefObject<HTMLElement | null>).current = node;
-        }
-      }}
-      className="sidebar"
-      id="sidebar"
-    >
+    <aside ref={sideBarRef} className="sidebar" id="sidebar">
       <div className="level-info">
         <h2 id="levelName">{level.name}</h2>
         <p id="levelDescription">{level.description}</p>
       </div>
       <h3>Components</h3>
       <ComponentBar level={level} />
-      <DeleteArea draggedNode={draggedNode} nodeIsOverBar={isNodeOverBar} />
+      <DeleteArea deleteActive={canDelete} />
     </aside>
   );
-});
+}
 
 LevelSidebar.displayName = "LevelSidebar";

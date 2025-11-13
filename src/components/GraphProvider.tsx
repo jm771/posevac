@@ -12,6 +12,10 @@ import {
   GraphEditor,
   GraphEditorContext,
 } from "../contexts/graph_editor_context";
+import {
+  NodeCallbackContext,
+  NodeCallbacks,
+} from "../contexts/node_callbacks_context";
 import { PosFloContext } from "../contexts/pos_flo_context";
 import { MakeInputNode, MakeOutputNode } from "../input_output_nodes";
 import { Level, nInputs, nOutputs } from "../levels";
@@ -109,17 +113,7 @@ export function GraphProvider({
   level: Level;
   testValuesContext: TestValuesContext;
 }) {
-  // export function FlowContainerWrapper(props: {
-  //   levelContext: LevelContext;
-  //   children: React.JSX.Element;
-  //   onViewportChange?: (panZoom: PanZoomState) => void;
-  // }) {
-  //   return (
-  //     <ReactFlowProvider>
-  //       <FlowContainer {...props} />
-  //     </ReactFlowProvider>
-  //   );
-  // }
+  const nodeCallbackRef = useRef<NodeCallbacks>(new NodeCallbacks());
 
   const nodeId = useRef<number>(0);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<NodeDefinition>>(
@@ -131,11 +125,15 @@ export function GraphProvider({
 
   return (
     <ReactFlowProvider>
-      <PosFloContext value={new PosFlo(nodes, edges)}>
-        <GraphEditorContext value={new GraphEditor(nodeId, setNodes, setEdges)}>
-          <FlowPropsContext value={flowProps}>{children}</FlowPropsContext>
-        </GraphEditorContext>
-      </PosFloContext>
+      <NodeCallbackContext value={nodeCallbackRef.current}>
+        <PosFloContext value={new PosFlo(nodes, edges)}>
+          <GraphEditorContext
+            value={new GraphEditor(nodeId, setNodes, setEdges)}
+          >
+            <FlowPropsContext value={flowProps}>{children}</FlowPropsContext>
+          </GraphEditorContext>
+        </PosFloContext>
+      </NodeCallbackContext>
     </ReactFlowProvider>
   );
 }

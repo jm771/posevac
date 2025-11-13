@@ -5,14 +5,13 @@ import Flow, {
   OnConnect,
   ReactFlow,
   useReactFlow,
-  Viewport,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import React, { useCallback, useContext, useRef } from "react";
 import { FlowPropsContext } from "../contexts/flow_props_context";
 import { GraphEditorContext } from "../contexts/graph_editor_context";
+import { NodeCallbackContext } from "../contexts/node_callbacks_context";
 import { RegularComponentType } from "../node_definitions";
-import { PanZoomState } from "../rendered_position";
 import { CompoundNode, ConstantNode } from "./FlowNodes";
 
 const nodeTypes: NodeTypes = {
@@ -20,21 +19,10 @@ const nodeTypes: NodeTypes = {
   constant: ConstantNode,
 };
 
-export function FlowContainer({
-  // levelContext,
-  children,
-  onViewportChange,
-  onNodeDrag,
-  onNodeDragStop,
-}: {
-  // levelContext: LevelContext;
-  children: React.JSX.Element;
-  onViewportChange?: (panZoom: PanZoomState) => void;
-  onNodeDrag?: (event: React.MouseEvent, node: Flow.Node<Record<string, unknown>>, nodes: Flow.Node<Record<string, unknown>>[]) => void;
-  onNodeDragStop?: (event: React.MouseEvent, node: Flow.Node<Record<string, unknown>>, nodes: Flow.Node<Record<string, unknown>>[]) => void;
-}) {
+export function FlowContainer({ children }: { children: React.JSX.Element }) {
   const flowProps = useContext(FlowPropsContext);
   const graphEditor = useContext(GraphEditorContext);
+  const nodeCallbacks = useContext(NodeCallbackContext);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useReactFlow();
 
@@ -46,17 +34,16 @@ export function FlowContainer({
     [graphEditor]
   );
 
-  // Handle viewport changes
-  const handleViewportChange = useCallback(
-    (viewport: Viewport) => {
-      if (onViewportChange) {
-        onViewportChange(
-          new PanZoomState({ x: viewport.x, y: viewport.y }, viewport.zoom)
-        );
-      }
-    },
-    [onViewportChange]
-  );
+  // const handleViewportChange = useCallback(
+  //   (viewport: Viewport) => {
+  //     if (onViewportChange) {
+  //       onViewportChange(
+  //         new PanZoomState({ x: viewport.x, y: viewport.y }, viewport.zoom)
+  //       );
+  //     }
+  //   },
+  //   [onViewportChange]
+  // );
 
   const onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -94,9 +81,9 @@ export function FlowContainer({
       <ReactFlow
         {...flowProps}
         onConnect={onConnect}
-        onMove={(_event, viewport) => handleViewportChange(viewport)}
-        onNodeDrag={onNodeDrag}
-        onNodeDragStop={onNodeDragStop}
+        // onMove={(_event, viewport) => handleViewportChange(viewport)}
+        onNodeDrag={nodeCallbacks.OnNodeDrag}
+        onNodeDragStop={nodeCallbacks.OnNodeDragEnd}
         nodeTypes={nodeTypes}
         autoPanOnNodeDrag={false}
         fitView
@@ -110,15 +97,3 @@ export function FlowContainer({
     </div>
   );
 }
-
-// export function FlowContainerWrapper(props: {
-//   levelContext: LevelContext;
-//   children: React.JSX.Element;
-//   onViewportChange?: (panZoom: PanZoomState) => void;
-// }) {
-//   return (
-//     <ReactFlowProvider>
-//       <FlowContainer {...props} />
-//     </ReactFlowProvider>
-//   );
-// }
