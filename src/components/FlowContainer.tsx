@@ -1,5 +1,6 @@
 import Flow, {
   Background,
+  ConnectionLineType,
   Controls,
   NodeTypes,
   OnConnect,
@@ -79,6 +80,8 @@ export function FlowContainer({ children }: { children: React.JSX.Element }) {
       onDrop={onDrop}
     >
       <ReactFlow
+        connectOnClick={true}
+        connectionLineType={ConnectionLineType.Straight}
         {...flowProps}
         onConnect={onConnect}
         // onMove={(_event, viewport) => handleViewportChange(viewport)}
