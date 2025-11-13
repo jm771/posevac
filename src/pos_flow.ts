@@ -17,6 +17,14 @@ export type TerminalId = {
   terminalIndex: TerminalIndex;
 };
 
+export function terminalEquals(a: TerminalId, b: TerminalId) {
+  return (
+    a.type === b.type &&
+    a.nodeId === b.nodeId &&
+    a.terminalIndex === b.terminalIndex
+  );
+}
+
 export type Connection = {
   source: TerminalId;
   dest: TerminalId;
@@ -35,11 +43,11 @@ export class PosFlo {
   GetConnectionsForTerminal(terminal: TerminalId): Connection[] {
     if (terminal.type === TerminalType.Input) {
       return this.connections
-        .filter((c) => NotNull(c.data).source == terminal)
+        .filter((c) => terminalEquals(NotNull(c.data).dest, terminal))
         .map((conn) => NotNull(conn.data));
     } else {
       return this.connections
-        .filter((c) => NotNull(c.data).dest == terminal)
+        .filter((c) => terminalEquals(NotNull(c.data).source, terminal))
         .map((conn) => NotNull(conn.data));
     }
   }

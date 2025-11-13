@@ -5,7 +5,7 @@ import { PosFlo } from "./pos_flow";
 import { Tester } from "./tester";
 
 export function stepForward(levelContext: LevelContext, posFlo: PosFlo) {
-  if (levelContext.tester == null) {
+  if (levelContext.tester === null) {
     levelContext.tester = new Tester(
       levelContext.level.testCases,
       levelContext.testerListenerHolder

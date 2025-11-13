@@ -94,12 +94,12 @@ export class Evaluator {
       inputValues
     );
 
-    const newPcs: ProgramCounter[] = [];
+    let newPcs: ProgramCounter[] = [];
 
     if (result !== null) {
       Assert(result.length === node.data.nOutputs);
 
-      result.flatMap((val: unknown, idx: number) =>
+      newPcs = result.flatMap((val: unknown, idx: number) =>
         this.posFlo
           .GetConnectionsForTerminal(GetOutputTerminal(node, idx))
           .filter((conn) => conn.condition.matches(val))
@@ -112,7 +112,7 @@ export class Evaluator {
     });
 
     newPcs.forEach((pc) => {
-      this.programCounters.Remove(pc);
+      this.programCounters.Add(pc);
     });
 
     const event: NodeEvaluateEvent = {
@@ -180,7 +180,7 @@ export class Evaluator {
   stride() {
     const startStage = this.evaluationState.stage;
 
-    while (this.evaluationState.stage == startStage) {
+    while (this.evaluationState.stage === startStage) {
       this.step();
     }
   }

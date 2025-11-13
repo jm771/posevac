@@ -42,7 +42,7 @@ export class Condition {
     }
 
     if (values instanceof Array) {
-      if (values.length == this.matchers.length) {
+      if (values.length === this.matchers.length) {
         return values.every((val, index) =>
           matcherMatches(this.matchers[index], val)
         );

@@ -41,10 +41,10 @@ export function ProgramCounterOverlay({
         });
       },
       onEvaluationEvent: (e: EvaluationEvent) => {
-        if (e == EvaluationEvent.Start) {
+        if (e === EvaluationEvent.Start) {
           setProgramCounters(new Map<string, ProgramCounter>());
         }
-        if (e == EvaluationEvent.End) {
+        if (e === EvaluationEvent.End) {
           setProgramCounters(new Map<string, ProgramCounter>());
         }
       },

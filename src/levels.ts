@@ -178,12 +178,12 @@ export function nOutputs(level: Level) {
 function ValidateTestCases(testCases: TestCase[]) {
   Assert(testCases.length > 0, "No test cases");
   Assert(
-    testCases.every((tc) => tc.inputs.length == testCases[0].inputs.length),
+    testCases.every((tc) => tc.inputs.length === testCases[0].inputs.length),
     "Not all test cases have same number of inputs"
   );
   Assert(
     testCases.every(
-      (tc) => tc.expectedOutputs.length == testCases[0].expectedOutputs.length
+      (tc) => tc.expectedOutputs.length === testCases[0].expectedOutputs.length
     ),
     "Not all test cases have same number of outputs"
   );

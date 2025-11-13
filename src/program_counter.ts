@@ -1,4 +1,4 @@
-import { Connection, TerminalId } from "./pos_flow";
+import { Connection, terminalEquals, TerminalId } from "./pos_flow";
 import { Assert, NotNull } from "./util";
 
 export type ProgramCounterId = string;
@@ -43,7 +43,9 @@ export class PCStore {
 
   GetByTerminal(id: TerminalId): ProgramCounter[] {
     return NotNull(
-      this.programCounters.filter((pc) => pc.currentLocation === id)
+      this.programCounters.filter((pc) =>
+        terminalEquals(pc.currentLocation, id)
+      )
     );
   }
 
