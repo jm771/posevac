@@ -75,7 +75,8 @@ export class GraphEditor {
       if (!removed) {
         ret.push({
           id: `edge-${this.nodeIdxRef.current++}`,
-          type: "straight",
+          type: "animated",
+          // type: "straight",
           ...flowCon,
           data: convertConnection(flowCon),
         });

@@ -1,11 +1,11 @@
 import Flow, {
   Background,
-  ConnectionLineType,
   Controls,
   NodeTypes,
   OnConnect,
   ReactFlow,
   useReactFlow,
+  ViewportPortal,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import React, { useCallback, useContext, useRef } from "react";
@@ -13,6 +13,7 @@ import { FlowPropsContext } from "../contexts/flow_props_context";
 import { GraphEditorContext } from "../contexts/graph_editor_context";
 import { NodeCallbackContext } from "../contexts/node_callbacks_context";
 import { RegularComponentType } from "../node_definitions";
+import { AnimatedNodeEdge } from "./AnimatedNodeEdge";
 import { CompoundNode, ConstantNode } from "./FlowNodes";
 
 const nodeTypes: NodeTypes = {
@@ -71,8 +72,9 @@ export function FlowContainer({ children }: { children: React.JSX.Element }) {
       onDrop={onDrop}
     >
       <ReactFlow
+        edgeTypes={{ animated: AnimatedNodeEdge }}
         connectOnClick={true}
-        connectionLineType={ConnectionLineType.Straight}
+        // connectionLineType={ConnectionLineType.Straight}
         {...flowProps}
         onConnect={onConnect}
         // onMove={(_event, viewport) => handleViewportChange(viewport)}
@@ -87,7 +89,7 @@ export function FlowContainer({ children }: { children: React.JSX.Element }) {
       >
         <Background />
         <Controls />
-        {children}
+        <ViewportPortal>{children}</ViewportPortal>
       </ReactFlow>
     </div>
   );
