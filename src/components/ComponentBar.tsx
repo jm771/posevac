@@ -1,11 +1,12 @@
 import { Node, ReactFlow, ReactFlowProvider } from "@xyflow/react";
-import React, { useMemo } from "react";
+import React, { useMemo, useRef } from "react";
 import { Level } from "../levels";
 import {
   GetNodeDefinition,
   NodeStyle,
   RegularComponentType,
 } from "../node_definitions";
+import { NotNull } from "../util";
 import { CompoundNode, ConstantNode } from "./FlowNodes";
 
 const nodeTypes = {
@@ -25,6 +26,7 @@ export function ComponentBar({ level }: { level: Level }) {
 
 export function SidebarElement({ type }: { type: RegularComponentType }) {
   const nodeDefinition = GetNodeDefinition(type);
+  const divRef = useRef<HTMLDivElement | null>(null);
 
   const nodeType =
     nodeDefinition.style.style === NodeStyle.Constant ? "constant" : "compound";
@@ -40,11 +42,18 @@ export function SidebarElement({ type }: { type: RegularComponentType }) {
 
   return (
     <div
+      ref={divRef}
       className="component-template"
       id={`preview-${type}`}
       draggable="true"
       onDragStart={(e: React.DragEvent<HTMLDivElement>) => {
+        const bounds = NotNull(divRef.current).getBoundingClientRect();
+        const offsetX = e.clientX - (bounds.left + bounds.right) / 2;
+        const offsetY = e.clientY - (bounds.top + bounds.bottom) / 2;
+
         e.dataTransfer.setData("component-type", type);
+        e.dataTransfer.setData("offsetX", String(offsetX));
+        e.dataTransfer.setData("offsetY", String(offsetY));
         e.dataTransfer.effectAllowed = "copy";
       }}
     >
@@ -60,7 +69,11 @@ export function SidebarElement({ type }: { type: RegularComponentType }) {
           panOnDrag={false}
           zoomOnDoubleClick={false}
           preventScrolling={false}
-          // nodeOrigin={[0.5, 0.5]}
+          edgesFocusable={false}
+          nodesFocusable={false}
+          draggable={false}
+          minZoom={1}
+          maxZoom={1}
           proOptions={{ hideAttribution: true }}
           fitView
           fitViewOptions={{ padding: 0.2 }}

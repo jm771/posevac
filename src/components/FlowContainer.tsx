@@ -35,17 +35,6 @@ export function FlowContainer({ children }: { children: React.JSX.Element }) {
     [graphEditor]
   );
 
-  // const handleViewportChange = useCallback(
-  //   (viewport: Viewport) => {
-  //     if (onViewportChange) {
-  //       onViewportChange(
-  //         new PanZoomState({ x: viewport.x, y: viewport.y }, viewport.zoom)
-  //       );
-  //     }
-  //   },
-  //   [onViewportChange]
-  // );
-
   const onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "copy";
@@ -61,10 +50,12 @@ export function FlowContainer({ children }: { children: React.JSX.Element }) {
         "component-type"
       ) as RegularComponentType;
 
-      const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+      const offsetX = parseFloat(e.dataTransfer.getData("offsetX"));
+      const offsetY = parseFloat(e.dataTransfer.getData("offsetY"));
+
       const position = reactFlowInstance.screenToFlowPosition({
-        x: e.clientX - reactFlowBounds.left,
-        y: e.clientY - reactFlowBounds.top,
+        x: e.clientX - offsetX,
+        y: e.clientY - offsetY,
       });
 
       graphEditor.AddNode(componentType, position);
@@ -92,6 +83,7 @@ export function FlowContainer({ children }: { children: React.JSX.Element }) {
         fitView
         minZoom={0.5}
         maxZoom={2}
+        nodeOrigin={[0.5, 0.5]}
       >
         <Background />
         <Controls />
