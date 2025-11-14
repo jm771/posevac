@@ -60,6 +60,7 @@ export function SidebarElement({ type }: { type: RegularComponentType }) {
           panOnDrag={false}
           zoomOnDoubleClick={false}
           preventScrolling={false}
+          // nodeOrigin={[0.5, 0.5]}
           proOptions={{ hideAttribution: true }}
           fitView
           fitViewOptions={{ padding: 0.2 }}

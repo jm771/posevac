@@ -1,6 +1,7 @@
-import { Node } from "@xyflow/react";
+import { Node, useReactFlow } from "@xyflow/react";
 import React, {
   MouseEvent,
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -18,6 +19,24 @@ export function LevelSidebar({ level }: { level: Level }) {
   const [canDelete, setCanDelete] = useState<boolean>(false);
   const callbacks = useContext(NodeCallbackContext);
   const graphContext = useContext(GraphEditorContext);
+  const { flowToScreenPosition, getNodesBounds } = useReactFlow();
+
+  const isDeletable = useCallback(
+    (n: Node<NodeDefinition>) => {
+      const rect = sideBarRef.current?.getBoundingClientRect();
+      if (!rect) {
+        return false;
+      }
+
+      const bounds = getNodesBounds([n]);
+      const middle = bounds.x + bounds.width / 2;
+
+      const screenMiddle = flowToScreenPosition({ x: middle, y: 0 }).x;
+
+      return n.data.deletable && screenMiddle < rect.right;
+    },
+    [flowToScreenPosition, getNodesBounds]
+  );
 
   useEffect(() => {
     function onDrag(
@@ -25,8 +44,7 @@ export function LevelSidebar({ level }: { level: Level }) {
       node: Node<NodeDefinition>,
       _nodes: Node<NodeDefinition>[]
     ) {
-      const leftLimit = sideBarRef.current?.getBoundingClientRect()?.x ?? 10000;
-      setCanDelete(node.data.deletable && node.position.x < leftLimit);
+      setCanDelete(isDeletable(node));
     }
 
     function onDragEnd(
@@ -34,10 +52,7 @@ export function LevelSidebar({ level }: { level: Level }) {
       node: Node<NodeDefinition>,
       _nodes: Node<NodeDefinition>[]
     ) {
-      const leftLimit = sideBarRef.current?.getBoundingClientRect()?.x ?? 10000;
-      const canDelete = node.data.deletable && node.position.x < leftLimit;
-
-      if (canDelete) {
+      if (isDeletable(node)) {
         graphContext.RemoveNode(node);
       }
 
