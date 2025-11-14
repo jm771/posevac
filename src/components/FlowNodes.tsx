@@ -1,44 +1,6 @@
 import { Handle, Position } from "@xyflow/react";
 import React from "react";
 import { NodeDefinition, NodeStyle } from "../node_definitions";
-// import { NodeDefinition, NodeStyle } from "../node_definitions";
-
-// export type FlowNodeData = {
-//   label: string;
-//   style: NodeStyle;
-//   inputCount: number;
-//   outputCount: number;
-//   constantValue?: unknown;
-//   constantRepeat?: boolean;
-// };
-
-// export function getFlowNodeDataFromDefintion(
-//   defn: NodeDefinition
-// ): FlowNodeData {
-//   let label = "N/A";
-
-//   switch (defn.style.style) {
-//     case NodeStyle.Compound:
-//       ({ label } = defn.style);
-//       break;
-//     case NodeStyle.Input:
-//       label = "input";
-//       break;
-//     case NodeStyle.Output:
-//       label = "output";
-//       break;
-//   }
-
-//   return {
-//     label: label,
-//     // Unsure if used
-//     style: defn.style.style,
-//     inputCount: defn.nInputs,
-//     outputCount: defn.nOutputs,
-//     constantValue: undefined,
-//     constantRepeat: undefined,
-//   };
-// }
 
 const topTerminalOffset = 10;
 const terminalOffset = 30;
@@ -79,6 +41,7 @@ function OutputTerminals({ count }: { count: number }) {
           position={Position.Right}
           id={`output-${i}`}
           style={{
+            // pointerEvents: "none",
             top: `${
               (100 * (terminalOffset * i + topTerminalOffset)) /
               (2 * topTerminalOffset + terminalOffset * (count - 1))
@@ -123,24 +86,6 @@ export function CompoundNode({ data }: { data: NodeDefinition }) {
     </div>
   );
 }
-
-// export function InputNode({ data }: { data: FlowNodeData }) {
-//   return (
-//     <div className="flow-node-input">
-//       {data.label}
-//       <OutputTerminals count={1} />
-//     </div>
-//   );
-// }
-
-// export function OutputNode({ data }: { data: FlowNodeData }) {
-//   return (
-//     <div className="flow-node-output">
-//       <InputTerminals count={1} />
-//       {data.label}
-//     </div>
-//   );
-// }
 
 export function ConstantNode({ data }: { data: NodeDefinition }) {
   return (

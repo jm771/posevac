@@ -24,52 +24,13 @@ import { TestValuesContext } from "../nodes";
 import { Connection, PosFlo } from "../pos_flow";
 import { range } from "../util";
 
-// export function convertConnection(connection: Flow.Connection): Connection {
-//   const sourceHandleIdx = parseInt(
-//     NotNull(connection.sourceHandle).replace("output-", "")
-//   );
-//   const targetHandleIdx = parseInt(
-//     NotNull(connection.targetHandle?.replace("input-", ""))
-//   );
-
-//   return {
-//     source: {
-//       type: TerminalType.Output,
-//       nodeId: NotNull(connection.source),
-//       terminalIndex: sourceHandleIdx,
-//     },
-//     dest: {
-//       type: TerminalType.Input,
-//       nodeId: NotNull(connection.target),
-//       terminalIndex: targetHandleIdx,
-//     },
-//     condition: new Condition([]),
-//   };
-// }
-
 function MakeNodeFromDefn(
   ref: { current: number },
   defn: NodeDefinition,
   position: XYPosition
 ) {
-  let label = "";
-  switch (defn.style.style) {
-    case NodeStyle.Compound:
-      label = defn.style.label;
-      break;
-    case NodeStyle.Input:
-      label = "Input";
-      break;
-    case NodeStyle.Output:
-      label = "Output";
-      break;
-    case NodeStyle.Constant:
-  }
-
   return {
     id: `node-${ref.current++}`,
-    // type: defn.style.style === NodeStyle.Constant ? "constant" : "compound",
-    // style: defn.style.style,
     type: defn.style.style === NodeStyle.Constant ? "constant" : "compound",
     position: position,
     data: defn,

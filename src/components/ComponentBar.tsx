@@ -58,26 +58,39 @@ export function SidebarElement({ type }: { type: RegularComponentType }) {
       }}
     >
       <ReactFlowProvider>
-        <ReactFlow
-          nodes={[previewNode]}
-          nodeTypes={nodeTypes}
-          nodesDraggable={false}
-          nodesConnectable={false}
-          elementsSelectable={false}
-          zoomOnScroll={false}
-          panOnScroll={false}
-          panOnDrag={false}
-          zoomOnDoubleClick={false}
-          preventScrolling={false}
-          edgesFocusable={false}
-          nodesFocusable={false}
-          draggable={false}
-          minZoom={1}
-          maxZoom={1}
-          proOptions={{ hideAttribution: true }}
-          fitView
-          fitViewOptions={{ padding: 0.2 }}
-        ></ReactFlow>
+        <div
+          style={{
+            // pointerEvents: "none",
+            display: "flex",
+            width: "100%",
+            height: "100%",
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ReactFlow
+            nodes={[previewNode]}
+            nodeTypes={nodeTypes}
+            nodesDraggable={false}
+            nodesConnectable={false}
+            connectOnClick={false}
+            elementsSelectable={false}
+            zoomOnScroll={false}
+            panOnScroll={false}
+            panOnDrag={false}
+            zoomOnDoubleClick={false}
+            preventScrolling={false}
+            edgesFocusable={false}
+            nodesFocusable={false}
+            draggable={false}
+            zoomOnPinch={false}
+            minZoom={1}
+            maxZoom={1}
+            proOptions={{ hideAttribution: true }}
+            fitView
+            fitViewOptions={{ padding: 0.2 }}
+          ></ReactFlow>
+        </div>
       </ReactFlowProvider>
     </div>
   );
