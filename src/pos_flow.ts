@@ -17,6 +17,10 @@ export type TerminalId = {
   terminalIndex: TerminalIndex;
 };
 
+function TerminalIdToString(t: TerminalId) {
+  return `${t.nodeId}-${t.type}-${t.terminalIndex}`;
+}
+
 export function terminalEquals(a: TerminalId, b: TerminalId) {
   return (
     a.type === b.type &&
@@ -30,6 +34,12 @@ export type Connection = {
   dest: TerminalId;
   condition: Condition;
 };
+
+export function ConnectionToString(conn: Connection) {
+  return `(${TerminalIdToString(conn.source)})->(${TerminalIdToString(
+    conn.dest
+  )})`;
+}
 
 export class PosFlo {
   nodes: Node<NodeDefinition>[];
