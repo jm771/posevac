@@ -5,6 +5,7 @@ import {
   ComponentType,
   GetNodeDefinition,
   NodeDefinition,
+  NodeStyle,
 } from "../node_definitions";
 import { Connection, TerminalType } from "../pos_flow";
 import { Assert, NotNull } from "../util";
@@ -124,7 +125,7 @@ export class GraphEditor {
 
     const node = {
       id,
-      type: defn.style.style,
+      type: defn.style.style === NodeStyle.Constant ? "constant" : "compound",
       position: position,
       data: defn,
     };

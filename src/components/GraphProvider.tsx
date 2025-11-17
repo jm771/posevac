@@ -89,9 +89,13 @@ export function GraphProvider({
     settingsRef.current
   );
 
+  const didInit = useRef(false);
+
   useEffect(() => {
+    if (didInit.current) return;
     MakeInputOutputNodes(level, graphEditor);
-  });
+    didInit.current = true;
+  }, [level, graphEditor]);
 
   return (
     <ReactFlowProvider>
