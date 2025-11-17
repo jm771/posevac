@@ -142,8 +142,8 @@ export function ConstantNode({ id }: { id: string }) {
   // }
 
   return (
-    // <div className="flow-node-constant">
-    <div className="constant-editor-container">
+    <div className="flow-node-constant">
+      {/* <div className="constant-editor-container"> */}
       <input
         ref={inputRef}
         type="number"

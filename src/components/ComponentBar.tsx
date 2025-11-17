@@ -1,11 +1,7 @@
 import { Node, ReactFlow, ReactFlowProvider } from "@xyflow/react";
 import React, { useMemo, useRef } from "react";
 import { Level } from "../levels";
-import {
-  GetNodeDefinition,
-  NodeStyle,
-  RegularComponentType,
-} from "../node_definitions";
+import { GetNodeDefinition, RegularComponentType } from "../node_definitions";
 import { NotNull } from "../util";
 import { CompoundNode, ConstantNode } from "./FlowNodes";
 
@@ -28,8 +24,9 @@ export function SidebarElement({ type }: { type: RegularComponentType }) {
   const nodeDefinition = GetNodeDefinition(type);
   const divRef = useRef<HTMLDivElement | null>(null);
 
-  const nodeType =
-    nodeDefinition.style.style === NodeStyle.Constant ? "constant" : "compound";
+  // const nodeType =
+  //   nodeDefinition.style.style === NodeStyle.Constant ? "constant" : "compound";
+  const nodeType = "compound";
 
   const previewNode: Node = useMemo(() => {
     return {
