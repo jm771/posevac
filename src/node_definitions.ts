@@ -1,6 +1,10 @@
 // It should be easy to add "standard" custom nodes here. But nodes that have customizable settings
 // (e.g. the constant node) will require UI work
 
+import {
+  ConstantNodeSettings,
+  NodeSettingType,
+} from "./contexts/node_settings_context";
 import { Assert, getOrThrow } from "./util";
 
 export enum NodeStyle {
@@ -9,11 +13,6 @@ export enum NodeStyle {
   Output = "output",
   Constant = "constant",
 }
-
-export type ConstantNodeSettings = {
-  repeat: boolean;
-  value: number;
-};
 
 export type StyleData =
   | { style: NodeStyle.Compound; label: string }
@@ -42,6 +41,7 @@ export type NodeDefinitionImpl<TState, TSettings> = {
   nInputs: number;
   nOutputs: number;
   deletable: boolean;
+  settingType: NodeSettingType;
 
   makeState(): TState;
   evaluate(
@@ -62,6 +62,7 @@ function MakeStandardNodeDefinition(
     nInputs: nInputs,
     nOutputs: nOutputs,
     deletable: true,
+    settingType: NodeSettingType.None,
     makeState: () => {},
     evaluate: (_state: unknown, _settings: unknown, args: unknown[]) =>
       func(args),
@@ -80,6 +81,7 @@ const ConstantNodeDefinition: NodeDefinitionImpl<
   nInputs: 0,
   nOutputs: 1,
   deletable: true,
+  settingType: NodeSettingType.Constant,
   makeState: () => {
     return { hasEvaluated: false };
   },

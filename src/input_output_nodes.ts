@@ -1,3 +1,4 @@
+import { NodeSettingType } from "./contexts/node_settings_context";
 import { NodeDefinitionImpl, NodeStyle } from "./node_definitions";
 import { TestValuesContext } from "./nodes";
 
@@ -10,6 +11,7 @@ export function MakeInputNode(
     nInputs: 0,
     nOutputs: 1,
     deletable: false,
+    settingType: NodeSettingType.None,
     makeState: () => {
       return { index: 0 };
     },
@@ -29,6 +31,7 @@ export function MakeOutputNode(
     nInputs: 1,
     nOutputs: 0,
     deletable: false,
+    settingType: NodeSettingType.None,
     makeState: () => {
       return { index: 0 };
     },

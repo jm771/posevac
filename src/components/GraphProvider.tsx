@@ -18,6 +18,10 @@ import {
   NodeCallbackContext,
   NodeCallbacks,
 } from "../contexts/node_callbacks_context";
+import {
+  NodeSetting,
+  NodeSettingsContext,
+} from "../contexts/node_settings_context";
 import { PosFloContext } from "../contexts/pos_flo_context";
 import { MakeInputNode, MakeOutputNode } from "../input_output_nodes";
 import { Level, nInputs, nOutputs } from "../levels";
@@ -87,17 +91,31 @@ export function GraphProvider({
   const flowProps = { nodes, edges, onNodesChange, onEdgesChange };
 
   const edgePathCallbackRef = useRef(new CallbackDict<string, string>());
+  // TODO - should find some way to not rerender - but still need to update
+  // const posfloRef = useRef(new PosFlo(nodes, edges));
+  const settingsRef = useRef(new Map<string, NodeSetting>());
 
   return (
     <ReactFlowProvider>
       <NodeCallbackContext value={nodeCallbackRef.current}>
         <EdgePathContext value={edgePathCallbackRef.current}>
-          <PosFloContext value={new PosFlo(nodes, edges)}>
-            <GraphEditorContext
-              value={new GraphEditor(nodeId, setNodes, setEdges)}
-            >
-              <FlowPropsContext value={flowProps}>{children}</FlowPropsContext>
-            </GraphEditorContext>
+          <PosFloContext value={new PosFlo(nodes, edges, settingsRef.current)}>
+            <NodeSettingsContext value={settingsRef.current}>
+              <GraphEditorContext
+                value={
+                  new GraphEditor(
+                    nodeId,
+                    setNodes,
+                    setEdges,
+                    settingsRef.current
+                  )
+                }
+              >
+                <FlowPropsContext value={flowProps}>
+                  {children}
+                </FlowPropsContext>
+              </GraphEditorContext>
+            </NodeSettingsContext>
           </PosFloContext>
         </EdgePathContext>
       </NodeCallbackContext>

@@ -11,7 +11,6 @@ import {
   GetInputTerminals,
   GetOutputTerminal,
   GetOutputTerminals,
-  NodeId,
 } from "./nodes";
 import { PosFlo } from "./pos_flow";
 import { PCStore, ProgramCounter } from "./program_counter";
@@ -33,21 +32,15 @@ type State =
 export class Evaluator {
   private programCounters: PCStore;
   private nodeStates: Map<string, unknown>;
-  private nodeSettings: Map<NodeId, unknown>;
   private evaluationState: State;
   private posFlo: PosFlo;
   private listener: EvaluationListener;
 
-  constructor(
-    posFlo: PosFlo,
-    listener: EvaluationListener,
-    nodeSettings: Map<NodeId, unknown>
-  ) {
+  constructor(posFlo: PosFlo, listener: EvaluationListener) {
     this.programCounters = new PCStore();
     this.evaluationState = { stage: Stage.Evaluate, nodeIndex: 0 };
     this.listener = listener;
     this.posFlo = posFlo;
-    this.nodeSettings = nodeSettings;
     this.nodeStates = new Map<string, unknown>();
     posFlo.nodes.forEach((n: Node<NodeDefinition>) => {
       this.nodeStates.set(n.id, n.data.makeState());
@@ -90,7 +83,7 @@ export class Evaluator {
 
     const result = node.data.evaluate(
       this.nodeStates.get(node.id),
-      this.nodeSettings.get(node.id),
+      this.posFlo.nodeSettings.get(node.id)?.setting,
       inputValues
     );
 

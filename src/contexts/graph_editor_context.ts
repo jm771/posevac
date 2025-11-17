@@ -8,6 +8,7 @@ import {
 } from "../node_definitions";
 import { Connection, TerminalType } from "../pos_flow";
 import { NotNull } from "../util";
+import { makeDefaultSettings, NodeSetting } from "./node_settings_context";
 
 function edgeMatches(e1: Flow.Edge, e2: Flow.Connection): boolean {
   return (
@@ -42,18 +43,21 @@ export function convertConnection(connection: Flow.Connection): Connection {
 }
 
 export class GraphEditor {
-  nodeIdxRef: React.RefObject<number>;
-  setNodes: Dispatch<SetStateAction<Node<NodeDefinition>[]>>;
-  setEdges: Dispatch<SetStateAction<Flow.Edge<Connection>[]>>;
+  readonly nodeIdxRef: React.RefObject<number>;
+  readonly setNodes: Dispatch<SetStateAction<Node<NodeDefinition>[]>>;
+  readonly setEdges: Dispatch<SetStateAction<Flow.Edge<Connection>[]>>;
+  readonly settings: Map<string, NodeSetting>;
 
   constructor(
     nodeIdxRef: React.RefObject<number>,
     setNodes: Dispatch<SetStateAction<Node<NodeDefinition>[]>>,
-    setEdges: Dispatch<SetStateAction<Flow.Edge<Connection>[]>>
+    setEdges: Dispatch<SetStateAction<Flow.Edge<Connection>[]>>,
+    settings: Map<string, NodeSetting>
   ) {
     this.nodeIdxRef = nodeIdxRef;
     this.setNodes = setNodes;
     this.setEdges = setEdges;
+    this.settings = settings;
   }
 
   AddConnection(flowCon: Flow.Connection) {
@@ -88,11 +92,14 @@ export class GraphEditor {
 
   AddNode(componentType: RegularComponentType, position: XYPosition) {
     const defn = GetNodeDefinition(componentType);
+    const id = `node-${this.nodeIdxRef.current++}`;
+
+    this.settings.set(id, makeDefaultSettings(defn.settingType));
 
     this.setNodes((nds) => [
       ...nds,
       {
-        id: `node-${this.nodeIdxRef.current++}`,
+        id,
         type: defn.style.style,
         position: position,
         data: defn,
@@ -102,6 +109,7 @@ export class GraphEditor {
 
   RemoveNode(node: Flow.Node<NodeDefinition>) {
     this.setNodes((nds) => nds.filter((n) => n.id != node.id));
+    this.settings.delete(node.id);
   }
 }
 

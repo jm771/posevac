@@ -1,6 +1,11 @@
 import { Handle, Position } from "@xyflow/react";
-import React from "react";
+import React, { useCallback, useContext, useRef, useState } from "react";
+import {
+  NodeSettingsContext,
+  NodeSettingType,
+} from "../contexts/node_settings_context";
 import { NodeDefinition, NodeStyle } from "../node_definitions";
+import { Assert, NotNull } from "../util";
 
 const topTerminalOffset = 10;
 const terminalOffset = 30;
@@ -87,21 +92,90 @@ export function CompoundNode({ data }: { data: NodeDefinition }) {
   );
 }
 
-export function ConstantNode({ data }: { data: NodeDefinition }) {
+export function ConstantNode({ id }: { id: string }) {
+  const nodeSettings = useContext(NodeSettingsContext);
+  const settings = NotNull(nodeSettings.get(id));
+  Assert(settings.type === NodeSettingType.Constant);
+
+  const [value, setValue] = useState<number>(settings.setting.value);
+  const [repeat, setRepeat] = useState<boolean>(settings.setting.repeat);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleValueChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      Assert(settings.type === NodeSettingType.Constant);
+      const newValue = e.target.valueAsNumber;
+      settings.setting.value = newValue;
+      setValue(newValue);
+    },
+    [setValue, settings]
+  );
+
+  const handleToggleClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      Assert(settings.type === NodeSettingType.Constant);
+      setRepeat((r) => {
+        settings.setting.repeat = !r;
+        return !r;
+      });
+    },
+    [setRepeat, settings]
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter" || e.key === "Escape") {
+        inputRef.current?.blur();
+      }
+    },
+    []
+  );
+
+  // function handleBlur() {
+  //   setTimeout(() => {
+  //     // Only close if we're not clicking the toggle button
+  //     if (document.activeElement !== toggleRef.current) {
+  //       selectNode(null);
+  //     }
+  //   }, 100);
+  // }
+
   return (
-    <div className="flow-node-constant">
-      {/* {data.constantValue !== undefined && (
-        <div className="flow-node-constant-value">
-          {String(data.constantValue)}
-        </div>
-      )}
-      {data.constantRepeat !== undefined && (
-        <div className="flow-node-constant-mode">
-          {data.constantRepeat ? "repeat" : "once"}
-        </div>
-      )} */}
-      Constant!
-      <Handle type="source" position={Position.Right} id="output-0" />
+    // <div className="flow-node-constant">
+    <div className="constant-editor-container">
+      <input
+        ref={inputRef}
+        type="number"
+        className="constant-value-input"
+        value={value}
+        onChange={handleValueChange}
+        onKeyDown={handleKeyDown}
+        // onBlur={handleBlur}
+      />
+      <button
+        // ref={toggleRef}
+        className={`constant-toggle-button ${repeat ? "repeat" : "once"}`}
+        onClick={handleToggleClick}
+      >
+        {repeat ? "REPEAT" : "ONCE"}
+      </button>
     </div>
+
+    //   {/* {data.constantValue !== undefined && (
+    //     <div className="flow-node-constant-value">
+    //       {String(data.constantValue)}
+    //     </div>
+    //   )}
+    //   {data.constantRepeat !== undefined && (
+    //     <div className="flow-node-constant-mode">
+    //       {data.constantRepeat ? "repeat" : "once"}
+    //     </div>
+    //   )} */}
+    //   <input >{settings.setting.value}</input>
+    //   <button {}></button>
+    //   Constant!
+    //   <Handle type="source" position={Position.Right} id="output-0" />
+    // </div>
   );
 }

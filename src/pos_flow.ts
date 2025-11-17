@@ -1,5 +1,6 @@
 import { Edge, Node } from "@xyflow/react";
 import { Condition } from "./condition";
+import { NodeSetting } from "./contexts/node_settings_context";
 import { NodeDefinition } from "./node_definitions";
 import { NotNull } from "./util";
 
@@ -44,10 +45,16 @@ export function ConnectionToString(conn: Connection) {
 export class PosFlo {
   nodes: Node<NodeDefinition>[];
   connections: Edge<Connection>[];
+  nodeSettings: Map<NodeId, NodeSetting>;
 
-  constructor(nodes: Node<NodeDefinition>[], connections: Edge<Connection>[]) {
+  constructor(
+    nodes: Node<NodeDefinition>[],
+    connections: Edge<Connection>[],
+    nodeSettings: Map<NodeId, NodeSetting>
+  ) {
     this.nodes = nodes;
     this.connections = connections;
+    this.nodeSettings = nodeSettings;
   }
 
   GetConnectionsForTerminal(terminal: TerminalId): Connection[] {
