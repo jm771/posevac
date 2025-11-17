@@ -4,52 +4,45 @@ import { Condition } from "./condition";
 import { EdgeData } from "./edges";
 
 import { GraphEditor } from "./contexts/graph_editor_context";
+import { NodeSetting } from "./contexts/node_settings_context";
 import { ComponentType } from "./node_definitions";
+import { Connection, PosFlo } from "./pos_flow";
 import { Assert, NotNull } from "./util";
-import { PosFlo } from "./pos_flow";
 
 const SERIALIZATION_VERSION = "1.0.1";
+
+export interface SerializedNode {
+  id: string;
+  type: ComponentType;
+  position: { x: number; y: number };
+}
+
+export type SerializedNodeSetting = {
+  node_id: string;
+  setting: NodeSetting;
+};
 
 export interface SerializedGraph {
   version: string;
   levelId: string;
   timestamp: string;
   nodes: SerializedNode[];
-  edges: SerializedEdge[];
+  edges: Connection[];
+  node_settings: SerializedNodeSetting[];
 }
 
-export interface SerializedNode {
-  id: string;
-  type: ComponentType;
-  position: { x: number; y: number };
-  constantValue?: unknown;
-  constantRepeat?: boolean;
-}
-
-export interface SerializedEdge {
-  sourceNodeId: string;
-  sourceTerminalIndex: number;
-  targetNodeId: string;
-  targetTerminalIndex: number;
-  condition: number[];
-}
 export function exportGraph(posFlo: PosFlo): SerializedGraph {
   // Get all user-created nodes (exclude input/output nodes and terminals)
-  const userNodes = context.allNodes
-    .map((cn) => cn.node)
-    .filter((node) => {
-      const nodeType: ComponentType = node.data("type");
-      return nodeType !== "input" && nodeType !== "output";
-    });
+  const userNodes = posFlo.nodes
+    .filter((node) => node.data.deletable); // Could maybe come up with some better way to do this
 
   const serializedNodes: SerializedNode[] = userNodes.map((node) => {
-    const nodeSingular = node as NodeSingular;
     const position = nodeSingular.position();
     const nodeType = nodeSingular.data("type");
 
     const serialized: SerializedNode = {
-      id: nodeSingular.id(),
-      type: nodeType,
+      id: node.id
+      type: node.data.,
       position: { x: position.x, y: position.y },
     };
 

@@ -37,6 +37,7 @@ export enum InputOutputComponentType {
 export type ComponentType = RegularComponentType | InputOutputComponentType;
 
 export type NodeDefinitionImpl<TState, TSettings> = {
+  componentType: ComponentType;
   style: StyleData;
   nInputs: number;
   nOutputs: number;
@@ -52,12 +53,14 @@ export type NodeDefinitionImpl<TState, TSettings> = {
 };
 
 function MakeStandardNodeDefinition(
+  componentType: RegularComponentType,
   label: string,
   nInputs: number,
   nOutputs: number,
   func: (args: unknown[]) => unknown[]
 ): NodeDefinitionImpl<void, void> {
   return {
+    componentType,
     style: { style: NodeStyle.Compound, label: label },
     nInputs: nInputs,
     nOutputs: nOutputs,
@@ -77,6 +80,7 @@ const ConstantNodeDefinition: NodeDefinitionImpl<
   ConstantNodeState,
   ConstantNodeSettings
 > = {
+  componentType: RegularComponentType.Constant,
   style: { style: NodeStyle.Constant },
   nInputs: 0,
   nOutputs: 1,
@@ -99,38 +103,60 @@ const ConstantNodeDefinition: NodeDefinitionImpl<
 
 export type NodeDefinition = NodeDefinitionImpl<unknown, unknown>;
 
-const typeToDefinitionMap = new Map<RegularComponentType, NodeDefinition>([
+const typeToDefinitionMap = new Map<ComponentType, NodeDefinition>(
   [
-    RegularComponentType.Plus,
-    MakeStandardNodeDefinition("+", 2, 1, (arr: unknown[]) => {
-      Assert(typeof arr[0] === "number" && typeof arr[1] === "number");
-      return [arr[0] + arr[1]];
-    }),
-  ],
-  [
-    RegularComponentType.Multiply,
-    MakeStandardNodeDefinition("x", 2, 1, (arr: unknown[]) => {
-      Assert(typeof arr[0] === "number" && typeof arr[1] === "number");
-      return [arr[0] * arr[1]];
-    }),
-  ],
-  [
-    RegularComponentType.Combine,
-    MakeStandardNodeDefinition("combine", 2, 1, (arr: unknown[]) => [arr]),
-  ],
-  [
-    RegularComponentType.Split,
-    MakeStandardNodeDefinition("split", 1, 2, (arr: unknown[]) => {
-      Assert(arr[0] instanceof Array);
-      return arr[0];
-    }),
-  ],
-  [
-    RegularComponentType.Nop,
-    MakeStandardNodeDefinition("nop", 1, 1, (arr: unknown[]) => arr),
-  ],
-  [RegularComponentType.Constant, ConstantNodeDefinition],
-]);
+    MakeStandardNodeDefinition(
+      RegularComponentType.Plus,
+      "+",
+      2,
+      1,
+      (arr: unknown[]) => {
+        Assert(typeof arr[0] === "number" && typeof arr[1] === "number");
+        return [arr[0] + arr[1]];
+      }
+    ),
+
+    MakeStandardNodeDefinition(
+      RegularComponentType.Multiply,
+      "x",
+      2,
+      1,
+      (arr: unknown[]) => {
+        Assert(typeof arr[0] === "number" && typeof arr[1] === "number");
+        return [arr[0] * arr[1]];
+      }
+    ),
+
+    MakeStandardNodeDefinition(
+      RegularComponentType.Combine,
+      "combine",
+      2,
+      1,
+      (arr: unknown[]) => [arr]
+    ),
+
+    MakeStandardNodeDefinition(
+      RegularComponentType.Split,
+      "split",
+      1,
+      2,
+      (arr: unknown[]) => {
+        Assert(arr[0] instanceof Array);
+        return arr[0];
+      }
+    ),
+
+    MakeStandardNodeDefinition(
+      RegularComponentType.Nop,
+      "nop",
+      1,
+      1,
+      (arr: unknown[]) => arr
+    ),
+
+    ConstantNodeDefinition,
+  ].map((x) => [x.componentType, x])
+);
 
 export function GetNodeDefinition(type: ComponentType): NodeDefinition {
   return getOrThrow(typeToDefinitionMap, type);

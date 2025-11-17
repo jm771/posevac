@@ -1,5 +1,9 @@
 import { NodeSettingType } from "./contexts/node_settings_context";
-import { NodeDefinitionImpl, NodeStyle } from "./node_definitions";
+import {
+  InputOutputComponentType,
+  NodeDefinitionImpl,
+  NodeStyle,
+} from "./node_definitions";
 import { TestValuesContext } from "./nodes";
 
 export function MakeInputNode(
@@ -7,6 +11,7 @@ export function MakeInputNode(
   valuesContext: TestValuesContext
 ): NodeDefinitionImpl<void, void> {
   return {
+    componentType: InputOutputComponentType.Input,
     style: { style: NodeStyle.Input },
     nInputs: 0,
     nOutputs: 1,
@@ -27,6 +32,7 @@ export function MakeOutputNode(
   valuesContext: TestValuesContext
 ): NodeDefinitionImpl<void, void> {
   return {
+    componentType: InputOutputComponentType.Output,
     style: { style: NodeStyle.Output },
     nInputs: 1,
     nOutputs: 0,
