@@ -10,12 +10,15 @@ export function EdgeConditon({ edge }: { edge: Edge<Connection> }) {
 
   useEffect(() => {
     if (!divRef.current) return;
+    console.log("a");
 
     const edgeStr = ConnectionToString(NotNull(edge.data));
 
     function callback(center: XYPosition) {
       if (!divRef.current) return;
-      divRef.current.style.transform = `translate(${center.x}, ${center.y}`;
+      // if (!center) return;
+      console.log("b");
+      divRef.current.style.transform = `translate(-50%, -50%) translate(${center.x}px, ${center.y}px)`;
     }
 
     edgeCenterHandlers.subscribe(edgeStr, callback);
@@ -26,7 +29,11 @@ export function EdgeConditon({ edge }: { edge: Edge<Connection> }) {
     };
   }, [edge, edgeCenterHandlers]);
 
-  return <div style={{ position: "absolute" }}>Hello there</div>;
+  return (
+    <div ref={divRef} style={{ position: "absolute" }}>
+      Hi there
+    </div>
+  );
 }
 
 export function EdgeConditionOverlay() {

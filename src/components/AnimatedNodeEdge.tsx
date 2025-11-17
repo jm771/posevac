@@ -31,11 +31,18 @@ export function AnimatedNodeEdge({
     targetPosition,
   });
 
-  const { edgePathHandlers } = useContext(EdgePathContext);
+  const ctx = useContext(EdgePathContext);
 
   useEffect(() => {
-    edgePathHandlers.updateVal(ConnectionToString(NotNull(data)), edgePath);
-  }, [data, edgePath, edgePathHandlers]);
+    ctx.edgePathHandlers.updateVal(ConnectionToString(NotNull(data)), edgePath);
+  }, [data, edgePath, ctx]);
+
+  useEffect(() => {
+    ctx.edgeCenterHandlers.updateVal(ConnectionToString(NotNull(data)), {
+      x: labelX,
+      y: labelY,
+    });
+  }, [data, ctx, labelX, labelY]);
 
   return <BaseEdge id={id} path={edgePath} />;
 }

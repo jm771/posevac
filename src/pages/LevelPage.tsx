@@ -31,7 +31,6 @@ export function LevelPage() {
             <FlowContainer>
               <>
                 <EdgeConditionOverlay />
-                {/* <ConstantNodeOverlay cy={levelContext.editorContext.cy} /> */}
                 <ProgramCounterOverlay
                   evaluationEventSource={levelContext.evaluationListenerHolder}
                 />
