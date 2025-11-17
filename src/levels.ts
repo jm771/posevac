@@ -1,4 +1,4 @@
-import { ComponentType } from "./node_definitions";
+import { RegularComponentType } from "./node_definitions";
 import { Assert } from "./util";
 
 export type TestCase = {
@@ -11,7 +11,7 @@ export interface Level {
   name: string;
   description: string;
   testCases: TestCase[];
-  allowedNodes: ComponentType[];
+  allowedNodes: RegularComponentType[];
 }
 
 const ADDITION: Level = {
@@ -35,7 +35,7 @@ const ADDITION: Level = {
       expectedOutputs: [[3, 7, 11]],
     },
   ],
-  allowedNodes: [ComponentType.Plus],
+  allowedNodes: [RegularComponentType.Plus],
 };
 
 const CUM_SUM: Level = {
@@ -49,7 +49,7 @@ const CUM_SUM: Level = {
       expectedOutputs: [[1, 3, 6, 10, 15]],
     },
   ],
-  allowedNodes: [ComponentType.Plus, ComponentType.Constant],
+  allowedNodes: [RegularComponentType.Plus, RegularComponentType.Constant],
 };
 
 const MULTIPLY: Level = {
@@ -67,10 +67,10 @@ const MULTIPLY: Level = {
     },
   ],
   allowedNodes: [
-    ComponentType.Split,
-    ComponentType.Combine,
-    ComponentType.Constant,
-    ComponentType.Plus,
+    RegularComponentType.Split,
+    RegularComponentType.Combine,
+    RegularComponentType.Constant,
+    RegularComponentType.Plus,
   ],
 };
 
@@ -86,11 +86,11 @@ const FACTORIAL: Level = {
     },
   ],
   allowedNodes: [
-    ComponentType.Split,
-    ComponentType.Combine,
-    ComponentType.Constant,
-    ComponentType.Multiply,
-    ComponentType.Plus,
+    RegularComponentType.Split,
+    RegularComponentType.Combine,
+    RegularComponentType.Constant,
+    RegularComponentType.Multiply,
+    RegularComponentType.Plus,
   ],
 };
 
@@ -109,12 +109,12 @@ const LESS_THAN_FOUR: Level = {
     },
   ],
   allowedNodes: [
-    ComponentType.Split,
-    ComponentType.Combine,
-    ComponentType.Constant,
-    ComponentType.Multiply,
-    ComponentType.Plus,
-    ComponentType.Nop,
+    RegularComponentType.Split,
+    RegularComponentType.Combine,
+    RegularComponentType.Constant,
+    RegularComponentType.Multiply,
+    RegularComponentType.Plus,
+    RegularComponentType.Nop,
   ],
 };
 
@@ -137,12 +137,12 @@ const MAX: Level = {
     },
   ],
   allowedNodes: [
-    ComponentType.Split,
-    ComponentType.Combine,
-    ComponentType.Constant,
-    ComponentType.Multiply,
-    ComponentType.Plus,
-    ComponentType.Nop,
+    RegularComponentType.Split,
+    RegularComponentType.Combine,
+    RegularComponentType.Constant,
+    RegularComponentType.Multiply,
+    RegularComponentType.Plus,
+    RegularComponentType.Nop,
   ],
 };
 

@@ -7,7 +7,6 @@ import { PosFloContext } from "../contexts/pos_flo_context";
 import {
   exportGraph,
   importGraph,
-  loadGraphFromFile,
   SerializedGraph,
 } from "../graph_serialization";
 import { PosFlo } from "../pos_flow";
