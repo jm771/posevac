@@ -117,6 +117,7 @@ export function EdgeConditionWrapper({ edge }: { edge: Edge<Connection> }) {
 
     function callback(center: XYPosition) {
       if (!divRef.current) return;
+      if (!center) return;
 
       divRef.current.style.transform = `translate(${center.x}px, ${center.y}px)`;
     }

@@ -9,10 +9,14 @@ import { SaveLoadControls } from "../components/SaveLoadControls";
 import { LevelSidebar } from "../components/Sidebar";
 import { TestCasePanel } from "../components/TestCasePanel";
 import { LevelContext } from "../editor_context";
+import { SerializedGraph } from "../graph_serialization";
 import { getLevelById } from "../levels";
 
 export function LevelPage() {
   const { levelId } = useParams<{ levelId: string }>();
+
+  const [saveState, setSaveState] = useState<SerializedGraph | null>(null);
+
   if (levelId === undefined) {
     throw Error("missing level id");
   }
@@ -23,7 +27,11 @@ export function LevelPage() {
   const [levelContext] = useState<LevelContext>(new LevelContext(level));
 
   return (
-    <GraphProvider level={level} testValuesContext={levelContext}>
+    <GraphProvider
+      level={level}
+      key={saveState?.timestamp ?? "lol"}
+      saveState={saveState}
+    >
       <div className="container">
         <LevelSidebar level={level} />
         <div className="level-page-main">
@@ -40,7 +48,7 @@ export function LevelPage() {
         </div>
         <aside className="controls-panel" id="controlsPanel">
           <AnimationControls levelContext={levelContext} />
-          <SaveLoadControls levelId={level.id} />
+          <SaveLoadControls levelId={level.id} setSaveState={setSaveState} />
         </aside>
         <TestCasePanel
           level={level}

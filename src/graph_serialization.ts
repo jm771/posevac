@@ -1,5 +1,6 @@
 // Graph Serialization - Save and load graph structures to/from JSON
 
+import { Condition } from "./condition";
 import { GraphEditor } from "./contexts/graph_editor_context";
 import { NodeSetting } from "./contexts/node_settings_context";
 import { ComponentType } from "./node_definitions";
@@ -91,7 +92,7 @@ export function importGraph(
         ...serializedEdge.dest,
         nodeId: getOrThrow(idMap, serializedEdge.dest.nodeId),
       },
-      condition: serializedEdge.condition,
+      condition: new Condition(serializedEdge.condition.matchers),
     });
   }
 

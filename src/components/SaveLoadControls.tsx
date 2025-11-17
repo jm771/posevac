@@ -1,21 +1,9 @@
 import React, { useContext, useRef } from "react";
-import {
-  GraphEditor,
-  GraphEditorContext,
-} from "../contexts/graph_editor_context";
 import { PosFloContext } from "../contexts/pos_flo_context";
-import {
-  exportGraph,
-  importGraph,
-  SerializedGraph,
-} from "../graph_serialization";
+import { exportGraph, SerializedGraph } from "../graph_serialization";
 import { PosFlo } from "../pos_flow";
 
-function loadGraphFromFile(
-  editor: GraphEditor,
-  levelId: string,
-  file: File
-): Promise<void> {
+function loadGraphFromFile(file: File): Promise<SerializedGraph> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
@@ -23,8 +11,7 @@ function loadGraphFromFile(
       try {
         const json = event.target?.result as string;
         const serialized = JSON.parse(json) as SerializedGraph;
-        importGraph(serialized, levelId, editor);
-        resolve();
+        resolve(serialized);
       } catch (error) {
         reject(error);
       }
@@ -39,15 +26,15 @@ function loadGraphFromFile(
 }
 
 function MakeFileSelectedHandler(
-  editor: GraphEditor,
-  levelId: string
+  callback: (g: SerializedGraph) => void
 ): (event: React.ChangeEvent<HTMLInputElement>) => Promise<void> {
   return async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     try {
-      await loadGraphFromFile(editor, levelId, file);
+      const result = await loadGraphFromFile(file);
+      callback(result);
     } catch (error) {
       alert(
         `Error loading graph: ${
@@ -81,9 +68,24 @@ function downloadGraph(posFlo: PosFlo, levelId: string) {
   }
 }
 
-export function SaveLoadControls({ levelId }: { levelId: string }) {
+export function SaveLoadControls({
+  levelId,
+  setSaveState,
+}: {
+  levelId: string;
+  setSaveState: (a: SerializedGraph) => void;
+}) {
   const posFlo = useContext(PosFloContext);
-  const editor = useContext(GraphEditorContext);
+  // const navigate = useNavigate();
+
+  // const loadPageWithGraph = useCallback(
+  //   (serializedGraph: SerializedGraph) => {
+  //     navigate(`/level/${serializedGraph.levelId}`, {
+  //       state: { serializedGraph },
+  //     });
+  //   },
+  //   [navigate, levelId]
+  // );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -108,7 +110,7 @@ export function SaveLoadControls({ levelId }: { levelId: string }) {
         <input
           ref={fileInputRef}
           type="file"
-          onChange={MakeFileSelectedHandler(editor, levelId)}
+          onChange={MakeFileSelectedHandler(setSaveState)}
           id="fileInput"
           accept=".json"
           style={{ display: "none" }}

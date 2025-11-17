@@ -24,9 +24,9 @@ import {
   NodeSettingType,
 } from "../contexts/node_settings_context";
 import { PosFloContext } from "../contexts/pos_flo_context";
+import { importGraph, SerializedGraph } from "../graph_serialization";
 import { Level, nInputs, nOutputs } from "../levels";
 import { InputOutputComponentType, NodeDefinition } from "../node_definitions";
-import { TestValuesContext } from "../nodes";
 import { Connection, PosFlo } from "../pos_flow";
 import { range } from "../util";
 
@@ -58,10 +58,11 @@ function MakeInputOutputNodes(level: Level, graphEditor: GraphEditor) {
 export function GraphProvider({
   children,
   level,
+  saveState,
 }: {
   children: React.JSX.Element;
   level: Level;
-  testValuesContext: TestValuesContext;
+  saveState: SerializedGraph | null;
 }) {
   const nodeCallbackRef = useRef<NodeCallbacks>(new NodeCallbacks());
 
@@ -93,9 +94,14 @@ export function GraphProvider({
 
   useEffect(() => {
     if (didInit.current) return;
-    MakeInputOutputNodes(level, graphEditor);
+
+    if (!saveState) {
+      MakeInputOutputNodes(level, graphEditor);
+    } else {
+      importGraph(saveState, level.id, graphEditor);
+    }
     didInit.current = true;
-  }, [level, graphEditor]);
+  }, [level, graphEditor, saveState]);
 
   return (
     <ReactFlowProvider>
