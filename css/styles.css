@@ -257,8 +257,7 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
     pointer-events: none;
     z-index: 1001;
-    offset-anchor: 50% 50%;
-    /* transform: translate(50%, 50%);  */
+    transform: translate(-50%, -50%); 
 }
 
 .level-selector {
@@ -790,21 +789,22 @@ body {
 }
 
 /* React Flow Handle Styles */
-.handle {
-  border-radius: 50%;
+.react-flow__handle {
   width: 12px !important;
   height: 12px !important;
   border-width: 2px !important;
 }
 
-.handle-left {
+.react-flow__handle-left {
   background-color: #81c784 !important;
   border-color: #81c784 !important;
+  left: 15px !important;
 }
 
-.handle-right {
+.react-flow__handle-right {
   background-color: #ffb74d !important;
   border-color: #ffb74d !important;
+  right: 15px !important;
 }
 
 .react-flow__node {

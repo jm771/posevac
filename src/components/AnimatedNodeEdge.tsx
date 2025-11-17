@@ -23,10 +23,10 @@ export function AnimatedNodeEdge({
 }: EdgeProps<AnimatedNodeEdge>) {
   //   const { getNode, updateNode } = useReactFlow();
   const [edgePath] = getBezierPath({
-    sourceX,
+    sourceX: sourceX - 6,
     sourceY,
     sourcePosition,
-    targetX,
+    targetX: targetX + 6,
     targetY,
     targetPosition,
   });
