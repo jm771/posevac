@@ -1,74 +1,39 @@
-import { Core, EdgeSingular, EventObject } from "cytoscape";
-import React, { useContext, useEffect, useState } from "react";
-import { Condition, Matcher, MATCHER_LABELS } from "../condition";
-import {
-  getEdgeCenter,
-  PanZoomContext,
-  styleForPosition,
-} from "../rendered_position";
+import { Edge, useEdges, XYPosition } from "@xyflow/react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { Matcher, MATCHER_LABELS } from "../condition";
+import { EdgePathContext } from "../contexts/edge_path_context";
+import { Connection, ConnectionToString } from "../pos_flow";
+import { NotNull } from "../util";
 
-export function EdgeConditionOverlay({ cy }: { cy: Core }) {
-  const [selectedEdge, setSelectedEdge] = useState<EdgeSingular | null>(null);
+export function EdgeConditionComponent({ edge }: { edge: Edge<Connection> }) {
   const [, setConditionVersion] = useState<number>(0);
-  const incConditionVersion = () => setConditionVersion((x) => x + 1);
-  const panZoom = useContext(PanZoomContext);
+  const incConditionVersion = useCallback(
+    () => setConditionVersion((x) => x + 1),
+    [setConditionVersion]
+  );
 
-  function nodeTapHandler() {
-    setSelectedEdge(null);
-  }
-
-  function edgeTapHandler(evt: EventObject) {
-    setSelectedEdge(evt.target as EdgeSingular);
-  }
-
-  useEffect(() => {
-    function tapHandler(evt: EventObject) {
-      if (evt.target === cy) {
-        setSelectedEdge(null);
-      }
-    }
-
-    cy.on("tap", "edge", edgeTapHandler);
-    cy.on("tap", tapHandler);
-    cy.on("tap", "node", nodeTapHandler);
-    return () => {
-      cy.off("tap", "edge", edgeTapHandler);
-      cy.off("tap", tapHandler);
-      cy.off("tap", "node", nodeTapHandler);
-    };
-  }, [cy]);
-
-  // Disable panning when overlay is open
-  useEffect(() => {
-    if (selectedEdge) {
-      cy.userPanningEnabled(false);
-    } else {
-      cy.userPanningEnabled(true);
-    }
-
-    return () => {
-      cy.userPanningEnabled(true);
-    };
-  }, [selectedEdge, cy]);
-
-  function handleAddMatcher() {
-    if (!selectedEdge) return;
-    const condition = selectedEdge.data("condition") as Condition;
-    const newMatchers = [...condition.matchers, Matcher.Wild];
-    selectedEdge.data("condition", new Condition(newMatchers));
+  const handleAddMatcher = useCallback(() => {
+    if (!edge) return;
+    const condition = NotNull(edge.data).condition;
+    condition.matchers.push(Matcher.Wild);
     incConditionVersion();
-  }
+  }, [edge, incConditionVersion]);
 
   function handleCycleMatcher(index: number, e: React.MouseEvent) {
     e.stopPropagation();
     e.preventDefault();
     e.nativeEvent.stopImmediatePropagation();
-    if (!selectedEdge) return;
-    const condition = selectedEdge.data("condition") as Condition;
-    const newMatchers = [...condition.matchers];
+    if (!edge) return;
+    const condition = NotNull(edge.data).condition;
+    const matchers = condition.matchers;
     // Cycle: Wild -> Zero -> One -> Wild
-    newMatchers[index] = (newMatchers[index] + 1) % 5;
-    selectedEdge.data("condition", new Condition(newMatchers));
+    matchers[index] = (matchers[index] + 1) % 5;
     incConditionVersion();
   }
 
@@ -76,11 +41,10 @@ export function EdgeConditionOverlay({ cy }: { cy: Core }) {
     e.stopPropagation();
     e.preventDefault();
     e.nativeEvent.stopImmediatePropagation();
-    if (!selectedEdge) return;
-    const condition = selectedEdge.data("condition") as Condition;
+    if (!edge) return;
+    const condition = NotNull(edge.data).condition;
     if (condition.matchers.length === 0) return;
-    const newMatchers = condition.matchers.slice(0, -1);
-    selectedEdge.data("condition", new Condition(newMatchers));
+    condition.matchers = condition.matchers.slice(0, -1);
     incConditionVersion();
   }
 
@@ -97,50 +61,90 @@ export function EdgeConditionOverlay({ cy }: { cy: Core }) {
     e.nativeEvent.stopImmediatePropagation();
   }
 
-  const pos = selectedEdge && getEdgeCenter(selectedEdge);
-  const condition = selectedEdge?.data("condition") as Condition;
+  const condition = NotNull(edge.data).condition;
   return (
-    selectedEdge && (
-      <div
-        className="edge-condition-input"
-        style={styleForPosition(pos!, panZoom)}
-        onMouseDown={stopEvent}
-        onMouseUp={stopEvent}
-        onClick={stopEvent}
-      >
-        <div className="matcher-list">
-          <span>(</span>
-          {condition.matchers.map((matcher, index) => (
-            <React.Fragment key={index}>
-              {index != 0 && <span>,</span>}
-              <button
-                className="matcher-button"
-                onMouseDown={(e) => handleCycleMatcher(index, e)}
-                onClick={stopEvent}
-              >
-                {MATCHER_LABELS[matcher]}
-              </button>
-            </React.Fragment>
-          ))}
-          <span>)</span>
-          <button
-            className="matcher-add-button"
-            onMouseDown={handleAddMatcherClick}
-            onClick={stopEvent}
-          >
-            +
-          </button>
-          {condition.matchers.length > 0 && (
+    <div
+      className="edge-condition-input"
+      onMouseDown={stopEvent}
+      onMouseUp={stopEvent}
+      onClick={stopEvent}
+      style={{ transform: "translate(-50%, -50%) scale(0.7)" }}
+    >
+      <div className="matcher-list">
+        {condition.matchers.length > 0 && <span>(</span>}
+        {condition.matchers.map((matcher, index) => (
+          <React.Fragment key={index}>
+            {index != 0 && <span>,</span>}
             <button
-              className="matcher-remove-button"
-              onMouseDown={handleRemoveLastMatcher}
+              className="matcher-button"
+              onMouseDown={(e) => handleCycleMatcher(index, e)}
               onClick={stopEvent}
             >
-              −
+              {MATCHER_LABELS[matcher]}
             </button>
-          )}
-        </div>
+          </React.Fragment>
+        ))}
+        {condition.matchers.length > 0 && <span>)</span>}
+        <button
+          className="matcher-add-button"
+          onMouseDown={handleAddMatcherClick}
+          onClick={stopEvent}
+        >
+          +
+        </button>
+        {condition.matchers.length > 0 && (
+          <button
+            className="matcher-remove-button"
+            onMouseDown={handleRemoveLastMatcher}
+            onClick={stopEvent}
+          >
+            −
+          </button>
+        )}
       </div>
-    )
+    </div>
+  );
+}
+
+export function EdgeConditionWrapper({ edge }: { edge: Edge<Connection> }) {
+  const divRef = useRef<HTMLDivElement>(null);
+  const { edgeCenterHandlers } = useContext(EdgePathContext);
+
+  useEffect(() => {
+    if (!divRef.current) return;
+
+    const edgeStr = ConnectionToString(NotNull(edge.data));
+
+    function callback(center: XYPosition) {
+      if (!divRef.current) return;
+      if (!center) return;
+
+      divRef.current.style.transform = `translate(${center.x}px, ${center.y}px)`;
+    }
+
+    edgeCenterHandlers.subscribe(edgeStr, callback);
+    callback(edgeCenterHandlers.getLastData(edgeStr));
+
+    return () => {
+      edgeCenterHandlers.unsub(edgeStr, callback);
+    };
+  }, [edge, edgeCenterHandlers]);
+
+  return (
+    <div ref={divRef} style={{ position: "absolute" }}>
+      <EdgeConditionComponent edge={edge} />
+    </div>
+  );
+}
+
+export function EdgeConditionOverlay() {
+  const edges: Edge<Connection>[] = useEdges();
+
+  return (
+    <>
+      {edges.map((edge: Edge<Connection>) => (
+        <EdgeConditionWrapper key={`${edge.id}-overlay`} edge={edge} />
+      ))}
+    </>
   );
 }

@@ -1,52 +1,72 @@
-import { EventObject } from "cytoscape";
-import React, { useEffect, useRef, useState } from "react";
-import { LevelContext } from "../editor_context";
-import { CompNode } from "../nodes";
-import { getRenderedPositionOfNode } from "../rendered_position";
+import { Node, useReactFlow } from "@xyflow/react";
+import React, {
+  MouseEvent,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { GraphEditorContext } from "../contexts/graph_editor_context";
+import { NodeCallbackContext } from "../contexts/node_callbacks_context";
+import { Level } from "../levels";
+import { NodeDefinition } from "../node_definitions";
 import { ComponentBar } from "./ComponentBar";
 import { DeleteArea } from "./DeleteArea";
 
-export function LevelSidebar({ levelContext }: { levelContext: LevelContext }) {
-  const level = levelContext.editorContext.level;
-  const sideBarRef = useRef<HTMLBaseElement | null>(null);
-  const [draggedNode, setDraggedNode] = useState<CompNode | null>(null);
-  const isNodeOverBarRef = useRef<boolean>(false);
-  const [isNodeOverBar, setIsNodeOverBar] = useState<boolean>(false);
+export function LevelSidebar({ level }: { level: Level }) {
+  const sideBarRef = useRef<HTMLElement | null>(null);
+  const [canDelete, setCanDelete] = useState<boolean>(false);
+  const callbacks = useContext(NodeCallbackContext);
+  const graphContext = useContext(GraphEditorContext);
+  const { flowToScreenPosition, getNodesBounds } = useReactFlow();
+
+  const isDeletable = useCallback(
+    (n: Node<NodeDefinition>) => {
+      const rect = sideBarRef.current?.getBoundingClientRect();
+      if (!rect) {
+        return false;
+      }
+
+      const bounds = getNodesBounds([n]);
+      const middle = bounds.x + bounds.width / 2;
+
+      const screenMiddle = flowToScreenPosition({ x: middle, y: 0 }).x;
+
+      return n.data.deletable && screenMiddle < rect.right;
+    },
+    [flowToScreenPosition, getNodesBounds]
+  );
 
   useEffect(() => {
-    function dragHandler(evt: EventObject) {
-      const node: CompNode | null =
-        levelContext.editorContext.tryGetCompNodeForNode(evt.target);
-
-      if (node === null) return;
-
-      setDraggedNode(node);
-      if (!sideBarRef.current) return;
-      const nodePos = getRenderedPositionOfNode(node.node);
-      const sidebarBounds = sideBarRef.current!.getBoundingClientRect();
-      isNodeOverBarRef.current = nodePos.x < sidebarBounds.right;
-      setIsNodeOverBar(isNodeOverBarRef.current);
+    function onDrag(
+      _event: MouseEvent,
+      node: Node<NodeDefinition>,
+      _nodes: Node<NodeDefinition>[]
+    ) {
+      setCanDelete(isDeletable(node));
     }
 
-    function freeHandler(evt: EventObject) {
-      const context = levelContext.editorContext;
-      const node: CompNode | null = context.tryGetCompNodeForNode(evt.target);
-
-      if (node?.deletable && isNodeOverBarRef.current) {
-        context.removeNode(node.getNodeId());
-        isNodeOverBarRef.current = false;
-        setIsNodeOverBar(false);
+    function onDragEnd(
+      _event: MouseEvent,
+      node: Node<NodeDefinition>,
+      _nodes: Node<NodeDefinition>[]
+    ) {
+      if (isDeletable(node)) {
+        graphContext.RemoveNode(node);
       }
+
+      setCanDelete(false);
     }
 
-    levelContext.editorContext.cy.on("free", "node", freeHandler);
-    levelContext.editorContext.cy.on("drag", "node", dragHandler);
+    callbacks.OnNodeDragCallbacks.add(onDrag);
+    callbacks.OnNodeDragEndCallbacks.add(onDragEnd);
 
     return () => {
-      levelContext.editorContext.cy.off("free", "node", freeHandler);
-      levelContext.editorContext.cy.off("drag", "node", dragHandler);
+      callbacks.OnNodeDragCallbacks.delete(onDrag);
+      callbacks.OnNodeDragEndCallbacks.delete(onDragEnd);
     };
-  }, [levelContext]);
+  }, [setCanDelete, callbacks]);
 
   return (
     <aside ref={sideBarRef} className="sidebar" id="sidebar">
@@ -55,8 +75,10 @@ export function LevelSidebar({ levelContext }: { levelContext: LevelContext }) {
         <p id="levelDescription">{level.description}</p>
       </div>
       <h3>Components</h3>
-      <ComponentBar levelContext={levelContext} />
-      <DeleteArea draggedNode={draggedNode} nodeIsOverBar={isNodeOverBar} />
+      <ComponentBar level={level} />
+      <DeleteArea deleteActive={canDelete} />
     </aside>
   );
 }
+
+LevelSidebar.displayName = "LevelSidebar";

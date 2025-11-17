@@ -1,15 +1,76 @@
-import { AnimatePresence } from "framer-motion";
-import React, { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { EdgePathContext } from "../contexts/edge_path_context";
 import {
   CounterAdvanceEvent,
   EvaluationEvent,
   EvaluationEventSource,
   EvaluationListener,
   NodeEvaluateEvent,
-} from "../evaluation";
+} from "../evaluation_listeners";
+import { ConnectionToString } from "../pos_flow";
 import { ProgramCounter } from "../program_counter";
 import { mapIterable } from "../util";
-import { ProgramCounterComponent } from "./ProgramCounterComponent";
+
+function ProgramCounterComponent({ pc }: { pc: ProgramCounter }) {
+  const divRef = useRef<HTMLDivElement>(null);
+  const { edgePathHandlers } = useContext(EdgePathContext);
+
+  const edge = pc.currentEdge;
+
+  useEffect(() => {
+    if (!divRef.current) return;
+
+    const edgeStr = ConnectionToString(edge);
+
+    function callback(edgePath: string) {
+      if (!divRef.current) return;
+      divRef.current.style.offsetPath = `path('${edgePath}')`;
+    }
+
+    edgePathHandlers.subscribe(edgeStr, callback);
+    callback(edgePathHandlers.getLastData(edgeStr));
+
+    return () => {
+      edgePathHandlers.unsub(edgeStr, callback);
+    };
+  }, [edge, edgePathHandlers]);
+
+  return (
+    <motion.div
+      ref={divRef}
+      style={{
+        scale: 1,
+        position: "absolute",
+        ...(pc.currentLocation.nodeId === pc.currentEdge.source.nodeId && {
+          offsetDistance: "0%",
+        }),
+      }}
+      initial={{
+        scale: 0,
+        rotate: -360,
+      }}
+      exit={{
+        scale: 0,
+        rotate: 360,
+      }}
+      className="pc-box"
+      animate={{
+        scale: 1,
+        rotate: 0,
+        ...(pc.currentLocation.nodeId === pc.currentEdge.dest.nodeId && {
+          offsetDistance: ["0%", "100%"],
+        }),
+      }}
+      // angle={0}
+      transition={{
+        duration: 0.6,
+      }}
+    >
+      {JSON.stringify(pc.contents)}
+    </motion.div>
+  );
+}
 
 export function ProgramCounterOverlay({
   evaluationEventSource,
@@ -41,10 +102,10 @@ export function ProgramCounterOverlay({
         });
       },
       onEvaluationEvent: (e: EvaluationEvent) => {
-        if (e == EvaluationEvent.Start) {
+        if (e === EvaluationEvent.Start) {
           setProgramCounters(new Map<string, ProgramCounter>());
         }
-        if (e == EvaluationEvent.End) {
+        if (e === EvaluationEvent.End) {
           setProgramCounters(new Map<string, ProgramCounter>());
         }
       },
@@ -62,12 +123,7 @@ export function ProgramCounterOverlay({
   return (
     <AnimatePresence>
       {mapIterable(programCounters.values(), (pc: ProgramCounter) => (
-        <ProgramCounterComponent
-          key={pc.id}
-          position={pc.currentLocation.position()}
-          text={JSON.stringify(pc.contents)}
-          angle={0}
-        />
+        <ProgramCounterComponent key={pc.id} pc={pc} />
       ))}
     </AnimatePresence>
   );

@@ -1,18 +1,9 @@
 import React from "react";
-import { CompNode } from "../nodes";
 
-export function DeleteArea({
-  draggedNode,
-  nodeIsOverBar,
-}: {
-  draggedNode: CompNode | null;
-  nodeIsOverBar: boolean;
-}) {
+export function DeleteArea({ deleteActive }: { deleteActive: boolean }) {
   return (
     <div
-      className={`delete-zone ${
-        draggedNode?.deletable && nodeIsOverBar ? "active" : ""
-      }`}
+      className={`delete-zone ${deleteActive ? "active" : ""}`}
       id="deleteZone"
     >
       <span>Drop here to delete</span>

@@ -1,34 +1,21 @@
-import { NodeSingular } from "cytoscape";
-import { CompNode } from "./nodes";
-import { ProgramCounter } from "./program_counter";
-import { DefaultMap } from "./util";
-
-export type CounterAdvanceEvent = {
-  programCounterId: string;
-  startTerminal: NodeSingular;
-  endTerminal: NodeSingular;
-};
-
-export type NodeEvaluateEvent = {
-  node: NodeSingular;
-  inputCounters: ProgramCounter[];
-  outputCounters: ProgramCounter[];
-};
-
-export enum EvaluationEvent {
-  Start,
-  End,
-}
-
-export type CounterAdvanceListener = (e: CounterAdvanceEvent) => void;
-export type NodeEvaluateListener = (e: NodeEvaluateEvent) => void;
-export type EvaluationEventListener = (e: EvaluationEvent) => void;
-
-export type EvaluationListener = {
-  onCounterAdvance: CounterAdvanceListener;
-  onNodeEvaluate: NodeEvaluateListener;
-  onEvaluationEvent: EvaluationEventListener;
-};
+import { Node } from "@xyflow/react";
+import {
+  CounterAdvanceEvent,
+  EvaluationEvent,
+  EvaluationListener,
+  NodeEvaluateEvent,
+} from "./evaluation_listeners";
+import { NodeDefinition } from "./node_definitions";
+import {
+  ComputeNode,
+  GetInputTerminals,
+  GetOutputTerminal,
+  GetOutputTerminals,
+  TestValuesContext,
+} from "./nodes";
+import { PosFlo } from "./pos_flow";
+import { PCStore, ProgramCounter } from "./program_counter";
+import { Assert } from "./util";
 
 enum Stage {
   AdvanceCounter,
@@ -43,126 +30,147 @@ type State =
     }
   | { stage: Stage.Evaluate; nodeIndex: number };
 
-export interface EvaluationEventSource {
-  registerListener(l: EvaluationListener): number;
-  deregisterListener(id: number): void;
-}
-
-export class EvaluationListenerHolder
-  implements EvaluationEventSource, EvaluationListener
-{
-  onCounterAdvance(e: CounterAdvanceEvent) {
-    this.listeners.forEach((l) => l.onCounterAdvance(e));
-  }
-
-  onNodeEvaluate(e: NodeEvaluateEvent) {
-    this.listeners.forEach((l) => l.onNodeEvaluate(e));
-  }
-
-  onEvaluationEvent(e: EvaluationEvent) {
-    this.listeners.forEach((l) => l.onEvaluationEvent(e));
-  }
-
-  private listeners: Map<number, EvaluationListener> = new Map<
-    number,
-    EvaluationListener
-  >();
-  private currentListenerId: number = 0;
-
-  registerListener(l: EvaluationListener): number {
-    const id = this.currentListenerId++;
-    this.listeners.set(id, l);
-    return id;
-  }
-
-  deregisterListener(id: number) {
-    this.listeners.delete(id);
-  }
-}
-
 export class Evaluator {
-  private programCounters: Map<string, ProgramCounter>;
-  private terminalToProgramCounters: DefaultMap<
-    string,
-    Map<string, ProgramCounter>
-  >;
-  private nodeEvaluationState: Map<string, unknown>;
-  private state: State;
-  private nodes: Array<CompNode>;
+  private programCounters: PCStore;
+  private nodeStates: Map<string, unknown>;
+  private evaluationState: State;
+  private posFlo: PosFlo;
   private listener: EvaluationListener;
+  private testValues: TestValuesContext;
 
-  constructor(nodes: Array<CompNode>, listener: EvaluationListener) {
-    this.programCounters = new Map<string, ProgramCounter>();
-    this.state = { stage: Stage.Evaluate, nodeIndex: 0 };
-    this.nodeEvaluationState = new Map<string, unknown>();
+  constructor(
+    posFlo: PosFlo,
+    listener: EvaluationListener,
+    testValues: TestValuesContext
+  ) {
+    this.programCounters = new PCStore();
+    this.evaluationState = { stage: Stage.Evaluate, nodeIndex: 0 };
     this.listener = listener;
-    this.terminalToProgramCounters = new DefaultMap<
-      string,
-      Map<string, ProgramCounter>
-    >(() => new Map<string, ProgramCounter>());
-    nodes.forEach((n: CompNode) => {
-      this.nodeEvaluationState.set(n.getNodeId(), n.makeCleanState());
+    this.posFlo = posFlo;
+    this.testValues = testValues;
+    this.nodeStates = new Map<string, unknown>();
+    posFlo.nodes.forEach((n: Node<NodeDefinition>) => {
+      this.nodeStates.set(n.id, n.data.makeState());
     });
-    this.nodes = nodes;
 
     // TODO - sensible place?
     this.listener.onEvaluationEvent(EvaluationEvent.Start);
   }
 
-  evaluateNode(node: CompNode): void {
-    const evaluation = node.evaluate(
-      this.nodeEvaluationState.get(node.getNodeId()),
-      this.terminalToProgramCounters
+  getCountersForNode(node: ComputeNode): ProgramCounter[] | null {
+    const inputCounters = GetInputTerminals(node).map((term) =>
+      this.programCounters.GetByTerminal(term)
     );
 
-    evaluation.pcsDestroyed.forEach((pc) => {
-      this.programCounters.delete(pc.id);
+    Assert(inputCounters.every((arr) => arr.length <= 1));
+    if (inputCounters.some((arr) => arr.length === 0)) {
+      return null;
+    }
+
+    return inputCounters.map((arr) => arr[0]);
+  }
+
+  isAnyOutputBlocked(node: ComputeNode): boolean {
+    return GetOutputTerminals(node)
+      .map((term) => this.programCounters.GetByTerminal(term))
+      .some((arr) => arr.length > 0);
+  }
+
+  evaluateNode(node: Node<NodeDefinition>): void {
+    if (this.isAnyOutputBlocked(node)) {
+      return;
+    }
+
+    const inputCounters = this.getCountersForNode(node);
+    if (inputCounters === null) {
+      return;
+    }
+
+    const inputValues = inputCounters.map((c) => c.contents);
+
+    const result = node.data.evaluate(
+      this.nodeStates.get(node.id),
+      this.posFlo.nodeSettings.get(node.id)?.setting,
+      inputValues,
+      this.testValues
+    );
+
+    let newPcs: ProgramCounter[] = [];
+
+    if (result !== null) {
+      Assert(result.length === node.data.nOutputs);
+
+      newPcs = result.flatMap((val: unknown, idx: number) =>
+        this.posFlo
+          .GetConnectionsForTerminal(GetOutputTerminal(node, idx))
+          .filter((conn) => conn.condition.matches(val))
+          .map((conn) => new ProgramCounter(conn.source, conn, val))
+      );
+    }
+
+    inputCounters.forEach((pc) => {
+      this.programCounters.Remove(pc);
     });
-    evaluation.pcsCreated.forEach((pc) => this.programCounters.set(pc.id, pc));
+
+    newPcs.forEach((pc) => {
+      this.programCounters.Add(pc);
+    });
 
     const event: NodeEvaluateEvent = {
-      node: node.node,
-      inputCounters: evaluation.pcsDestroyed,
-      outputCounters: evaluation.pcsCreated,
+      nodeId: node.id,
+      inputCounters: inputCounters,
+      outputCounters: newPcs,
     };
 
     this.listener.onNodeEvaluate(event);
   }
 
   advanceCounter(pc: ProgramCounter) {
-    const startTerminal = pc.currentLocation;
-    const nextTerminal = pc.tryAdvance(this.terminalToProgramCounters);
-
-    if (nextTerminal != null) {
-      const event: CounterAdvanceEvent = {
-        programCounterId: pc.id,
-        startTerminal: startTerminal,
-        endTerminal: nextTerminal,
-      };
-      this.listener.onCounterAdvance(event);
+    if (pc.currentEdge === null) {
+      return;
     }
+
+    if (this.programCounters.GetByTerminal(pc.currentEdge.dest).length !== 0) {
+      return;
+    }
+
+    const event: CounterAdvanceEvent = {
+      programCounterId: pc.id,
+      startTerminal: pc.currentEdge.source,
+      endTerminal: pc.currentEdge.dest,
+    };
+
+    this.programCounters.AdvancePc(pc);
+    this.listener.onCounterAdvance(event);
   }
 
   step() {
-    switch (this.state.stage) {
+    switch (this.evaluationState.stage) {
       case Stage.AdvanceCounter: {
-        if (this.state.counterIndex >= this.state.counters.length) {
-          this.state = { stage: Stage.Evaluate, nodeIndex: 0 };
+        if (
+          this.evaluationState.counterIndex >=
+          this.evaluationState.counters.length
+        ) {
+          this.evaluationState = { stage: Stage.Evaluate, nodeIndex: 0 };
         } else {
-          this.advanceCounter(this.state.counters[this.state.counterIndex++]);
+          this.advanceCounter(
+            this.evaluationState.counters[this.evaluationState.counterIndex++]
+          );
         }
 
         break;
       }
       case Stage.Evaluate: {
-        if (this.state.nodeIndex >= this.nodes.length) {
-          this.state = {
+        if (this.evaluationState.nodeIndex >= this.posFlo.nodes.length) {
+          this.evaluationState = {
             stage: Stage.AdvanceCounter,
-            counters: Array.from(this.programCounters.values()),
+            counters: Array.from(this.programCounters.GetAll()),
             counterIndex: 0,
           };
         } else {
-          this.evaluateNode(this.nodes[this.state.nodeIndex++]);
+          this.evaluateNode(
+            this.posFlo.nodes[this.evaluationState.nodeIndex++]
+          );
         }
 
         break;
@@ -171,9 +179,9 @@ export class Evaluator {
   }
 
   stride() {
-    const startStage = this.state.stage;
+    const startStage = this.evaluationState.stage;
 
-    while (this.state.stage == startStage) {
+    while (this.evaluationState.stage === startStage) {
       this.step();
     }
   }

@@ -119,13 +119,13 @@ export class Tester implements InputProvider, OutputChecker {
   private allOutputsProduced(): boolean {
     return this.currState.outputIndexes.every(
       (v, idx) =>
-        v == this.testCases[this.currCaseIndex].expectedOutputs[idx].length
+        v === this.testCases[this.currCaseIndex].expectedOutputs[idx].length
     );
   }
 
   private allInputsConsumed(): boolean {
     return this.currState.inputIndexes.every(
-      (v, idx) => v == this.testCases[this.currCaseIndex].inputs[idx].length
+      (v, idx) => v === this.testCases[this.currCaseIndex].inputs[idx].length
     );
   }
 

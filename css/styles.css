@@ -126,12 +126,6 @@ body {
     overflow: hidden;
 }
 
-.cy-container {
-    width: 100%;
-    height: calc(100% - 180px);
-    background-color: var(--bg-primary);
-}
-
 .drag-preview {
     position: fixed;
     pointer-events: none;
@@ -399,7 +393,7 @@ body {
   border-radius: 8px;
   background-color: var(--bg-secondary);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-  z-index: 1000;
+  z-index: 999;
   pointer-events: auto;
 }
 
@@ -534,7 +528,7 @@ body {
   flex-direction: column;
   gap: 4px;
   align-items: center;
-  z-index: 1000;
+  z-index: 999;
   pointer-events: auto;
 }
 
@@ -742,4 +736,116 @@ body {
 
 .test-case-content::-webkit-scrollbar-thumb:hover {
   background: var(--border-color);
+}
+
+.flow-node-compound, .flow-node-input, .flow-node-output, .flow-node-constant {
+  border-radius: 8px;
+  padding: 6px 26px;
+  color: #d4d4d4;
+  font-size: 12px;
+  min-width: 80px;
+  min-height: 60px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flow-node-compound {
+  background-color: #2d2d30;
+  border: 2px solid #ba68c8;
+}
+
+.flow-node-input {
+  background-color: #81c784;
+  color: white;
+}
+
+.flow-node-output {
+  background-color: #e57373;
+  color: white;
+}
+
+.flow-node-constant {
+  background-color: #4a4a4a;
+  border: 2px solid #64b5f6;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.flow-node-constant-value {
+  font-size: 14px;
+}
+
+.flow-node-constant-mode {
+  font-size: 9px;
+  opacity: 0.7;
+}
+
+/* React Flow Handle Styles */
+.react-flow__handle {
+  width: 12px !important;
+  height: 12px !important;
+  border-width: 2px !important;
+}
+
+.react-flow__handle-left {
+  background-color: #81c784 !important;
+  border-color: #81c784 !important;
+  left: 15px !important;
+}
+
+.react-flow__edge {
+  pointer-events: none !important;
+}
+
+.react-flow__handle-right {
+  background-color: #ffb74d !important;
+  border-color: #ffb74d !important;
+  right: 15px !important;
+}
+
+.react-flow__node {
+  overflow: visible !important;
+  z-index: -1 !important;
+}
+
+.flow-container-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.react-flow__node {
+  border-radius: 8px;
+}
+
+.react-flow__edge-path {
+  stroke: var(--accent-blue);
+  stroke-width: 2;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--accent-orange);
+}
+
+.react-flow__edge.animated .react-flow__edge-path {
+  stroke-dasharray: 5;
+  animation: dashdraw 0.5s linear infinite;
+}
+
+@keyframes dashdraw {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
+/* Level Page Layout */
+.level-page-main {
+  position: relative;
+  flex: 1;
+}
+
+.flow-ui-wrapper {
+  width: 100%;
+  height: 100%;
 }

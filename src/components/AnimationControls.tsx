@@ -1,6 +1,7 @@
-import React, { useEffect } from "react";
+import React, { useContext } from "react";
 import { useNavigate } from "react-router";
 import { resetAnimation, stepForward } from "../animation";
+import { PosFloContext } from "../contexts/pos_flo_context";
 import { LevelContext } from "../editor_context";
 
 export function AnimationControls({
@@ -10,24 +11,7 @@ export function AnimationControls({
 }) {
   const navigate = useNavigate();
 
-  useEffect(() => {
-    function panZoomCallback() {
-      // updatePCMarkerForViewportChange(levelContext);
-    }
-
-    function positionCallback() {
-      // TODO Need to make this work again if want program counters to follow dragged nodes
-      // updatePCMarkerForViewportChange(levelContext);
-    }
-
-    levelContext.editorContext.cy.on("pan zoom", panZoomCallback);
-    levelContext.editorContext.cy.on("position", "node", positionCallback);
-
-    return () => {
-      levelContext.editorContext.cy.off("pan zoom", panZoomCallback);
-      levelContext.editorContext.cy.off("position", "node", positionCallback);
-    };
-  }, [levelContext]);
+  const posFlo = useContext(PosFloContext);
 
   return (
     <>
@@ -43,7 +27,7 @@ export function AnimationControls({
         <button
           id="forwardBtn"
           className="control-btn"
-          onClick={() => stepForward(levelContext)}
+          onClick={() => stepForward(levelContext, posFlo)}
         >
           ► Forward
         </button>
