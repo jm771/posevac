@@ -132,18 +132,9 @@ export function ConstantNode({ id }: { id: string }) {
     []
   );
 
-  // function handleBlur() {
-  //   setTimeout(() => {
-  //     // Only close if we're not clicking the toggle button
-  //     if (document.activeElement !== toggleRef.current) {
-  //       selectNode(null);
-  //     }
-  //   }, 100);
-  // }
-
   return (
     <div className="flow-node-constant">
-      {/* <div className="constant-editor-container"> */}
+      <InputTerminals count={0} />
       <input
         ref={inputRef}
         type="number"
@@ -151,31 +142,14 @@ export function ConstantNode({ id }: { id: string }) {
         value={value}
         onChange={handleValueChange}
         onKeyDown={handleKeyDown}
-        // onBlur={handleBlur}
       />
       <button
-        // ref={toggleRef}
         className={`constant-toggle-button ${repeat ? "repeat" : "once"}`}
         onClick={handleToggleClick}
       >
         {repeat ? "REPEAT" : "ONCE"}
       </button>
+      <OutputTerminals count={1} />
     </div>
-
-    //   {/* {data.constantValue !== undefined && (
-    //     <div className="flow-node-constant-value">
-    //       {String(data.constantValue)}
-    //     </div>
-    //   )}
-    //   {data.constantRepeat !== undefined && (
-    //     <div className="flow-node-constant-mode">
-    //       {data.constantRepeat ? "repeat" : "once"}
-    //     </div>
-    //   )} */}
-    //   <input >{settings.setting.value}</input>
-    //   <button {}></button>
-    //   Constant!
-    //   <Handle type="source" position={Position.Right} id="output-0" />
-    // </div>
   );
 }
