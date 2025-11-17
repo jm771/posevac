@@ -126,12 +126,6 @@ body {
     overflow: hidden;
 }
 
-.cy-container {
-    width: 100%;
-    height: calc(100% - 180px);
-    background-color: var(--bg-primary);
-}
-
 .drag-preview {
     position: fixed;
     pointer-events: none;
@@ -849,10 +843,6 @@ body {
 .level-page-main {
   position: relative;
   flex: 1;
-}
-
-.cy-container-hidden {
-  display: none;
 }
 
 .flow-ui-wrapper {
