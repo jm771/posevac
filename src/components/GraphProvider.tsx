@@ -6,7 +6,7 @@ import {
   useNodesState,
   XYPosition,
 } from "@xyflow/react";
-import React, { useEffect, useRef } from "react";
+import React, { SetStateAction, useMemo, useRef } from "react";
 import { CallbackDict } from "../callback_dict";
 import { EdgePathContext } from "../contexts/edge_path_context";
 import { FlowPropsContext } from "../contexts/flow_props_context";
@@ -55,6 +55,56 @@ function MakeInputOutputNodes(level: Level, graphEditor: GraphEditor) {
   });
 }
 
+class InitialState {
+  nodeId = { current: 0 };
+  nodes: Node<NodeDefinition>[] = [];
+  edges: Edge<Connection>[] = [];
+  settings = new Map<string, NodeSetting>();
+}
+
+function loadInitialState(saveState: SerializedGraph | null, level: Level) {
+  const state = new InitialState();
+
+  function setEdges(value: SetStateAction<Edge<Connection>[]>) {
+    if (typeof value === "function") {
+      // functional update
+      state.edges = (value as (prev: Edge<Connection>[]) => Edge<Connection>[])(
+        state.edges
+      );
+    } else {
+      // direct value
+      state.edges = value;
+    }
+  }
+
+  function setNodes(value: SetStateAction<Node<NodeDefinition>[]>) {
+    if (typeof value === "function") {
+      // functional update
+      state.nodes = (
+        value as (prev: Node<NodeDefinition>[]) => Node<NodeDefinition>[]
+      )(state.nodes);
+    } else {
+      // direct value
+      state.nodes = value;
+    }
+  }
+
+  const editor = new GraphEditor(
+    state.nodeId,
+    setNodes,
+    setEdges,
+    state.settings
+  );
+
+  if (saveState != null) {
+    importGraph(saveState, level.id, editor);
+  } else {
+    MakeInputOutputNodes(level, editor);
+  }
+
+  return state;
+}
+
 export function GraphProvider({
   children,
   level,
@@ -64,13 +114,20 @@ export function GraphProvider({
   level: Level;
   saveState: SerializedGraph | null;
 }) {
+  const initalState = useMemo(
+    () => loadInitialState(saveState, level),
+    [saveState, level]
+  );
+
   const nodeCallbackRef = useRef<NodeCallbacks>(new NodeCallbacks());
 
-  const nodeId = useRef<number>(0);
+  const nodeId = useRef<number>(initalState.nodeId.current);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<NodeDefinition>>(
-    []
+    initalState.nodes
   );
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<Connection>>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<Connection>>(
+    initalState.edges
+  );
 
   const flowProps = { nodes, edges, onNodesChange, onEdgesChange };
 
@@ -80,28 +137,25 @@ export function GraphProvider({
   });
   // TODO - should find some way to not rerender - but still need to update
   // const posfloRef = useRef(new PosFlo(nodes, edges));
-  const settingsRef = useRef(new Map<string, NodeSetting>());
+  const settingsRef = useRef(initalState.settings);
 
   // This one too probably
-  const graphEditor = new GraphEditor(
-    nodeId,
-    setNodes,
-    setEdges,
-    settingsRef.current
-  );
+  const graphEditor = useRef<GraphEditor>(
+    new GraphEditor(nodeId, setNodes, setEdges, settingsRef.current)
+  ).current;
 
-  const didInit = useRef(false);
+  // const didInit = useRef(false);
 
-  useEffect(() => {
-    if (didInit.current) return;
+  // useEffect(() => {
+  //   if (didInit.current) return;
 
-    if (!saveState) {
-      MakeInputOutputNodes(level, graphEditor);
-    } else {
-      importGraph(saveState, level.id, graphEditor);
-    }
-    didInit.current = true;
-  }, [level, graphEditor, saveState]);
+  //   if (!saveState) {
+  //     MakeInputOutputNodes(level, graphEditor);
+  //   } else {
+  //     importGraph(saveState, level.id, graphEditor);
+  //   }
+  //   didInit.current = true;
+  // }, [level, graphEditor, saveState]);
 
   return (
     <ReactFlowProvider>

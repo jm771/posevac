@@ -97,6 +97,6 @@ export function importGraph(
   }
 
   for (const setting of serializedGraph.nodeSettings) {
-    editor.settings.set(setting.node_id, setting.setting);
+    editor.settings.set(getOrThrow(idMap, setting.node_id), setting.setting);
   }
 }
