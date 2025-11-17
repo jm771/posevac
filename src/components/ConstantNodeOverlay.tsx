@@ -1,6 +1,6 @@
 import { Core, EventObject, NodeSingular } from "cytoscape";
-import React, { useContext, useEffect, useRef, useState } from "react";
-import { PanZoomContext, styleForPosition } from "../rendered_position";
+import React, { useEffect, useRef, useState } from "react";
+import { styleForPosition } from "../rendered_position";
 
 // export function initializeNodeLabelStyling(cy: Core) {
 // // @ts-ignore - nodeHtmlLabel is added by extension
@@ -39,8 +39,6 @@ export function ConstantNodeOverlay({ cy }: { cy: Core }) {
       return node;
     });
   };
-
-  const panZoom = useContext(PanZoomContext);
 
   useEffect(() => {
     const dataHandler = () => {
