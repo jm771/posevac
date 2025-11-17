@@ -2,6 +2,7 @@ import React, { useContext, useRef } from "react";
 import { PosFloContext } from "../contexts/pos_flo_context";
 import { exportGraph, SerializedGraph } from "../graph_serialization";
 import { PosFlo } from "../pos_flow";
+import { Assert } from "../util";
 
 function loadGraphFromFile(file: File): Promise<SerializedGraph> {
   return new Promise((resolve, reject) => {
@@ -26,7 +27,8 @@ function loadGraphFromFile(file: File): Promise<SerializedGraph> {
 }
 
 function MakeFileSelectedHandler(
-  callback: (g: SerializedGraph) => void
+  callback: (g: SerializedGraph) => void,
+  levelId: string
 ): (event: React.ChangeEvent<HTMLInputElement>) => Promise<void> {
   return async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -34,6 +36,10 @@ function MakeFileSelectedHandler(
 
     try {
       const result = await loadGraphFromFile(file);
+      Assert(
+        result.levelId === levelId,
+        `Graph is for level "${result.levelId}" but current level is "${levelId}"`
+      );
       callback(result);
     } catch (error) {
       alert(
@@ -76,6 +82,7 @@ export function SaveLoadControls({
   setSaveState: (a: SerializedGraph) => void;
 }) {
   const posFlo = useContext(PosFloContext);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -99,7 +106,7 @@ export function SaveLoadControls({
         <input
           ref={fileInputRef}
           type="file"
-          onChange={MakeFileSelectedHandler(setSaveState)}
+          onChange={MakeFileSelectedHandler(setSaveState, levelId)}
           id="fileInput"
           accept=".json"
           style={{ display: "none" }}

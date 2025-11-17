@@ -1,6 +1,7 @@
 import { Handle, Position } from "@xyflow/react";
 import React, { useCallback, useContext, useRef, useState } from "react";
 import {
+  IONodeSetting,
   NodeSettingsContext,
   NodeSettingType,
 } from "../contexts/node_settings_context";
@@ -58,7 +59,15 @@ function OutputTerminals({ count }: { count: number }) {
   );
 }
 
-export function CompoundNode({ data }: { data: NodeDefinition }) {
+export function CompoundNode({
+  id,
+  data,
+}: {
+  id: string;
+  data: NodeDefinition;
+}) {
+  const settings = useContext(NodeSettingsContext);
+
   const nodesToFit = Math.max(data.nInputs, data.nOutputs);
   const heightTotalOffset = topTerminalOffset * 2 + 24; //12px in css
   const height = (nodesToFit - 1) * terminalOffset + heightTotalOffset;
@@ -69,10 +78,10 @@ export function CompoundNode({ data }: { data: NodeDefinition }) {
       label = data.style.label;
       break;
     case NodeStyle.Input:
-      label = "Input";
+      label = `Input ${(settings.get(id)?.setting as IONodeSetting).index}`;
       break;
     case NodeStyle.Output:
-      label = "Output";
+      label = `Output ${(settings.get(id)?.setting as IONodeSetting).index}`;
       break;
     case NodeStyle.Constant:
   }
