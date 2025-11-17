@@ -90,7 +90,10 @@ export function GraphProvider({
 
   const flowProps = { nodes, edges, onNodesChange, onEdgesChange };
 
-  const edgePathCallbackRef = useRef(new CallbackDict<string, string>());
+  const edgePathCallbackRef = useRef({
+    edgePathHandlers: new CallbackDict<string, string>(),
+    edgeCenterHandlers: new CallbackDict<string, XYPosition>(),
+  });
   // TODO - should find some way to not rerender - but still need to update
   // const posfloRef = useRef(new PosFlo(nodes, edges));
   const settingsRef = useRef(new Map<string, NodeSetting>());

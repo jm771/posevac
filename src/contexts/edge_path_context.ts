@@ -1,6 +1,12 @@
+import { XYPosition } from "@xyflow/react";
 import { createContext } from "react";
 import { CallbackDict } from "../callback_dict";
 
-export const EdgePathContext = createContext<CallbackDict<string, string>>(
-  null as unknown as CallbackDict<string, string>
+export type EdgePathInfo = {
+  edgePathHandlers: CallbackDict<string, string>;
+  edgeCenterHandlers: CallbackDict<string, XYPosition>;
+};
+
+export const EdgePathContext = createContext<EdgePathInfo>(
+  null as unknown as EdgePathInfo
 );

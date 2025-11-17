@@ -22,7 +22,7 @@ export function AnimatedNodeEdge({
   targetPosition,
 }: EdgeProps<AnimatedNodeEdge>) {
   //   const { getNode, updateNode } = useReactFlow();
-  const [edgePath] = getBezierPath({
+  const [edgePath, labelX, labelY] = getBezierPath({
     sourceX: sourceX - 6,
     sourceY,
     sourcePosition,
@@ -31,7 +31,7 @@ export function AnimatedNodeEdge({
     targetPosition,
   });
 
-  const edgePathHandlers = useContext(EdgePathContext);
+  const { edgePathHandlers } = useContext(EdgePathContext);
 
   useEffect(() => {
     edgePathHandlers.updateVal(ConnectionToString(NotNull(data)), edgePath);

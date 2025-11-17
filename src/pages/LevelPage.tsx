@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { AnimationControls } from "../components/AnimationControls";
+import { EdgeConditionOverlay } from "../components/EdgeConditionOverlay";
 import { FlowContainer } from "../components/FlowContainer";
 import { GraphProvider } from "../components/GraphProvider";
 import { ProgramCounterOverlay } from "../components/ProgramCounterOverlay";
@@ -29,7 +30,7 @@ export function LevelPage() {
           <div className="flow-ui-wrapper">
             <FlowContainer>
               <>
-                {/* <EdgeConditionOverlay cy={levelContext.editorContext.cy} /> */}
+                <EdgeConditionOverlay />
                 {/* <ConstantNodeOverlay cy={levelContext.editorContext.cy} /> */}
                 <ProgramCounterOverlay
                   evaluationEventSource={levelContext.evaluationListenerHolder}

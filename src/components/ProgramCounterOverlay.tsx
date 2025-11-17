@@ -14,7 +14,7 @@ import { mapIterable } from "../util";
 
 function ProgramCounterComponent({ pc }: { pc: ProgramCounter }) {
   const divRef = useRef<HTMLDivElement>(null);
-  const edgePathHandlers = useContext(EdgePathContext);
+  const { edgePathHandlers } = useContext(EdgePathContext);
 
   const edge = pc.currentEdge;
 
