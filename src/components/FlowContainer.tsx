@@ -87,6 +87,7 @@ export function FlowContainer({ children }: { children: React.JSX.Element }) {
         defaultViewport={{ x: 500, y: 100, zoom: 1 }}
         // maxZoom={2}
         nodeOrigin={[0.5, 0.5]}
+        zoomOnDoubleClick={false}
       >
         <Background />
         <Controls />

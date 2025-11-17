@@ -12,9 +12,6 @@ import { Connection, ConnectionToString } from "../pos_flow";
 import { NotNull } from "../util";
 
 export function EdgeConditionComponent({ edge }: { edge: Edge<Connection> }) {
-  // function edgeTapHandler(evt: EventObject) {
-  //   setSelectedEdge(evt.target as EdgeSingular);
-  // }
   const [, setConditionVersion] = useState<number>(0);
   const incConditionVersion = useCallback(
     () => setConditionVersion((x) => x + 1),
@@ -115,14 +112,12 @@ export function EdgeConditionWrapper({ edge }: { edge: Edge<Connection> }) {
 
   useEffect(() => {
     if (!divRef.current) return;
-    console.log("a");
 
     const edgeStr = ConnectionToString(NotNull(edge.data));
 
     function callback(center: XYPosition) {
       if (!divRef.current) return;
-      // if (!center) return;
-      console.log("b");
+
       divRef.current.style.transform = `translate(${center.x}px, ${center.y}px)`;
     }
 
