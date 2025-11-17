@@ -38,32 +38,6 @@ import { mapIterable } from "../util";
 // }
 
 function ProgramCounterComponent({ pc }: { pc: ProgramCounter }) {
-  // const rf = useReactFlow();
-  // rf.get
-  // const { getNode } = useReactFlow();
-
-  // const source = NotNull(getNode(edge.source));
-  // const target = NotNull(getNode(edge.target));
-  // // if (!source || !target) return null;
-
-  // const sourceHandle = source.position;
-  // const targetHandle = target.position;
-
-  // const [edgePath] = getBezierPath({
-  //   sourceX: sourceHandle.x, //+ source.width! / 2,
-  //   sourceY: sourceHandle.y, //+ source.height! / 2,
-  //   targetX: targetHandle.x, //+ target.width! / 2,
-  //   targetY: targetHandle.y, //+ target.height! / 2,
-  //   // sourcePosition: 'right',
-  //   // targetPosition: 'left',
-  // });
-
-  //   return { path, labelX, labelY };
-  // }
-
-  //   const [edgePath] = getBezierPath(edge);
-  // console.log(edgePath);
-
   const divRef = useRef<HTMLDivElement>(null);
   const edgePathHandlers = useContext(EdgePathContext);
 
@@ -75,38 +49,21 @@ function ProgramCounterComponent({ pc }: { pc: ProgramCounter }) {
 
     const edgeStr = ConnectionToString(edge);
 
-    console.log("a");
-    // const node = document.getElementById(
-    //   `pc-${ConnectionToString(NotNull(data))}`
-    // ) as HTMLElement;
     function callback(edgePath: string) {
       if (!divRef.current) return;
-      console.log("b");
       divRef.current.style.offsetPath = `path('${edgePath}')`;
     }
-
-    const keyframes = [{ offsetDistance: "0%" }, { offsetDistance: "100%" }];
-    const animation = divRef.current.animate(keyframes, {
-      duration: 2000,
-      direction: "alternate",
-      iterations: Infinity,
-    });
 
     edgePathHandlers.subscribe(edgeStr, callback);
     callback(edgePathHandlers.getLastData(edgeStr));
 
     return () => {
-      animation.cancel();
       edgePathHandlers.unsub(edgeStr, callback);
     };
   }, []);
 
-  // const id =
-  //   pc.currentEdge != null ? ConnectionToString(pc.currentEdge) : pc.id;
-
   return (
     <motion.div
-      // id={`pc-${id}`}
       ref={divRef}
       style={{
         position: "absolute",
@@ -114,11 +71,11 @@ function ProgramCounterComponent({ pc }: { pc: ProgramCounter }) {
         // transform: `translate(${sourceHandle.x}px, ${sourceHandle.y}px)`,
       }}
       className="pc-box"
-      // animate={{ offsetDistance: ["0%", "100%"] }}
-      // transition={{
-      //   repeat: Infinity,
-      //   duration: 3,
-      // }}
+      animate={{ offsetDistance: ["0%", "100%"] }}
+      transition={{
+        repeat: Infinity,
+        duration: 3,
+      }}
     >
       Hi There!
     </motion.div>
