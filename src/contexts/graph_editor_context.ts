@@ -1,13 +1,13 @@
-import Flow, { addEdge, Node, XYPosition } from "@xyflow/react";
+import Flow, { Node, XYPosition } from "@xyflow/react";
 import React, { createContext, Dispatch, SetStateAction } from "react";
 import { Condition } from "../condition";
 import {
+  ComponentType,
   GetNodeDefinition,
   NodeDefinition,
-  RegularComponentType,
 } from "../node_definitions";
 import { Connection, TerminalType } from "../pos_flow";
-import { NotNull } from "../util";
+import { Assert, NotNull } from "../util";
 import { makeDefaultSettings, NodeSetting } from "./node_settings_context";
 
 function edgeMatches(e1: Flow.Edge, e2: Flow.Connection): boolean {
@@ -17,6 +17,15 @@ function edgeMatches(e1: Flow.Edge, e2: Flow.Connection): boolean {
     e1.target === e2.target &&
     e1.targetHandle === e2.targetHandle
   );
+}
+
+function makeFlowCon(con: Connection): Flow.Connection {
+  return {
+    source: con.source.nodeId,
+    target: con.dest.nodeId,
+    sourceHandle: `output-${con.source.terminalIndex}`,
+    targetHandle: `input-${con.dest.terminalIndex}`,
+  };
 }
 
 export function convertConnection(connection: Flow.Connection): Connection {
@@ -43,9 +52,9 @@ export function convertConnection(connection: Flow.Connection): Connection {
 }
 
 export class GraphEditor {
-  readonly nodeIdxRef: React.RefObject<number>;
-  readonly setNodes: Dispatch<SetStateAction<Node<NodeDefinition>[]>>;
-  readonly setEdges: Dispatch<SetStateAction<Flow.Edge<Connection>[]>>;
+  private readonly nodeIdxRef: React.RefObject<number>;
+  private readonly setNodes: Dispatch<SetStateAction<Node<NodeDefinition>[]>>;
+  private readonly setEdges: Dispatch<SetStateAction<Flow.Edge<Connection>[]>>;
   readonly settings: Map<string, NodeSetting>;
 
   constructor(
@@ -60,8 +69,22 @@ export class GraphEditor {
     this.settings = settings;
   }
 
-  AddConnection(flowCon: Flow.Connection) {
-    this.setEdges((eds) => addEdge(flowCon, eds));
+  AddBusinessConnection(con: Connection) {
+    const newFlowCon = makeFlowCon(con);
+
+    this.setEdges((eds) => {
+      Assert(!eds.some((e) => edgeMatches(e, newFlowCon)));
+
+      return [
+        ...eds,
+        {
+          id: `edge-${this.nodeIdxRef.current++}`,
+          type: "animated",
+          ...newFlowCon,
+          data: con,
+        },
+      ];
+    });
   }
 
   RemoveConnection(flowCon: Flow.Connection) {
@@ -90,21 +113,25 @@ export class GraphEditor {
     });
   }
 
-  AddNode(componentType: RegularComponentType, position: XYPosition) {
+  AddNode(
+    componentType: ComponentType,
+    position: XYPosition
+  ): Node<NodeDefinition> {
     const defn = GetNodeDefinition(componentType);
     const id = `node-${this.nodeIdxRef.current++}`;
 
     this.settings.set(id, makeDefaultSettings(defn.settingType));
 
-    this.setNodes((nds) => [
-      ...nds,
-      {
-        id,
-        type: defn.style.style,
-        position: position,
-        data: defn,
-      },
-    ]);
+    const node = {
+      id,
+      type: defn.style.style,
+      position: position,
+      data: defn,
+    };
+
+    this.setNodes((nds) => [...nds, node]);
+
+    return node;
   }
 
   RemoveNode(node: Flow.Node<NodeDefinition>) {

@@ -1,4 +1,4 @@
-import Flow, {
+import {
   Edge,
   Node,
   ReactFlowProvider,
@@ -6,7 +6,7 @@ import Flow, {
   useNodesState,
   XYPosition,
 } from "@xyflow/react";
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { CallbackDict } from "../callback_dict";
 import { EdgePathContext } from "../contexts/edge_path_context";
 import { FlowPropsContext } from "../contexts/flow_props_context";
@@ -21,60 +21,43 @@ import {
 import {
   NodeSetting,
   NodeSettingsContext,
+  NodeSettingType,
 } from "../contexts/node_settings_context";
 import { PosFloContext } from "../contexts/pos_flo_context";
-import { MakeInputNode, MakeOutputNode } from "../input_output_nodes";
 import { Level, nInputs, nOutputs } from "../levels";
-import { NodeDefinition, NodeStyle } from "../node_definitions";
+import { InputOutputComponentType, NodeDefinition } from "../node_definitions";
 import { TestValuesContext } from "../nodes";
 import { Connection, PosFlo } from "../pos_flow";
 import { range } from "../util";
 
-function MakeNodeFromDefn(
-  ref: { current: number },
-  defn: NodeDefinition,
-  position: XYPosition
-) {
-  return {
-    id: `node-${ref.current++}`,
-    type: defn.style.style === NodeStyle.Constant ? "constant" : "compound",
-    position: position,
-    data: defn,
-  };
-}
+function MakeInputOutputNodes(level: Level, graphEditor: GraphEditor) {
+  range(nInputs(level)).forEach((idx) => {
+    const newNode = graphEditor.AddNode(InputOutputComponentType.Input, {
+      x: -300,
+      y: 200 * idx,
+    });
+    graphEditor.settings.set(newNode.id, {
+      type: NodeSettingType.Input,
+      setting: { index: idx },
+    });
+  });
 
-function MakeInputOutputNodes(
-  ref: { current: number },
-  level: Level,
-  testValuesContext: TestValuesContext
-): Flow.Node<NodeDefinition>[] {
-  const ret: Flow.Node<NodeDefinition>[] = [];
+  range(nOutputs(level)).forEach((idx) => {
+    const newNode = graphEditor.AddNode(InputOutputComponentType.Output, {
+      x: 300,
+      y: 200 * idx,
+    });
 
-  range(nInputs(level)).forEach((idx) =>
-    ret.push(
-      MakeNodeFromDefn(ref, MakeInputNode(idx, testValuesContext), {
-        x: -300,
-        y: 200 * idx,
-      })
-    )
-  );
-
-  range(nOutputs(level)).forEach((idx) =>
-    ret.push(
-      MakeNodeFromDefn(ref, MakeOutputNode(idx, testValuesContext), {
-        x: 300,
-        y: 200 * idx,
-      })
-    )
-  );
-
-  return ret;
+    graphEditor.settings.set(newNode.id, {
+      type: NodeSettingType.Output,
+      setting: { index: idx },
+    });
+  });
 }
 
 export function GraphProvider({
   children,
   level,
-  testValuesContext,
 }: {
   children: React.JSX.Element;
   level: Level;
@@ -84,7 +67,7 @@ export function GraphProvider({
 
   const nodeId = useRef<number>(0);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<NodeDefinition>>(
-    MakeInputOutputNodes(nodeId, level, testValuesContext)
+    []
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<Connection>>([]);
 
@@ -98,22 +81,25 @@ export function GraphProvider({
   // const posfloRef = useRef(new PosFlo(nodes, edges));
   const settingsRef = useRef(new Map<string, NodeSetting>());
 
+  // This one too probably
+  const graphEditor = new GraphEditor(
+    nodeId,
+    setNodes,
+    setEdges,
+    settingsRef.current
+  );
+
+  useEffect(() => {
+    MakeInputOutputNodes(level, graphEditor);
+  });
+
   return (
     <ReactFlowProvider>
       <NodeCallbackContext value={nodeCallbackRef.current}>
         <EdgePathContext value={edgePathCallbackRef.current}>
           <PosFloContext value={new PosFlo(nodes, edges, settingsRef.current)}>
             <NodeSettingsContext value={settingsRef.current}>
-              <GraphEditorContext
-                value={
-                  new GraphEditor(
-                    nodeId,
-                    setNodes,
-                    setEdges,
-                    settingsRef.current
-                  )
-                }
-              >
+              <GraphEditorContext value={graphEditor}>
                 <FlowPropsContext value={flowProps}>
                   {children}
                 </FlowPropsContext>

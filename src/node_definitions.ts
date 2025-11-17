@@ -3,8 +3,10 @@
 
 import {
   ConstantNodeSettings,
+  IONodeSetting,
   NodeSettingType,
 } from "./contexts/node_settings_context";
+import { TestValuesContext } from "./nodes";
 import { Assert, getOrThrow } from "./util";
 
 export enum NodeStyle {
@@ -48,7 +50,8 @@ export type NodeDefinitionImpl<TState, TSettings> = {
   evaluate(
     state: TState,
     settings: TSettings,
-    args: unknown[]
+    args: unknown[],
+    testValues: TestValuesContext
   ): unknown[] | null;
 };
 
@@ -67,8 +70,12 @@ function MakeStandardNodeDefinition(
     deletable: true,
     settingType: NodeSettingType.None,
     makeState: () => {},
-    evaluate: (_state: unknown, _settings: unknown, args: unknown[]) =>
-      func(args),
+    evaluate: (
+      _state: unknown,
+      _settings: unknown,
+      args: unknown[],
+      _testValues: TestValuesContext
+    ) => func(args),
   };
 }
 
@@ -92,12 +99,55 @@ const ConstantNodeDefinition: NodeDefinitionImpl<
   evaluate: (
     state: ConstantNodeState,
     settings: ConstantNodeSettings,
-    _args: unknown[]
+    _args: unknown[],
+    _testValues: TestValuesContext
   ) => {
     const ret =
       !state.hasEvaluated || settings.repeat ? [settings.value] : null;
     state.hasEvaluated = true;
     return ret;
+  },
+};
+
+const InputNodeDefinition: NodeDefinitionImpl<void, IONodeSetting> = {
+  componentType: InputOutputComponentType.Input,
+  style: { style: NodeStyle.Input },
+  nInputs: 0,
+  nOutputs: 1,
+  deletable: false,
+  settingType: NodeSettingType.None,
+  makeState: () => {
+    return { index: 0 };
+  },
+  evaluate: (
+    _state: void,
+    settings: IONodeSetting,
+    _args: unknown[],
+    testValues: TestValuesContext
+  ) => {
+    const ret = testValues.getInputProvider().getInput(settings.index);
+    return ret === null ? null : [ret];
+  },
+};
+
+const OutputNodeDefinition: NodeDefinitionImpl<void, IONodeSetting> = {
+  componentType: InputOutputComponentType.Output,
+  style: { style: NodeStyle.Output },
+  nInputs: 1,
+  nOutputs: 0,
+  deletable: false,
+  settingType: NodeSettingType.None,
+  makeState: () => {
+    return { index: 0 };
+  },
+  evaluate: (
+    _state: void,
+    settings: IONodeSetting,
+    args: unknown[],
+    testValues: TestValuesContext
+  ) => {
+    testValues.getOutputChecker().checkOutput(settings.index, args[0]);
+    return [];
   },
 };
 
@@ -155,6 +205,8 @@ const typeToDefinitionMap = new Map<ComponentType, NodeDefinition>(
     ),
 
     ConstantNodeDefinition,
+    InputNodeDefinition,
+    OutputNodeDefinition,
   ].map((x) => [x.componentType, x])
 );
 

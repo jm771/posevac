@@ -1,7 +1,7 @@
 import { Node, ReactFlow, ReactFlowProvider } from "@xyflow/react";
 import React, { useMemo, useRef } from "react";
 import { Level } from "../levels";
-import { GetNodeDefinition, RegularComponentType } from "../node_definitions";
+import { ComponentType, GetNodeDefinition } from "../node_definitions";
 import { NotNull } from "../util";
 import { CompoundNode, ConstantNode } from "./FlowNodes";
 
@@ -20,7 +20,7 @@ export function ComponentBar({ level }: { level: Level }) {
   );
 }
 
-export function SidebarElement({ type }: { type: RegularComponentType }) {
+export function SidebarElement({ type }: { type: ComponentType }) {
   const nodeDefinition = GetNodeDefinition(type);
   const divRef = useRef<HTMLDivElement | null>(null);
 

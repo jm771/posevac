@@ -18,7 +18,7 @@ export function stepForward(levelContext: LevelContext, posFlo: PosFlo) {
     levelContext.evaluator = new Evaluator(
       posFlo,
       levelContext.evaluationListenerHolder,
-      new Map<NodeId, unknown>()
+      levelContext
     );
   }
 

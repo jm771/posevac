@@ -40,7 +40,7 @@ export function LevelPage() {
         </div>
         <aside className="controls-panel" id="controlsPanel">
           <AnimationControls levelContext={levelContext} />
-          <SaveLoadControls />
+          <SaveLoadControls levelId={level.id} />
         </aside>
         <TestCasePanel
           level={level}

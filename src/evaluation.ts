@@ -11,6 +11,7 @@ import {
   GetInputTerminals,
   GetOutputTerminal,
   GetOutputTerminals,
+  TestValuesContext,
 } from "./nodes";
 import { PosFlo } from "./pos_flow";
 import { PCStore, ProgramCounter } from "./program_counter";
@@ -35,12 +36,18 @@ export class Evaluator {
   private evaluationState: State;
   private posFlo: PosFlo;
   private listener: EvaluationListener;
+  private testValues: TestValuesContext;
 
-  constructor(posFlo: PosFlo, listener: EvaluationListener) {
+  constructor(
+    posFlo: PosFlo,
+    listener: EvaluationListener,
+    testValues: TestValuesContext
+  ) {
     this.programCounters = new PCStore();
     this.evaluationState = { stage: Stage.Evaluate, nodeIndex: 0 };
     this.listener = listener;
     this.posFlo = posFlo;
+    this.testValues = testValues;
     this.nodeStates = new Map<string, unknown>();
     posFlo.nodes.forEach((n: Node<NodeDefinition>) => {
       this.nodeStates.set(n.id, n.data.makeState());
@@ -84,7 +91,8 @@ export class Evaluator {
     const result = node.data.evaluate(
       this.nodeStates.get(node.id),
       this.posFlo.nodeSettings.get(node.id)?.setting,
-      inputValues
+      inputValues,
+      this.testValues
     );
 
     let newPcs: ProgramCounter[] = [];

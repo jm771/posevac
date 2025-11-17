@@ -1,7 +1,13 @@
 import { createContext } from "react";
 
+export type IONodeSetting = {
+  index: number;
+};
+
 export enum NodeSettingType {
   Constant = "constant",
+  Input = "input",
+  Output = "output",
   None = "none",
 }
 
@@ -16,6 +22,8 @@ export function makeDefaultSettings(type: NodeSettingType): NodeSetting {
         },
       };
     case NodeSettingType.None:
+    case NodeSettingType.Input:
+    case NodeSettingType.Output:
       return {
         type: NodeSettingType.None,
         setting: null,
@@ -33,7 +41,9 @@ export type NodeSetting =
       type: NodeSettingType.Constant;
       setting: ConstantNodeSettings;
     }
-  | { type: NodeSettingType.None; setting: null };
+  | { type: NodeSettingType.None; setting: null }
+  | { type: NodeSettingType.Input; setting: IONodeSetting }
+  | { type: NodeSettingType.Output; setting: IONodeSetting };
 
 export const NodeSettingsContext = createContext<Map<string, NodeSetting>>(
   null as unknown as Map<string, NodeSetting>

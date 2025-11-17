@@ -12,7 +12,7 @@ import React, { useCallback, useContext, useRef } from "react";
 import { FlowPropsContext } from "../contexts/flow_props_context";
 import { GraphEditorContext } from "../contexts/graph_editor_context";
 import { NodeCallbackContext } from "../contexts/node_callbacks_context";
-import { RegularComponentType } from "../node_definitions";
+import { ComponentType } from "../node_definitions";
 import { AnimatedNodeEdge } from "./AnimatedNodeEdge";
 import { CompoundNode, ConstantNode } from "./FlowNodes";
 
@@ -49,7 +49,7 @@ export function FlowContainer({ children }: { children: React.JSX.Element }) {
 
       const componentType = e.dataTransfer.getData(
         "component-type"
-      ) as RegularComponentType;
+      ) as ComponentType;
 
       const offsetX = parseFloat(e.dataTransfer.getData("offsetX"));
       const offsetY = parseFloat(e.dataTransfer.getData("offsetY"));

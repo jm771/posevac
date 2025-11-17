@@ -1,15 +1,12 @@
 // Graph Serialization - Save and load graph structures to/from JSON
-import { NodeSingular } from "cytoscape";
-import { Condition } from "./condition";
-import { EdgeData } from "./edges";
 
 import { GraphEditor } from "./contexts/graph_editor_context";
 import { NodeSetting } from "./contexts/node_settings_context";
 import { ComponentType } from "./node_definitions";
 import { Connection, PosFlo } from "./pos_flow";
-import { Assert, NotNull } from "./util";
+import { Assert, getOrThrow, mapIterable, NotNull } from "./util";
 
-const SERIALIZATION_VERSION = "1.0.1";
+const SERIALIZATION_VERSION = "1.0.2";
 
 export interface SerializedNode {
   id: string;
@@ -28,226 +25,77 @@ export interface SerializedGraph {
   timestamp: string;
   nodes: SerializedNode[];
   edges: Connection[];
-  node_settings: SerializedNodeSetting[];
+  nodeSettings: SerializedNodeSetting[];
 }
 
-export function exportGraph(posFlo: PosFlo): SerializedGraph {
+export function exportGraph(posFlo: PosFlo, levelId: string): SerializedGraph {
   // Get all user-created nodes (exclude input/output nodes and terminals)
-  const userNodes = posFlo.nodes
-    .filter((node) => node.data.deletable); // Could maybe come up with some better way to do this
-
-  const serializedNodes: SerializedNode[] = userNodes.map((node) => {
-    const position = nodeSingular.position();
-    const nodeType = nodeSingular.data("type");
-
-    const serialized: SerializedNode = {
-      id: node.id
-      type: node.data.,
-      position: { x: position.x, y: position.y },
+  const nodes: SerializedNode[] = posFlo.nodes.map((node) => {
+    return {
+      id: node.id,
+      type: node.data.componentType,
+      position: node.position,
     };
+  });
 
-    // Add constant-specific fields
-    if (nodeType === "constant") {
-      serialized.constantValue = nodeSingular.data("constantValue");
-      serialized.constantRepeat = nodeSingular.data("constantRepeat");
+  const edges = posFlo.connections.map((x) => NotNull(x.data));
+  const nodeSettings = mapIterable(
+    posFlo.nodeSettings.entries(),
+    ([node_id, setting]) => {
+      return { node_id, setting };
     }
-
-    return serialized;
-  });
-
-  // Get all edges between user-created nodes (exclude edges to/from input/output)
-  const userEdges = cy.edges();
-
-  // Serialize edges - track which terminal on which node
-  const serializedEdges: SerializedEdge[] = userEdges.map((edge) => {
-    const sourceTerminalId = edge.data("source");
-    const targetTerminalId = edge.data("target");
-
-    const sourceTerminal = cy.$(`#${sourceTerminalId}`) as NodeSingular;
-    const targetTerminal = cy.$(`#${targetTerminalId}`) as NodeSingular;
-
-    const sourceParent = sourceTerminal.parent() as NodeSingular;
-    const targetParent = targetTerminal.parent() as NodeSingular;
-
-    // Parse terminal index from terminal ID
-    // Terminal IDs are like "node-0-output0" or "node-1-input1"
-    const sourceTerminalType = sourceTerminal.data("terminalType"); // "input" or "output"
-    const targetTerminalType = targetTerminal.data("terminalType");
-
-    // Extract the terminal index from the ID
-    const sourceMatch = sourceTerminalId.match(
-      new RegExp(`${sourceTerminalType}(\\d+)$`)
-    );
-    const targetMatch = targetTerminalId.match(
-      new RegExp(`${targetTerminalType}(\\d+)$`)
-    );
-
-    const sourceIndex = sourceMatch ? parseInt(sourceMatch[1]) : 0;
-    const targetIndex = targetMatch ? parseInt(targetMatch[1]) : 0;
-
-    const serialized: SerializedEdge = {
-      sourceNodeId: sourceParent.id(),
-      sourceTerminalIndex: sourceIndex,
-      targetNodeId: targetParent.id(),
-      targetTerminalIndex: targetIndex,
-      condition: (edge.data("condition") as Condition).matchers,
-    };
-
-    return serialized;
-  });
+  );
 
   return {
     version: SERIALIZATION_VERSION,
-    levelId: context.level.id,
+    levelId,
     timestamp: new Date().toISOString(),
-    nodes: serializedNodes,
-    edges: serializedEdges,
+    nodes,
+    edges,
+    nodeSettings,
   };
 }
+
 export function importGraph(
-  context: GraphEditor,
-  serializedGraph: SerializedGraph
+  serializedGraph: SerializedGraph,
+  levelId: string,
+  editor: GraphEditor
 ): void {
-  const cy = context.cy;
-
-  cy.edges().remove();
-
   Assert(
     serializedGraph.version === SERIALIZATION_VERSION,
     "Wrong serialization version"
   );
 
-  if (serializedGraph.levelId !== context.level.id) {
-    throw new Error(
-      `Graph is for level "${serializedGraph.levelId}" but current level is "${context.level.id}"`
-    );
-  }
+  Assert(
+    serializedGraph.levelId === levelId,
+    `Graph is for level "${serializedGraph.levelId}" but current level is "${levelId}"`
+  );
 
   const idMap = new Map<string, string>();
 
-  context.inputNodes.forEach((n) => idMap.set(n.getNodeId(), n.getNodeId()));
-  context.outputNodes.forEach((n) => idMap.set(n.getNodeId(), n.getNodeId()));
-
   for (const serializedNode of serializedGraph.nodes) {
-    let newNode: CompNode;
-
-    switch (serializedNode.type) {
-      case "constant":
-        newNode = createConstantNode(
-          context,
-          serializedNode.position.x,
-          serializedNode.position.y,
-          serializedNode.constantValue ?? 0,
-          serializedNode.constantRepeat ?? true
-        );
-        break;
-      default:
-        newNode = createNodeFromName(
-          context,
-          serializedNode.type,
-          serializedNode.position.x,
-          serializedNode.position.y
-        );
-        break;
-    }
-
-    idMap.set(serializedNode.id, newNode.getNodeId());
-    context.allNodes.push(newNode);
+    const newNode = editor.AddNode(
+      serializedNode.type,
+      serializedNode.position
+    );
+    idMap.set(serializedNode.id, newNode.id);
   }
 
-  // Recreate edges using terminal mappings
   for (const serializedEdge of serializedGraph.edges) {
-    const sourceCompNode = context.getNodeForId(
-      NotNull(idMap.get(serializedEdge.sourceNodeId))
-    );
-    const targetCompNode = context.getNodeForId(
-      NotNull(idMap.get(serializedEdge.targetNodeId))
-    );
-
-    const sourceTerminal = NotNull(
-      sourceCompNode.outputTerminals[serializedEdge.sourceTerminalIndex]
-    );
-    const targetTerminal = NotNull(
-      targetCompNode.inputTerminals[serializedEdge.targetTerminalIndex]
-    );
-
-    const edgeData: EdgeData = {
-      source: sourceTerminal.id(),
-      target: targetTerminal.id(),
-      condition: new Condition(serializedEdge.condition),
-    };
-
-    cy.add({
-      group: "edges",
-      data: edgeData,
+    editor.AddBusinessConnection({
+      source: {
+        ...serializedEdge.source,
+        nodeId: getOrThrow(idMap, serializedEdge.source.nodeId),
+      },
+      dest: {
+        ...serializedEdge.dest,
+        nodeId: getOrThrow(idMap, serializedEdge.dest.nodeId),
+      },
+      condition: serializedEdge.condition,
     });
   }
-}
 
-export function downloadGraphAsJSON(
-  context: GraphEditorContext,
-  filename?: string
-): void {
-  const serialized = exportGraph(context);
-  const json = JSON.stringify(serialized, null, 2);
-  const blob = new Blob([json], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename || `graph-${context.level.id}-${Date.now()}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
-  console.log("Graph downloaded as JSON");
-}
-
-/**
- * Load graph from JSON file
- */
-export function loadGraphFromFile(
-  context: GraphEditorContext,
-  file: File
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = (event) => {
-      try {
-        const json = event.target?.result as string;
-        const serialized = JSON.parse(json) as SerializedGraph;
-        importGraph(context, serialized);
-        resolve();
-      } catch (error) {
-        reject(error);
-      }
-    };
-
-    reader.onerror = () => {
-      reject(new Error("Failed to read file"));
-    };
-
-    reader.readAsText(file);
-  });
-}
-
-/**
- * Export graph to JSON string
- */
-export function exportGraphToJSON(context: GraphEditorContext): string {
-  const serialized = exportGraph(context);
-  return JSON.stringify(serialized, null, 2);
-}
-
-/**
- * Import graph from JSON string
- */
-export function importGraphFromJSON(
-  context: GraphEditorContext,
-  json: string
-): void {
-  const serialized = JSON.parse(json) as SerializedGraph;
-  importGraph(context, serialized);
+  for (const setting of serializedGraph.nodeSettings) {
+    editor.settings.set(setting.node_id, setting.setting);
+  }
 }
