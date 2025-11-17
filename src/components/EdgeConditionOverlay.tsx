@@ -66,48 +66,46 @@ export function EdgeConditionComponent({ edge }: { edge: Edge<Connection> }) {
 
   const condition = NotNull(edge.data).condition;
   return (
-    edge && (
-      <div
-        className="edge-condition-input"
-        onMouseDown={stopEvent}
-        onMouseUp={stopEvent}
-        onClick={stopEvent}
-        style={{ transform: "translate(-50%, -50%) scale(0.7)" }}
-      >
-        <div className="matcher-list">
-          <span>(</span>
-          {condition.matchers.map((matcher, index) => (
-            <React.Fragment key={index}>
-              {index != 0 && <span>,</span>}
-              <button
-                className="matcher-button"
-                onMouseDown={(e) => handleCycleMatcher(index, e)}
-                onClick={stopEvent}
-              >
-                {MATCHER_LABELS[matcher]}
-              </button>
-            </React.Fragment>
-          ))}
-          <span>)</span>
-          <button
-            className="matcher-add-button"
-            onMouseDown={handleAddMatcherClick}
-            onClick={stopEvent}
-          >
-            +
-          </button>
-          {condition.matchers.length > 0 && (
+    <div
+      className="edge-condition-input"
+      onMouseDown={stopEvent}
+      onMouseUp={stopEvent}
+      onClick={stopEvent}
+      style={{ transform: "translate(-50%, -50%) scale(0.7)" }}
+    >
+      <div className="matcher-list">
+        {condition.matchers.length > 0 && <span>(</span>}
+        {condition.matchers.map((matcher, index) => (
+          <React.Fragment key={index}>
+            {index != 0 && <span>,</span>}
             <button
-              className="matcher-remove-button"
-              onMouseDown={handleRemoveLastMatcher}
+              className="matcher-button"
+              onMouseDown={(e) => handleCycleMatcher(index, e)}
               onClick={stopEvent}
             >
-              −
+              {MATCHER_LABELS[matcher]}
             </button>
-          )}
-        </div>
+          </React.Fragment>
+        ))}
+        {condition.matchers.length > 0 && <span>)</span>}
+        <button
+          className="matcher-add-button"
+          onMouseDown={handleAddMatcherClick}
+          onClick={stopEvent}
+        >
+          +
+        </button>
+        {condition.matchers.length > 0 && (
+          <button
+            className="matcher-remove-button"
+            onMouseDown={handleRemoveLastMatcher}
+            onClick={stopEvent}
+          >
+            −
+          </button>
+        )}
       </div>
-    )
+    </div>
   );
 }
 
