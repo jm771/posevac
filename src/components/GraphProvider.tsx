@@ -7,6 +7,8 @@ import Flow, {
   XYPosition,
 } from "@xyflow/react";
 import React, { useRef } from "react";
+import { CallbackDict } from "../callback_dict";
+import { EdgePathContext } from "../contexts/edge_path_context";
 import { EdgesContext } from "../contexts/edges_context";
 import { FlowPropsContext } from "../contexts/flow_props_context";
 import {
@@ -86,22 +88,26 @@ export function GraphProvider({
 
   const flowProps = { nodes, edges, onNodesChange, onEdgesChange };
 
+  const edgePathCallbackRef = useRef(new CallbackDict<string, string>());
+
   return (
     <ReactFlowProvider>
       <NodeCallbackContext value={nodeCallbackRef.current}>
-        <EdgesContext value={edges}>
-          <NodeContext value={nodes}>
-            <PosFloContext value={new PosFlo(nodes, edges)}>
-              <GraphEditorContext
-                value={new GraphEditor(nodeId, setNodes, setEdges)}
-              >
-                <FlowPropsContext value={flowProps}>
-                  {children}
-                </FlowPropsContext>
-              </GraphEditorContext>
-            </PosFloContext>
-          </NodeContext>
-        </EdgesContext>
+        <EdgePathContext value={edgePathCallbackRef.current}>
+          <EdgesContext value={edges}>
+            <NodeContext value={nodes}>
+              <PosFloContext value={new PosFlo(nodes, edges)}>
+                <GraphEditorContext
+                  value={new GraphEditor(nodeId, setNodes, setEdges)}
+                >
+                  <FlowPropsContext value={flowProps}>
+                    {children}
+                  </FlowPropsContext>
+                </GraphEditorContext>
+              </PosFloContext>
+            </NodeContext>
+          </EdgesContext>
+        </EdgePathContext>
       </NodeCallbackContext>
     </ReactFlowProvider>
   );

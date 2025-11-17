@@ -4,7 +4,8 @@ import {
   type Edge,
   type EdgeProps,
 } from "@xyflow/react";
-import React, { useEffect } from "react";
+import React, { useContext, useEffect } from "react";
+import { EdgePathContext } from "../contexts/edge_path_context";
 import { Connection, ConnectionToString } from "../pos_flow";
 import { NotNull } from "../util";
 
@@ -29,26 +30,12 @@ export function AnimatedNodeEdge({
     targetY,
     targetPosition,
   });
+
+  const edgePathHandlers = useContext(EdgePathContext);
+
   useEffect(() => {
-    const node = document.getElementById(
-      `pc-${ConnectionToString(NotNull(data))}`
-    ) as HTMLElement;
-
-    if (!node) return;
-
-    node.style.offsetPath = `path('${edgePath}')`;
-
-    const keyframes = [{ offsetDistance: "0%" }, { offsetDistance: "100%" }];
-    const animation = node.animate(keyframes, {
-      duration: 2000,
-      direction: "alternate",
-      iterations: Infinity,
-    });
-
-    return () => {
-      animation.cancel();
-    };
-  }, [data, edgePath]);
+    edgePathHandlers.updateVal(ConnectionToString(NotNull(data)), edgePath);
+  }, [data, edgePath, edgePathHandlers]);
 
   return <BaseEdge id={id} path={edgePath} />;
 }

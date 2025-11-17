@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { EdgePathContext } from "../contexts/edge_path_context";
 import {
   CounterAdvanceEvent,
   EvaluationEvent,
@@ -63,12 +64,50 @@ function ProgramCounterComponent({ pc }: { pc: ProgramCounter }) {
   //   const [edgePath] = getBezierPath(edge);
   // console.log(edgePath);
 
-  const id =
-    pc.currentEdge != null ? ConnectionToString(pc.currentEdge) : pc.id;
+  const divRef = useRef<HTMLDivElement>(null);
+  const edgePathHandlers = useContext(EdgePathContext);
+
+  const edge = pc.currentEdge;
+
+  useEffect(() => {
+    if (!divRef.current) return;
+    if (!edge) return;
+
+    const edgeStr = ConnectionToString(edge);
+
+    console.log("a");
+    // const node = document.getElementById(
+    //   `pc-${ConnectionToString(NotNull(data))}`
+    // ) as HTMLElement;
+    function callback(edgePath: string) {
+      if (!divRef.current) return;
+      console.log("b");
+      divRef.current.style.offsetPath = `path('${edgePath}')`;
+    }
+
+    const keyframes = [{ offsetDistance: "0%" }, { offsetDistance: "100%" }];
+    const animation = divRef.current.animate(keyframes, {
+      duration: 2000,
+      direction: "alternate",
+      iterations: Infinity,
+    });
+
+    edgePathHandlers.subscribe(edgeStr, callback);
+    callback(edgePathHandlers.getLastData(edgeStr));
+
+    return () => {
+      animation.cancel();
+      edgePathHandlers.unsub(edgeStr, callback);
+    };
+  }, []);
+
+  // const id =
+  //   pc.currentEdge != null ? ConnectionToString(pc.currentEdge) : pc.id;
 
   return (
     <motion.div
-      id={`pc-${id}`}
+      // id={`pc-${id}`}
+      ref={divRef}
       style={{
         position: "absolute",
         // offsetPath: `path('${edgePath}')`,
