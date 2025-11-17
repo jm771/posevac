@@ -9,7 +9,6 @@ import Flow, {
 import React, { useRef } from "react";
 import { CallbackDict } from "../callback_dict";
 import { EdgePathContext } from "../contexts/edge_path_context";
-import { EdgesContext } from "../contexts/edges_context";
 import { FlowPropsContext } from "../contexts/flow_props_context";
 import {
   GraphEditor,
@@ -19,7 +18,6 @@ import {
   NodeCallbackContext,
   NodeCallbacks,
 } from "../contexts/node_callbacks_context";
-import { NodeContext } from "../contexts/nodes_context";
 import { PosFloContext } from "../contexts/pos_flo_context";
 import { MakeInputNode, MakeOutputNode } from "../input_output_nodes";
 import { Level, nInputs, nOutputs } from "../levels";
@@ -94,19 +92,13 @@ export function GraphProvider({
     <ReactFlowProvider>
       <NodeCallbackContext value={nodeCallbackRef.current}>
         <EdgePathContext value={edgePathCallbackRef.current}>
-          <EdgesContext value={edges}>
-            <NodeContext value={nodes}>
-              <PosFloContext value={new PosFlo(nodes, edges)}>
-                <GraphEditorContext
-                  value={new GraphEditor(nodeId, setNodes, setEdges)}
-                >
-                  <FlowPropsContext value={flowProps}>
-                    {children}
-                  </FlowPropsContext>
-                </GraphEditorContext>
-              </PosFloContext>
-            </NodeContext>
-          </EdgesContext>
+          <PosFloContext value={new PosFlo(nodes, edges)}>
+            <GraphEditorContext
+              value={new GraphEditor(nodeId, setNodes, setEdges)}
+            >
+              <FlowPropsContext value={flowProps}>{children}</FlowPropsContext>
+            </GraphEditorContext>
+          </PosFloContext>
         </EdgePathContext>
       </NodeCallbackContext>
     </ReactFlowProvider>

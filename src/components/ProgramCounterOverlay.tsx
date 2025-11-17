@@ -64,7 +64,7 @@ function ProgramCounterComponent({ pc }: { pc: ProgramCounter }) {
       }}
       // angle={0}
       transition={{
-        duration: 0.5,
+        duration: 0.6,
       }}
     >
       {JSON.stringify(pc.contents)}
