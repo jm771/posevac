@@ -31,23 +31,6 @@ export interface OutputChecker {
 }
 
 export type NodeId = string;
-
-// export function TryGetNodeInputs(
-//   posFlo: PosFlo
-//   terminalToProgramCounters: Map<TerminalId, ProgramCounter>
-// ): unknown[] | null {
-
-// }
-
-// export class ComputeNode {
-//   definition: NodeDefinition;
-//   id: NodeId;
-
-//   constructor(nodeDefinition: NodeDefinition, id: NodeId) {
-//     this.definition = nodeDefinition;
-//     this.id = id;
-//   }
-
 export type ComputeNode = Node<NodeDefinition>;
 
 export function GetInputTerminals(node: Node<NodeDefinition>): TerminalId[] {

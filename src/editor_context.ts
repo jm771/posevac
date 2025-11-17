@@ -16,65 +16,6 @@ function edgeMatches(e1: Flow.Edge, e2: Flow.Connection): boolean {
   );
 }
 
-// export class GraphEditorContext {
-//   public level: Level;
-//   posFlow: PosFlo;
-//   testValuesContext: TestValuesContext;
-//   setNodes: Dispatch<SetStateAction<Node<FlowNodeData>[]>>;
-//   setEdges: Dispatch<SetStateAction<Flow.Edge[]>>;
-
-//   constructor(
-//     level: Level,
-//     testValuesContext: TestValuesContext,
-//     setNodes: Dispatch<SetStateAction<Node<FlowNodeData>[]>>,
-//     setEdges: Dispatch<SetStateAction<Flow.Edge[]>>
-//   ) {
-//     this.level = level;
-//     this.testValuesContext = testValuesContext;
-//     this.posFlow = new PosFlo();
-//     this.setNodes = setNodes;
-//     this.setEdges = setEdges;
-//   }
-
-//   AddInputOutputNodes() {
-//     range(nInputs(this.level)).forEach((idx) =>
-//       this.posFlow.AddNode(MakeInputNode(idx, this.testValuesContext))
-//     );
-
-//     range(nOutputs(this.level)).forEach((idx) =>
-//       this.posFlow.AddNode(MakeOutputNode(idx, this.testValuesContext))
-//     );
-//   }
-
-//   AddConnection(flowCon: Flow.Connection) {
-//     const connection = convertConnection(flowCon);
-//     this.posFlow.AddConnection(connection);
-//     this.setEdges((eds) => addEdge(flowCon, eds));
-//   }
-
-//   RemoveConnection(flowCon: Flow.Connection) {
-//     const connection = convertConnection(flowCon);
-//     this.posFlow.RemoveConnection(connection);
-//     this.setEdges((eds) => eds.filter((e) => !edgeMatches(e, flowCon)));
-//   }
-
-//   AddNode(componentType: RegularComponentType, position: XYPosition) {
-//     const compNode = this.posFlow.AddNode(GetNodeDefinition(componentType));
-
-//     this.setNodes((nds) => [
-//       ...nds,
-//       {
-//         id: compNode.id,
-//         type: compNode.definition.style.style,
-//         position: position,
-//         data: getFlowNodeDataFromDefintion(compNode.definition),
-//       },
-//     ]);
-//   }
-
-//   RemoveNode() {}
-// }
-
 export class LevelContext implements TestValuesContext {
   evaluationListenerHolder: EvaluationListenerHolder;
   testerListenerHolder: TesterListenerHolder;

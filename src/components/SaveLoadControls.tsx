@@ -76,17 +76,6 @@ export function SaveLoadControls({
   setSaveState: (a: SerializedGraph) => void;
 }) {
   const posFlo = useContext(PosFloContext);
-  // const navigate = useNavigate();
-
-  // const loadPageWithGraph = useCallback(
-  //   (serializedGraph: SerializedGraph) => {
-  //     navigate(`/level/${serializedGraph.levelId}`, {
-  //       state: { serializedGraph },
-  //     });
-  //   },
-  //   [navigate, levelId]
-  // );
-
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
