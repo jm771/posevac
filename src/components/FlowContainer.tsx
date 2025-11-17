@@ -72,6 +72,7 @@ export function FlowContainer({ children }: { children: React.JSX.Element }) {
       onDrop={onDrop}
     >
       <ReactFlow
+        edgesFocusable={false}
         edgeTypes={{ animated: AnimatedNodeEdge }}
         connectOnClick={true}
         // connectionLineType={ConnectionLineType.Straight}

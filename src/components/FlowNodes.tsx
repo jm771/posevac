@@ -5,7 +5,7 @@ import {
   NodeSettingType,
 } from "../contexts/node_settings_context";
 import { NodeDefinition, NodeStyle } from "../node_definitions";
-import { Assert, NotNull } from "../util";
+import { Assert } from "../util";
 
 const topTerminalOffset = 10;
 const terminalOffset = 30;
@@ -94,7 +94,11 @@ export function CompoundNode({ data }: { data: NodeDefinition }) {
 
 export function ConstantNode({ id }: { id: string }) {
   const nodeSettings = useContext(NodeSettingsContext);
-  const settings = NotNull(nodeSettings.get(id));
+  const settings = nodeSettings.get(id);
+
+  // #YOLO
+  if (!settings) return;
+
   Assert(settings.type === NodeSettingType.Constant);
 
   const [value, setValue] = useState<number>(settings.setting.value);
