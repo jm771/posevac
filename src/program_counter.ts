@@ -6,14 +6,10 @@ export type ProgramCounterId = string;
 export class ProgramCounter {
   contents: unknown;
   currentLocation: TerminalId;
-  currentEdge: Connection | null;
+  currentEdge: Connection;
   id: string;
 
-  constructor(
-    location: TerminalId,
-    edge: Connection | null,
-    contents: unknown
-  ) {
+  constructor(location: TerminalId, edge: Connection, contents: unknown) {
     this.contents = contents;
     this.currentLocation = location;
     this.currentEdge = edge;
@@ -51,7 +47,6 @@ export class PCStore {
 
   AdvancePc(pc: ProgramCounter) {
     pc.currentLocation = NotNull(pc.currentEdge).dest;
-    pc.currentEdge = null;
   }
 
   GetAll(): ProgramCounter[] {

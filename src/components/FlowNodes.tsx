@@ -18,12 +18,29 @@ function InputTerminals({ count }: { count: number }) {
           position={Position.Left}
           id={`input-${i}`}
           style={{
+            background: "none",
+            border: "none",
+            width: "1em",
+            height: "1em",
+            left: "22px",
+            // transform: "translate(-120px, -6px)",
             top: `${
               (100 * (terminalOffset * i + topTerminalOffset)) /
               (2 * topTerminalOffset + terminalOffset * (count - 1))
             }%`,
           }}
-        />
+        >
+          <div
+            className="handle-left handle"
+            style={{
+              pointerEvents: "none",
+              fontSize: "1em",
+              left: 0,
+              position: "absolute",
+              transform: "translateX(-50%)",
+            }}
+          />
+        </Handle>
       ))}
     </>
   );
@@ -41,13 +58,29 @@ function OutputTerminals({ count }: { count: number }) {
           position={Position.Right}
           id={`output-${i}`}
           style={{
+            background: "none",
+            border: "none",
+            width: "1em",
+            height: "1em",
+            right: "22px",
             // pointerEvents: "none",
             top: `${
               (100 * (terminalOffset * i + topTerminalOffset)) /
               (2 * topTerminalOffset + terminalOffset * (count - 1))
             }%`,
           }}
-        />
+        >
+          <div
+            className="handle-right handle"
+            style={{
+              pointerEvents: "none",
+              fontSize: "1em",
+              left: 0,
+              position: "absolute",
+              transform: "translateX(50%)",
+            }}
+          />
+        </Handle>
       ))}
     </>
   );

@@ -12,31 +12,6 @@ import { ConnectionToString } from "../pos_flow";
 import { ProgramCounter } from "../program_counter";
 import { mapIterable } from "../util";
 
-// export function ProgramCounterComponent({
-//   position,
-//   text,
-// }: {
-//   position: cytoscape.Position;
-//   text: string;
-//   angle: number;
-// }) {
-//   const panZoom = useContext(PanZoomContext);
-
-//   return (
-//     <motion.div
-//       className="pc-box"
-//       initial={{ ...motionTargetForPosition(position, panZoom, 0) }}
-//       exit={{ ...motionTargetForPosition(position, panZoom, 0) }}
-//       animate={{
-//         ...motionTargetForPosition(position, panZoom, 1),
-//       }}
-//       transition={{ duration: 0.5 }}
-//     >
-//       {text}
-//     </motion.div>
-//   );
-// }
-
 function ProgramCounterComponent({ pc }: { pc: ProgramCounter }) {
   const divRef = useRef<HTMLDivElement>(null);
   const edgePathHandlers = useContext(EdgePathContext);
@@ -45,7 +20,6 @@ function ProgramCounterComponent({ pc }: { pc: ProgramCounter }) {
 
   useEffect(() => {
     if (!divRef.current) return;
-    if (!edge) return;
 
     const edgeStr = ConnectionToString(edge);
 
@@ -60,47 +34,44 @@ function ProgramCounterComponent({ pc }: { pc: ProgramCounter }) {
     return () => {
       edgePathHandlers.unsub(edgeStr, callback);
     };
-  }, []);
+  }, [edge, edgePathHandlers]);
 
   return (
     <motion.div
       ref={divRef}
       style={{
+        scale: 1,
         position: "absolute",
-        // offsetPath: `path('${edgePath}')`,
-        // transform: `translate(${sourceHandle.x}px, ${sourceHandle.y}px)`,
+        ...(pc.currentLocation.nodeId === pc.currentEdge.source.nodeId && {
+          offsetDistance: "0%",
+        }),
+      }}
+      initial={{
+        scale: 0,
+        rotate: -360,
+      }}
+      exit={{
+        scale: 0,
+        rotate: 360,
       }}
       className="pc-box"
-      animate={{ offsetDistance: ["0%", "100%"] }}
+      animate={{
+        scale: 1,
+        rotate: 0,
+        ...(pc.currentLocation.nodeId === pc.currentEdge.dest.nodeId && {
+          offsetDistance: ["0%", "100%"],
+        }),
+      }}
+      // angle={0}
       transition={{
-        repeat: Infinity,
-        duration: 3,
+        duration: 0.5,
       }}
     >
-      Hi There!
+      {JSON.stringify(pc.contents)}
     </motion.div>
   );
 }
 
-// export function ProgramCounterOverlay({
-//   evaluationEventSource,
-// }: {
-//   evaluationEventSource: EvaluationEventSource;
-// }) {
-//   // const edges = useContext(EdgesContext);
-
-//   const edges = useContext(EdgesContext);
-
-//   return (
-//     <>
-//       {edges.map((n) => (
-//         <ProgramCounterComponent key={n.id} edge={n}>
-//           {/* Hello there!!! */}
-//         </ProgramCounterComponent>
-//       ))}
-//     </>
-//   );
-// }
 export function ProgramCounterOverlay({
   evaluationEventSource,
 }: {
@@ -152,15 +123,7 @@ export function ProgramCounterOverlay({
   return (
     <AnimatePresence>
       {mapIterable(programCounters.values(), (pc: ProgramCounter) => (
-        <ProgramCounterComponent
-          pc={pc}
-          // key={pc.id}
-          // // TODO fix
-          // // position={{ x: 0, y: 0 }}
-          // // position={pc.currentLocation.position()}
-          // text={JSON.stringify(pc.contents)}
-          // angle={0}
-        />
+        <ProgramCounterComponent key={pc.id} pc={pc} />
       ))}
     </AnimatePresence>
   );

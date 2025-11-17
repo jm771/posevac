@@ -82,9 +82,10 @@ export function FlowContainer({ children }: { children: React.JSX.Element }) {
         onNodeDragStop={nodeCallbacks.OnNodeDragEnd}
         nodeTypes={nodeTypes}
         autoPanOnNodeDrag={false}
-        fitView
-        minZoom={0.5}
-        maxZoom={2}
+        // fitView
+        // minZoom={0.5}
+        defaultViewport={{ x: 500, y: 100, zoom: 1 }}
+        // maxZoom={2}
         nodeOrigin={[0.5, 0.5]}
       >
         <Background />

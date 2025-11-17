@@ -51,8 +51,8 @@ function MakeInputOutputNodes(
   range(nInputs(level)).forEach((idx) =>
     ret.push(
       MakeNodeFromDefn(ref, MakeInputNode(idx, testValuesContext), {
-        x: 100,
-        y: 100 * idx,
+        x: -300,
+        y: 200 * idx,
       })
     )
   );
@@ -61,7 +61,7 @@ function MakeInputOutputNodes(
     ret.push(
       MakeNodeFromDefn(ref, MakeOutputNode(idx, testValuesContext), {
         x: 300,
-        y: 100 * idx,
+        y: 200 * idx,
       })
     )
   );
