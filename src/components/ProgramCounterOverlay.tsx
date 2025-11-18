@@ -8,7 +8,7 @@ import {
   EvaluationListener,
   NodeEvaluateEvent,
 } from "../evaluation_listeners";
-import { ConnectionToString } from "../pos_flow";
+import { ConnectionToString, terminalEquals } from "../pos_flow";
 import { ProgramCounter } from "../program_counter";
 import { mapIterable } from "../util";
 
@@ -42,7 +42,7 @@ function ProgramCounterComponent({ pc }: { pc: ProgramCounter }) {
       style={{
         scale: 1,
         position: "absolute",
-        ...(pc.currentLocation.nodeId === pc.currentEdge.source.nodeId && {
+        ...(terminalEquals(pc.currentLocation, pc.currentEdge.source) && {
           offsetDistance: "0%",
         }),
       }}
@@ -58,7 +58,7 @@ function ProgramCounterComponent({ pc }: { pc: ProgramCounter }) {
       animate={{
         scale: 1,
         rotate: 0,
-        ...(pc.currentLocation.nodeId === pc.currentEdge.dest.nodeId && {
+        ...(terminalEquals(pc.currentLocation, pc.currentEdge.dest) && {
           offsetDistance: ["0%", "100%"],
         }),
       }}
