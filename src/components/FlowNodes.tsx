@@ -1,6 +1,11 @@
 import { Handle, Position } from "@xyflow/react";
 import React, { useCallback, useContext, useRef, useState } from "react";
 import {
+  EcsComponent,
+  EntityComponentsContext,
+  OverclockMode,
+} from "../contexts/ecs_context";
+import {
   IONodeSetting,
   NodeSettingsContext,
   NodeSettingType,
@@ -59,6 +64,38 @@ function OutputTerminals({ count }: { count: number }) {
   );
 }
 
+const modes = [
+  OverclockMode.Regular,
+  OverclockMode.Cartesian,
+  OverclockMode.Zip,
+];
+
+export function OverclockSettingButton({ nodeId }: { nodeId: string }) {
+  const ecs = useContext(EntityComponentsContext);
+  const component = ecs.GetComponent(nodeId, EcsComponent.Overclock);
+  // TODO somewhere better
+
+  const [index, setIndex] = useState<number>(
+    modes.findIndex((x) => x === component.mode)
+  );
+
+  const onClick = useCallback(
+    () =>
+      setIndex((x) => {
+        const newIndex = (x + 1) % modes.length;
+        component.mode = modes[newIndex];
+        return newIndex;
+      }),
+    [setIndex, component]
+  );
+
+  return (
+    <button className={"constant-toggle-button repeat"} onClick={onClick}>
+      {modes[index]}
+    </button>
+  );
+}
+
 export function CompoundNode({
   id,
   data,
@@ -96,6 +133,9 @@ export function CompoundNode({
     >
       <InputTerminals count={data.nInputs} />
       {label}
+      {data.style.style === NodeStyle.Compound && (
+        <OverclockSettingButton nodeId={id} />
+      )}
       <OutputTerminals count={data.nOutputs} />
     </div>
   );

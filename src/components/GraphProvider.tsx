@@ -8,6 +8,12 @@ import {
 } from "@xyflow/react";
 import React, { SetStateAction, useMemo, useRef } from "react";
 import { CallbackDict } from "../callback_dict";
+import {
+  EcsComponent,
+  EntityComponents,
+  EntityComponentsContext,
+  OverclockMode,
+} from "../contexts/ecs_context";
 import { EdgePathContext } from "../contexts/edge_path_context";
 import { FlowPropsContext } from "../contexts/flow_props_context";
 import {
@@ -140,38 +146,40 @@ export function GraphProvider({
   const settingsRef = useRef(initalState.settings);
 
   // This one too probably
-  const graphEditor = useRef<GraphEditor>(
+  const graphEditorRef = useRef<GraphEditor>(
     new GraphEditor(nodeId, setNodes, setEdges, settingsRef.current)
-  ).current;
+  );
 
-  // const didInit = useRef(false);
-
-  // useEffect(() => {
-  //   if (didInit.current) return;
-
-  //   if (!saveState) {
-  //     MakeInputOutputNodes(level, graphEditor);
-  //   } else {
-  //     importGraph(saveState, level.id, graphEditor);
-  //   }
-  //   didInit.current = true;
-  // }, [level, graphEditor, saveState]);
+  const entityComponentsRef = useRef(
+    new EntityComponents([
+      [
+        EcsComponent.Overclock,
+        () => {
+          return { mode: OverclockMode.Regular };
+        },
+      ],
+    ])
+  );
 
   return (
     <ReactFlowProvider>
-      <NodeCallbackContext value={nodeCallbackRef.current}>
-        <EdgePathContext value={edgePathCallbackRef.current}>
-          <PosFloContext value={new PosFlo(nodes, edges, settingsRef.current)}>
-            <NodeSettingsContext value={settingsRef.current}>
-              <GraphEditorContext value={graphEditor}>
-                <FlowPropsContext value={flowProps}>
-                  {children}
-                </FlowPropsContext>
-              </GraphEditorContext>
-            </NodeSettingsContext>
-          </PosFloContext>
-        </EdgePathContext>
-      </NodeCallbackContext>
+      <EntityComponentsContext value={entityComponentsRef.current}>
+        <NodeCallbackContext value={nodeCallbackRef.current}>
+          <EdgePathContext value={edgePathCallbackRef.current}>
+            <PosFloContext
+              value={new PosFlo(nodes, edges, settingsRef.current)}
+            >
+              <NodeSettingsContext value={settingsRef.current}>
+                <GraphEditorContext value={graphEditorRef.current}>
+                  <FlowPropsContext value={flowProps}>
+                    {children}
+                  </FlowPropsContext>
+                </GraphEditorContext>
+              </NodeSettingsContext>
+            </PosFloContext>
+          </EdgePathContext>
+        </NodeCallbackContext>
+      </EntityComponentsContext>
     </ReactFlowProvider>
   );
 }
