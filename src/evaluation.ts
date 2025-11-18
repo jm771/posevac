@@ -30,7 +30,12 @@ type State =
     }
   | { stage: Stage.Evaluate; nodeIndex: number };
 
-export class Evaluator {
+export interface Evaluator {
+  step(): void;
+  destroy(): void;
+}
+
+export class EvaluatorImpl implements Evaluator {
   private programCounters: PCStore;
   private nodeStates: Map<string, unknown>;
   private evaluationState: State;

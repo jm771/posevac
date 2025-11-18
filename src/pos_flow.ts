@@ -18,7 +18,7 @@ export type TerminalId = {
   terminalIndex: TerminalIndex;
 };
 
-function TerminalIdToString(t: TerminalId) {
+export function TerminalIdToString(t: TerminalId) {
   return `${t.nodeId}-${t.type}-${t.terminalIndex}`;
 }
 

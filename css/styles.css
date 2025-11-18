@@ -222,8 +222,16 @@ body {
     cursor: not-allowed;
 }
 
+.pc-container {
+  display: flex;
+  border: 3px solid #81c784;
+  border-radius: 3px;
+  flex-direction: column;
+  transform: translate(-50%, -50%); 
+}
+
 .pc-box {
-    position: absolute;
+    /* position: absolute; */
     min-width: 35px;
     height: 35px;
     background-color: #ffb74d;
@@ -238,7 +246,6 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
     pointer-events: none;
     z-index: 1001;
-    transform: translate(-50%, -50%); 
 }
 
 .level-selector {

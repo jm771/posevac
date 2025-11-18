@@ -1,4 +1,3 @@
-import Flow from "@xyflow/react";
 import { createContext } from "react";
 import { Evaluator } from "./evaluation";
 import { EvaluationListenerHolder } from "./evaluation_listeners";
@@ -6,15 +5,6 @@ import { Level } from "./levels";
 import { InputProvider, OutputChecker, TestValuesContext } from "./nodes";
 import { Tester, TesterListenerHolder } from "./tester";
 import { NotNull } from "./util";
-
-function edgeMatches(e1: Flow.Edge, e2: Flow.Connection): boolean {
-  return (
-    e1.source === e2.source &&
-    e1.sourceHandle === e2.sourceHandle &&
-    e1.target === e2.target &&
-    e1.targetHandle === e2.targetHandle
-  );
-}
 
 export class LevelContext implements TestValuesContext {
   evaluationListenerHolder: EvaluationListenerHolder;

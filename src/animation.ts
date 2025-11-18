@@ -1,6 +1,5 @@
 import { LevelContext } from "./editor_context";
-import { Evaluator } from "./evaluation";
-import { NodeId } from "./nodes";
+import { OverclockedEvaluator } from "./overclocked_evaluation";
 import { PosFlo } from "./pos_flow";
 import { Tester } from "./tester";
 
@@ -15,7 +14,7 @@ export function stepForward(levelContext: LevelContext, posFlo: PosFlo) {
   // TODO need to plumb real settings in
 
   if (levelContext.evaluator == null) {
-    levelContext.evaluator = new Evaluator(
+    levelContext.evaluator = new OverclockedEvaluator(
       posFlo,
       levelContext.evaluationListenerHolder,
       levelContext

@@ -8,15 +8,28 @@ import {
   EvaluationListener,
   NodeEvaluateEvent,
 } from "../evaluation_listeners";
-import { ConnectionToString } from "../pos_flow";
+import {
+  Connection,
+  ConnectionToString,
+  TerminalId,
+  TerminalIdToString,
+} from "../pos_flow";
 import { ProgramCounter } from "../program_counter";
-import { mapIterable } from "../util";
+import { DefaultMap, mapIterable } from "../util";
 
-function ProgramCounterComponent({ pc }: { pc: ProgramCounter }) {
+function ProgramCounterGroupComponent({
+  currentLocation,
+  edge,
+  pcs,
+}: {
+  currentLocation: TerminalId;
+  edge: Connection;
+  pcs: ProgramCounter[];
+}) {
   const divRef = useRef<HTMLDivElement>(null);
   const { edgePathHandlers } = useContext(EdgePathContext);
 
-  const edge = pc.currentEdge;
+  // const edge = pc.currentEdge;
 
   useEffect(() => {
     if (!divRef.current) return;
@@ -38,11 +51,12 @@ function ProgramCounterComponent({ pc }: { pc: ProgramCounter }) {
 
   return (
     <motion.div
+      className="pc-container"
       ref={divRef}
       style={{
         scale: 1,
         position: "absolute",
-        ...(pc.currentLocation.nodeId === pc.currentEdge.source.nodeId && {
+        ...(currentLocation.nodeId === edge.source.nodeId && {
           offsetDistance: "0%",
         }),
       }}
@@ -54,11 +68,10 @@ function ProgramCounterComponent({ pc }: { pc: ProgramCounter }) {
         scale: 0,
         rotate: 360,
       }}
-      className="pc-box"
       animate={{
         scale: 1,
         rotate: 0,
-        ...(pc.currentLocation.nodeId === pc.currentEdge.dest.nodeId && {
+        ...(currentLocation.nodeId === edge.dest.nodeId && {
           offsetDistance: ["0%", "100%"],
         }),
       }}
@@ -67,7 +80,11 @@ function ProgramCounterComponent({ pc }: { pc: ProgramCounter }) {
         duration: 0.6,
       }}
     >
-      {JSON.stringify(pc.contents)}
+      {pcs.map((pc) => (
+        <div className="pc-box" key={pc.id}>
+          {JSON.stringify(pc.contents)}
+        </div>
+      ))}
     </motion.div>
   );
 }
@@ -120,11 +137,28 @@ export function ProgramCounterOverlay({
     };
   }, [evaluationEventSource]);
 
+  const groupMap = new DefaultMap<string, ProgramCounter[]>(() => []);
+
+  programCounters.forEach((pc) => {
+    groupMap
+      // .get(ConnectionToString(pc.currentEdge) + pc.currentLocation.nodeId)
+      .get(TerminalIdToString(pc.currentLocation))
+      .push(pc);
+  });
+
   return (
     <AnimatePresence>
-      {mapIterable(programCounters.values(), (pc: ProgramCounter) => (
-        <ProgramCounterComponent key={pc.id} pc={pc} />
-      ))}
+      {mapIterable(
+        groupMap.entries(),
+        ([key, pcs]: [string, ProgramCounter[]]) => (
+          <ProgramCounterGroupComponent
+            key={key}
+            pcs={pcs}
+            edge={pcs[0].currentEdge}
+            currentLocation={pcs[0].currentLocation}
+          />
+        )
+      )}
     </AnimatePresence>
   );
 }
