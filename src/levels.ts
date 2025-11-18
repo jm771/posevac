@@ -55,7 +55,8 @@ const CUM_SUM: Level = {
 const MULTIPLY: Level = {
   id: "multiply",
   name: "Multiply",
-  description: "Build the multiply component - multiply two non-negative integers",
+  description:
+    "Build the multiply component - multiply two non-negative integers",
   testCases: [
     {
       inputs: [[4], [2]],
@@ -97,7 +98,8 @@ const FACTORIAL: Level = {
 const LESS_THAN_FOUR: Level = {
   id: "lt",
   name: "Less Than Four",
-  description: "Filter the input to only output those that are less than four (inputs will be non negative integers)",
+  description:
+    "Filter the input to only output those that are less than four (inputs will be non negative integers)",
   testCases: [
     {
       inputs: [[1, 2, 3, 4, 5, 1]],
@@ -121,7 +123,8 @@ const LESS_THAN_FOUR: Level = {
 const MAX: Level = {
   id: "max",
   name: "Maximum",
-  description: "Work out the maxium of two numbers - how hard can it be? (inputs will be non negative integers)",
+  description:
+    "Work out the maxium of two numbers - how hard can it be? (inputs will be non negative integers)",
   testCases: [
     {
       inputs: [[1], [2]],
@@ -146,14 +149,39 @@ const MAX: Level = {
   ],
 };
 
-export const LEVELS: Level[] = [
-  ADDITION,
-  CUM_SUM,
-  FACTORIAL,
-  MULTIPLY,
-  LESS_THAN_FOUR,
-  MAX,
+export type WorldInfo = {
+  key: string;
+  title: string;
+  descrption: string;
+};
+
+export const WORLDS: WorldInfo[] = [
+  {
+    key: "1",
+    title: "Beginnings",
+    descrption:
+      "The POSEVAC is out of the garage - lets see what we can get working",
+  },
+  {
+    key: "2",
+    title: "Lists and Strings",
+    descrption: "Ok - it's working - time to start processing some real data!",
+  },
+  {
+    key: "X",
+    title: "Saftey limiter off",
+    descrption:
+      "It's violently shaking with all it's compute power, but if you want the Turing award, you need to master this",
+  },
 ];
+
+export const WorldMap = new Map([
+  ["1", [ADDITION, CUM_SUM, FACTORIAL, MULTIPLY, LESS_THAN_FOUR, MAX]],
+  ["2", []],
+  ["X", []],
+]);
+
+export const LEVELS = Array.from(WorldMap.values()).flatMap((x) => x);
 
 export function getLevelById(id: string): Level {
   const ret = LEVELS.find((level) => level.id === id);
