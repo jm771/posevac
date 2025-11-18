@@ -14,6 +14,7 @@ import {
   terminalEquals,
   TerminalId,
   TerminalIdToString,
+  TerminalType,
 } from "../pos_flow";
 import { ProgramCounter } from "../program_counter";
 import { DefaultMap, mapIterable } from "../util";
@@ -57,6 +58,7 @@ function ProgramCounterGroupComponent({
       style={{
         scale: 1,
         position: "absolute",
+        border: pcs.length >= 2 ? "3px solid #81c784" : undefined,
         ...(terminalEquals(currentLocation, edge.source) && {
           offsetDistance: "0%",
         }),
@@ -141,9 +143,13 @@ export function ProgramCounterOverlay({
   const groupMap = new DefaultMap<string, ProgramCounter[]>(() => []);
 
   programCounters.forEach((pc) => {
+    const groupingEdge =
+      pc.currentLocation.type === TerminalType.Output
+        ? ConnectionToString(pc.currentEdge)
+        : "";
     groupMap
       // .get(ConnectionToString(pc.currentEdge) + pc.currentLocation.nodeId)
-      .get(TerminalIdToString(pc.currentLocation))
+      .get(TerminalIdToString(pc.currentLocation) + groupingEdge)
       .push(pc);
   });
 
