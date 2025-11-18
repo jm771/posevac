@@ -133,7 +133,6 @@ body {
     opacity: 0.8;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .sidebar {
         width: 220px;
@@ -223,18 +222,6 @@ body {
     cursor: not-allowed;
 }
 
-/* PC Marker - SVG Arrow Overlay */
-.pc-arrow-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1000;
-    display: flex;
-}
-
 .pc-box {
     position: absolute;
     min-width: 35px;
@@ -283,6 +270,80 @@ body {
     color: var(--text-secondary);
     text-align: center;
     margin-bottom: 50px;
+}
+
+.world-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    padding: 10px 15px 20px 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.world-info {
+    flex: 1;
+}
+
+.world-title {
+    font-size: 32px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.world-description {
+    font-size: 16px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.world-navigation {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.world-nav-arrow {
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    padding: 6px 12px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.world-nav-arrow:hover {
+    background-color: var(--bg-hover);
+    border-color: var(--accent-blue);
+}
+
+.world-counter {
+    font-size: 14px;
+    color: var(--text-secondary);
+    min-width: 50px;
+    text-align: center;
+}
+
+
+@media (max-width: 768px) {
+    .world-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .world-title {
+        font-size: 24px;
+    }
+
+    .world-description {
+        font-size: 14px;
+    }
 }
 
 .levels-grid {
@@ -347,7 +408,6 @@ body {
     transform: scale(0.95);
 }
 
-/* Level Info in Sidebar */
 .level-info {
     margin-bottom: 25px;
     padding-bottom: 20px;
@@ -563,7 +623,6 @@ body {
   background: #ffb74d;
 }
 
-/* Test Case Panel */
 .test-case-panel {
   position: fixed;
   bottom: 0;
@@ -782,7 +841,7 @@ body {
   opacity: 0.7;
 }
 
-/* React Flow Handle Styles */
+
 .react-flow__handle {
   width: 12px !important;
   height: 12px !important;
@@ -839,7 +898,6 @@ body {
   }
 }
 
-/* Level Page Layout */
 .level-page-main {
   position: relative;
   flex: 1;

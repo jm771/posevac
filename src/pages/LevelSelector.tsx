@@ -29,23 +29,30 @@ export function LevelSelector() {
 
   return (
     <>
-      <div>
-        <h1>{world.title}</h1>
-        <h3>{world.descrption}</h3>
-      </div>
-      <div className="test-case-navigation">
-        <button
-          onClick={() => setSelectedWorldIdx((x) => x - 1)}
-          className="nav-arrow"
-        >
-          ◄
-        </button>
-        <button
-          onClick={() => setSelectedWorldIdx((x) => x + 1)}
-          className="nav-arrow"
-        >
-          ►
-        </button>
+      <div className="world-header">
+        <div className="world-info">
+          <h1 className="world-title">{world.title}</h1>
+          <p className="world-description">{world.descrption}</p>
+        </div>
+        <div className="world-navigation">
+          <button
+            onClick={() => setSelectedWorldIdx((x) => x - 1)}
+            className="world-nav-arrow"
+            aria-label="Previous world"
+          >
+            ◄
+          </button>
+          <span className="world-counter">
+            {posMod + 1} / {WORLDS.length}
+          </span>
+          <button
+            onClick={() => setSelectedWorldIdx((x) => x + 1)}
+            className="world-nav-arrow"
+            aria-label="Next world"
+          >
+            ►
+          </button>
+        </div>
       </div>
       <div className="levels-grid">
         {levels.map((l: Level) => (
