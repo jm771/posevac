@@ -36,6 +36,16 @@ export type ConstantNodeSettings = {
   repeat: boolean;
 };
 
+export enum OverlockMode {
+  Regular = "Regular",
+  Zip = "Zip",
+  Cartesian = "Cartesian",
+}
+
+export type OverlockModeSetting = {
+  mode: OverlockMode;
+};
+
 export type NodeSetting =
   | {
       type: NodeSettingType.Constant;
