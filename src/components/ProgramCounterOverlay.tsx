@@ -11,6 +11,7 @@ import {
 import {
   Connection,
   ConnectionToString,
+  terminalEquals,
   TerminalId,
   TerminalIdToString,
 } from "../pos_flow";
@@ -56,7 +57,7 @@ function ProgramCounterGroupComponent({
       style={{
         scale: 1,
         position: "absolute",
-        ...(currentLocation.nodeId === edge.source.nodeId && {
+        ...(terminalEquals(currentLocation, edge.source) && {
           offsetDistance: "0%",
         }),
       }}
@@ -71,7 +72,7 @@ function ProgramCounterGroupComponent({
       animate={{
         scale: 1,
         rotate: 0,
-        ...(currentLocation.nodeId === edge.dest.nodeId && {
+        ...(terminalEquals(currentLocation, edge.dest) && {
           offsetDistance: ["0%", "100%"],
         }),
       }}
