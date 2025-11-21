@@ -66,6 +66,7 @@ class InitialState {
   nodes: Node<NodeDefinition>[] = [];
   edges: Edge<Connection>[] = [];
   settings = new Map<string, NodeSetting>();
+  ecs = new EntityComponents([], null);
 }
 
 function loadInitialState(saveState: SerializedGraph | null, level: Level) {
@@ -103,7 +104,7 @@ function loadInitialState(saveState: SerializedGraph | null, level: Level) {
   );
 
   if (saveState != null) {
-    importGraph(saveState, level.id, editor);
+    importGraph(saveState, level.id, editor, state.ecs);
   } else {
     MakeInputOutputNodes(level, editor);
   }
@@ -151,14 +152,17 @@ export function GraphProvider({
   );
 
   const entityComponentsRef = useRef(
-    new EntityComponents([
+    new EntityComponents(
       [
-        EcsComponent.Overclock,
-        () => {
-          return { mode: OverclockMode.Regular };
-        },
+        [
+          EcsComponent.Overclock,
+          () => {
+            return { mode: OverclockMode.Regular };
+          },
+        ],
       ],
-    ])
+      initalState.ecs
+    )
   );
 
   return (

@@ -133,7 +133,8 @@ export function CompoundNode({
     >
       <InputTerminals count={data.nInputs} />
       {label}
-      {data.style.style === NodeStyle.Compound && (
+      {(data.style.style === NodeStyle.Compound ||
+        data.style.style === NodeStyle.Output) && (
         <OverclockSettingButton nodeId={id} />
       )}
       <OutputTerminals count={data.nOutputs} />

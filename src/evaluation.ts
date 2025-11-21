@@ -32,6 +32,7 @@ type State =
 
 export interface Evaluator {
   step(): void;
+  stride(): void;
   destroy(): void;
 }
 

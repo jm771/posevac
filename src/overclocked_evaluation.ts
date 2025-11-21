@@ -1,4 +1,9 @@
 import { Node } from "@xyflow/react";
+import {
+  EcsComponent,
+  EntityComponents,
+  OverclockMode,
+} from "./contexts/ecs_context";
 import { Evaluator } from "./evaluation";
 import {
   CounterAdvanceEvent,
@@ -16,7 +21,7 @@ import {
 } from "./nodes";
 import { PosFlo } from "./pos_flow";
 import { PCStore, ProgramCounter } from "./program_counter";
-import { Assert, mapIterable, NotNull } from "./util";
+import { Assert, mapIterable, NotNull, range } from "./util";
 
 function* getAllCombs(arr: unknown[][]): Generator<unknown[]> {
   if (arr.length === 0) {
@@ -40,6 +45,29 @@ function* getAllCombs(arr: unknown[][]): Generator<unknown[]> {
   }
 }
 
+function getMappedInputs(
+  inputValueses: unknown[][],
+  mode: OverclockMode
+): unknown[][] | null {
+  if (inputValueses.length === 0) {
+    return [[]];
+  }
+
+  if (mode === OverclockMode.Regular) {
+    Assert(inputValueses.every((arr) => arr.length === 1));
+    return [inputValueses.map((arr) => arr[0])];
+  } else if (mode === OverclockMode.Cartesian) {
+    return Array.from(getAllCombs(inputValueses));
+  } else {
+    //if (mode === OverclockMode.Zip) {
+    const firstLen = inputValueses[0].length;
+    if (!inputValueses.every((arr) => arr.length === firstLen)) {
+      return null;
+    }
+    return range(firstLen).map((idx) => inputValueses.map((arr) => arr[idx]));
+  }
+}
+
 enum Stage {
   AdvanceCounter,
   Evaluate,
@@ -60,11 +88,13 @@ export class OverclockedEvaluator implements Evaluator {
   private posFlo: PosFlo;
   private listener: EvaluationListener;
   private testValues: TestValuesContext;
+  private ecs: EntityComponents;
 
   constructor(
     posFlo: PosFlo,
     listener: EvaluationListener,
-    testValues: TestValuesContext
+    testValues: TestValuesContext,
+    ecs: EntityComponents
   ) {
     this.programCounters = new PCStore();
     this.evaluationState = { stage: Stage.Evaluate, nodeIndex: 0 };
@@ -72,6 +102,7 @@ export class OverclockedEvaluator implements Evaluator {
     this.posFlo = posFlo;
     this.testValues = testValues;
     this.nodeStates = new Map<string, unknown>();
+    this.ecs = ecs;
     posFlo.nodes.forEach((n: Node<NodeDefinition>) => {
       this.nodeStates.set(n.id, n.data.makeState());
     });
@@ -111,7 +142,15 @@ export class OverclockedEvaluator implements Evaluator {
 
     const inputValueses = inputCounters.map((a) => a.map((c) => c.contents));
 
-    const results = mapIterable(getAllCombs(inputValueses), (inputValues) =>
+    const ocMode = this.ecs.GetComponent(node.id, EcsComponent.Overclock).mode;
+
+    const mappedInputValues = getMappedInputs(inputValueses, ocMode);
+
+    if (mappedInputValues === null) {
+      return;
+    }
+
+    const results = mapIterable(mappedInputValues, (inputValues) =>
       node.data.evaluate(
         this.nodeStates.get(node.id),
         this.posFlo.nodeSettings.get(node.id)?.setting,
@@ -162,9 +201,18 @@ export class OverclockedEvaluator implements Evaluator {
     }
 
     // Stack them up baby!!!
-    // if (this.programCounters.GetByTerminal(pc.currentEdge.dest).length !== 0) {
-    //   return;
-    // }
+    const destNodeId = pc.currentEdge.dest.nodeId;
+
+    const blocking =
+      this.ecs.GetComponent(destNodeId, EcsComponent.Overclock).mode ===
+      OverclockMode.Regular;
+
+    if (
+      blocking &&
+      this.programCounters.GetByTerminal(pc.currentEdge.dest).length !== 0
+    ) {
+      return;
+    }
 
     const event: CounterAdvanceEvent = {
       programCounterId: pc.id,

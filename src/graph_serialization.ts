@@ -1,6 +1,7 @@
 // Graph Serialization - Save and load graph structures to/from JSON
 
 import { Condition } from "./condition";
+import { EcsComponent, EntityComponents } from "./contexts/ecs_context";
 import { GraphEditor } from "./contexts/graph_editor_context";
 import { NodeSetting } from "./contexts/node_settings_context";
 import { ComponentType } from "./node_definitions";
@@ -20,6 +21,12 @@ export type SerializedNodeSetting = {
   setting: NodeSetting;
 };
 
+export type SerializedComponent = {
+  entityId: string;
+  kind: EcsComponent;
+  value: unknown;
+};
+
 export interface SerializedGraph {
   version: string;
   levelId: string;
@@ -27,9 +34,14 @@ export interface SerializedGraph {
   nodes: SerializedNode[];
   edges: Connection[];
   nodeSettings: SerializedNodeSetting[];
+  components: SerializedComponent[];
 }
 
-export function exportGraph(posFlo: PosFlo, levelId: string): SerializedGraph {
+export function exportGraph(
+  posFlo: PosFlo,
+  levelId: string,
+  ecs: EntityComponents
+): SerializedGraph {
   // Get all user-created nodes (exclude input/output nodes and terminals)
   const nodes: SerializedNode[] = posFlo.nodes.map((node) => {
     return {
@@ -47,6 +59,13 @@ export function exportGraph(posFlo: PosFlo, levelId: string): SerializedGraph {
     }
   );
 
+  const componentVals: SerializedComponent[] = ecs
+    .GetAllComponents()
+    .filter(([[id, x], y]) => !id.includes("preview"))
+    .map(([[entityId, kind], value]) => {
+      return { entityId, kind, value };
+    });
+
   return {
     version: SERIALIZATION_VERSION,
     levelId,
@@ -54,13 +73,15 @@ export function exportGraph(posFlo: PosFlo, levelId: string): SerializedGraph {
     nodes,
     edges,
     nodeSettings,
+    components: componentVals,
   };
 }
 
 export function importGraph(
   serializedGraph: SerializedGraph,
   levelId: string,
-  editor: GraphEditor
+  editor: GraphEditor,
+  ecs: EntityComponents
 ): void {
   Assert(
     serializedGraph.version === SERIALIZATION_VERSION,
@@ -72,6 +93,7 @@ export function importGraph(
     `Graph is for level "${serializedGraph.levelId}" but current level is "${levelId}"`
   );
 
+  // TODO need to do edges too if want componenets for them
   const idMap = new Map<string, string>();
 
   for (const serializedNode of serializedGraph.nodes) {
@@ -98,5 +120,13 @@ export function importGraph(
 
   for (const setting of serializedGraph.nodeSettings) {
     editor.settings.set(getOrThrow(idMap, setting.node_id), setting.setting);
+  }
+
+  for (const ecsComp of serializedGraph.components) {
+    ecs.MakeComponent(
+      getOrThrow(idMap, ecsComp.entityId),
+      ecsComp.kind,
+      ecsComp.value
+    );
   }
 }

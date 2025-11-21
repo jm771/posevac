@@ -1,9 +1,14 @@
+import { EntityComponents } from "./contexts/ecs_context";
 import { LevelContext } from "./editor_context";
 import { OverclockedEvaluator } from "./overclocked_evaluation";
 import { PosFlo } from "./pos_flow";
 import { Tester } from "./tester";
 
-export function stepForward(levelContext: LevelContext, posFlo: PosFlo) {
+export function stepForward(
+  levelContext: LevelContext,
+  posFlo: PosFlo,
+  ecs: EntityComponents
+) {
   if (levelContext.tester === null) {
     levelContext.tester = new Tester(
       levelContext.level.testCases,
@@ -17,7 +22,8 @@ export function stepForward(levelContext: LevelContext, posFlo: PosFlo) {
     levelContext.evaluator = new OverclockedEvaluator(
       posFlo,
       levelContext.evaluationListenerHolder,
-      levelContext
+      levelContext,
+      ecs
     );
   }
 
