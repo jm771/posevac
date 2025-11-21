@@ -205,7 +205,9 @@ export class OverclockedEvaluator implements Evaluator {
 
     const blocking =
       this.ecs.GetComponent(destNodeId, EcsComponent.Overclock).mode ===
-      OverclockMode.Regular;
+        OverclockMode.Regular ||
+      this.ecs.GetComponent(pc.currentLocation.nodeId, EcsComponent.Overclock)
+        .mode === OverclockMode.Regular;
 
     if (
       blocking &&

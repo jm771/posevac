@@ -33,7 +33,7 @@ export function EdgeConditionComponent({ edge }: { edge: Edge<Connection> }) {
     const condition = NotNull(edge.data).condition;
     const matchers = condition.matchers;
     // Cycle: Wild -> Zero -> One -> Wild
-    matchers[index] = (matchers[index] + 1) % 5;
+    matchers[index] = (matchers[index] + 1) % (Object.keys(Matcher).length / 2);
     incConditionVersion();
   }
 

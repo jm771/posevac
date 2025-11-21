@@ -149,6 +149,29 @@ const MAX: Level = {
   ],
 };
 
+const EulerianCycles: Level = {
+  id: "euler",
+  name: "Eulerian Cycles",
+  description: "How many Eulerian cycles starting 12 are there in a K5 graph?",
+  testCases: [
+    {
+      inputs: [],
+      expectedOutputs: [[132]],
+    },
+  ],
+  allowedNodes: [
+    RegularComponentType.Split,
+    RegularComponentType.Combine,
+    RegularComponentType.Constant,
+    RegularComponentType.Multiply,
+    RegularComponentType.Plus,
+    RegularComponentType.Nop,
+    RegularComponentType.Push,
+    RegularComponentType.Pop,
+    RegularComponentType.Empty,
+  ],
+};
+
 export type WorldInfo = {
   key: string;
   title: string;
@@ -178,7 +201,7 @@ export const WORLDS: WorldInfo[] = [
 export const WorldMap = new Map([
   ["1", [ADDITION, CUM_SUM, FACTORIAL, MULTIPLY, LESS_THAN_FOUR, MAX]],
   ["2", []],
-  ["X", []],
+  ["X", [EulerianCycles]],
 ]);
 
 export const LEVELS = Array.from(WorldMap.values()).flatMap((x) => x);

@@ -29,6 +29,10 @@ export enum RegularComponentType {
   Split = "split",
   Nop = "nop",
   Constant = "constant",
+  Push = "push",
+  Pop = "pop",
+  Empty = "empty",
+  Sum = "sum",
 }
 
 export enum InputOutputComponentType {
@@ -202,6 +206,32 @@ const typeToDefinitionMap = new Map<ComponentType, NodeDefinition>(
       1,
       1,
       (arr: unknown[]) => arr
+    ),
+    MakeStandardNodeDefinition(
+      RegularComponentType.Push,
+      "push",
+      2,
+      1,
+      ([v, arr]: unknown[]) => {
+        return [[...arr, v]];
+      }
+    ),
+    MakeStandardNodeDefinition(
+      RegularComponentType.Pop,
+      "pop",
+      1,
+      2,
+      ([arr]: unknown[]) => {
+        const n = [...arr];
+        return [n.pop(), n];
+      }
+    ),
+    MakeStandardNodeDefinition(
+      RegularComponentType.Empty,
+      "[]",
+      0,
+      1,
+      (arr: unknown[]) => [[]]
     ),
 
     ConstantNodeDefinition,

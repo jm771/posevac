@@ -84,7 +84,11 @@ function ProgramCounterGroupComponent({
       }}
     >
       {pcs.map((pc) => (
-        <div className="pc-box" key={pc.id}>
+        <div
+          className="pc-box"
+          key={pc.id}
+          style={Array.isArray(pc.contents) ? { background: "#FF1493" } : {}}
+        >
           {JSON.stringify(pc.contents)}
         </div>
       ))}
