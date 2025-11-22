@@ -63,14 +63,14 @@ function ProgramCounterGroupComponent({
           offsetDistance: "0%",
         }),
       }}
-      initial={{
-        scale: 0,
-        rotate: -360,
-      }}
-      exit={{
-        scale: 0,
-        rotate: 360,
-      }}
+      // initial={{
+      //   scale: 0,
+      //   rotate: -360,
+      // }}
+      // exit={{
+      //   scale: 0,
+      //   rotate: 360,
+      // }}
       animate={{
         scale: 1,
         rotate: 0,
