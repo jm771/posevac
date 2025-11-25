@@ -149,6 +149,31 @@ const MAX: Level = {
   ],
 };
 
+const Reverse: Level = {
+  id: "reverse",
+  name: "Reverse",
+  description:
+    "Take the input numbers until you see a zero - then return the numbers in reverse order",
+  testCases: [
+    {
+      inputs: [[1, 2, 3, 4, 0]],
+      expectedOutputs: [[0, 4, 3, 2, 1]],
+    },
+    {
+      inputs: [[6, 2, 8, 7, 0]],
+      expectedOutputs: [[0, 7, 8, 2, 6]],
+    },
+  ],
+  allowedNodes: [
+    RegularComponentType.Split,
+    RegularComponentType.Combine,
+    RegularComponentType.Constant,
+    RegularComponentType.Multiply,
+    RegularComponentType.Plus,
+    RegularComponentType.Nop,
+  ],
+};
+
 const EulerianCycles: Level = {
   id: "euler",
   name: "Eulerian Cycles",
@@ -199,7 +224,7 @@ export const WORLDS: WorldInfo[] = [
 ];
 
 export const WorldMap = new Map([
-  ["1", [ADDITION, CUM_SUM, FACTORIAL, MULTIPLY, LESS_THAN_FOUR, MAX]],
+  ["1", [ADDITION, CUM_SUM, FACTORIAL, Reverse, MULTIPLY, LESS_THAN_FOUR, MAX]],
   ["2", []],
   ["X", [EulerianCycles]],
 ]);
