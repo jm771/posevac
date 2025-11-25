@@ -61,7 +61,7 @@ export function exportGraph(
 
   const componentVals: SerializedComponent[] = ecs
     .GetAllComponents()
-    .filter(([[id, x], y]) => !id.includes("preview"))
+    .filter(([[id]]) => !id.includes("preview"))
     .map(([[entityId, kind], value]) => {
       return { entityId, kind, value };
     });
@@ -128,6 +128,7 @@ export function importGraph(
       ecs.MakeComponent(
         getOrThrow(idMap, ecsComp.entityId),
         ecsComp.kind,
+        // @ts-ignore
         ecsComp.value
       );
     }

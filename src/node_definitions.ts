@@ -213,6 +213,7 @@ const typeToDefinitionMap = new Map<ComponentType, NodeDefinition>(
       2,
       1,
       ([v, arr]: unknown[]) => {
+        Assert(arr instanceof Array);
         return [[...arr, v]];
       }
     ),
@@ -222,17 +223,14 @@ const typeToDefinitionMap = new Map<ComponentType, NodeDefinition>(
       1,
       2,
       ([arr]: unknown[]) => {
+        Assert(arr instanceof Array);
         const n = [...arr];
         return [n.pop(), n];
       }
     ),
-    MakeStandardNodeDefinition(
-      RegularComponentType.Empty,
-      "[]",
-      0,
-      1,
-      (arr: unknown[]) => [[]]
-    ),
+    MakeStandardNodeDefinition(RegularComponentType.Empty, "[]", 0, 1, () => [
+      [],
+    ]),
 
     ConstantNodeDefinition,
     InputNodeDefinition,

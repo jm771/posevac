@@ -63,13 +63,16 @@ export class EntityComponents {
     kind: K
   ): ValForKey<K> | null {
     const key = makeKey(entityId, kind);
+    // @ts-ignore
     let res: ValForKey<K> | undefined = this.map.get(key);
     if (res === undefined) {
       this.keys.set(key, [entityId, kind]);
+      // @ts-ignore
       res = NotNull(this.factories.get(kind))() as ValForKey<K>;
       this.map.set(key, res);
     }
 
+    // @ts-ignore
     return res;
   }
 

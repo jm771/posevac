@@ -1,4 +1,5 @@
-import { Handle, Position } from "@xyflow/react";
+// @ts-ignore
+import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 import React, { useCallback, useContext, useRef, useState } from "react";
 import {
   EcsComponent,
@@ -23,6 +24,7 @@ function InputTerminals({ count }: { count: number }) {
   return (
     <>
       {inputHandles.map((i) => (
+        // @ts-ignore
         <Handle
           key={`input-${i}`}
           type="target"
@@ -46,6 +48,7 @@ function OutputTerminals({ count }: { count: number }) {
   return (
     <>
       {outputHandles.map((i) => (
+        // @ts-ignore
         <Handle
           key={`output-${i}`}
           type="source"
@@ -100,13 +103,7 @@ export function OverclockSettingButton({ nodeId }: { nodeId: string }) {
   );
 }
 
-export function CompoundNode({
-  id,
-  data,
-}: {
-  id: string;
-  data: NodeDefinition;
-}) {
+export function CompoundNode({ id, data }: NodeProps<Node<NodeDefinition>>) {
   const settings = useContext(NodeSettingsContext);
   useContext(EntityComponentsContext).GetComponent(id, EcsComponent.Overclock);
 
@@ -147,12 +144,12 @@ export function CompoundNode({
   );
 }
 
-export function ConstantNode({ id }: { id: string }) {
+export function ConstantNode({ id }: NodeProps<Node<NodeDefinition>>) {
   const nodeSettings = useContext(NodeSettingsContext);
   const settings = nodeSettings.get(id);
 
   // #YOLO
-  if (!settings) return;
+  if (!settings) return <></>;
 
   Assert(settings.type === NodeSettingType.Constant);
 
