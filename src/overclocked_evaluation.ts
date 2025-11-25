@@ -130,6 +130,13 @@ export class OverclockedEvaluator implements Evaluator {
       .some((arr) => arr.length > 0);
   }
 
+  getOcMode(nodeId: string): OverclockMode {
+    return (
+      this.ecs.GetComponent(nodeId, EcsComponent.Overclock)?.mode ??
+      OverclockMode.Regular
+    );
+  }
+
   evaluateNode(node: Node<NodeDefinition>): void {
     if (this.isAnyOutputBlocked(node)) {
       return;
@@ -142,7 +149,7 @@ export class OverclockedEvaluator implements Evaluator {
 
     const inputValueses = inputCounters.map((a) => a.map((c) => c.contents));
 
-    const ocMode = this.ecs.GetComponent(node.id, EcsComponent.Overclock).mode;
+    const ocMode = this.getOcMode(node.id);
 
     const mappedInputValues = getMappedInputs(inputValueses, ocMode);
 
@@ -204,10 +211,8 @@ export class OverclockedEvaluator implements Evaluator {
     const destNodeId = pc.currentEdge.dest.nodeId;
 
     const blocking =
-      this.ecs.GetComponent(destNodeId, EcsComponent.Overclock).mode ===
-        OverclockMode.Regular ||
-      this.ecs.GetComponent(pc.currentLocation.nodeId, EcsComponent.Overclock)
-        .mode === OverclockMode.Regular;
+      this.getOcMode(destNodeId) == OverclockMode.Regular ||
+      this.getOcMode(pc.currentLocation.nodeId) === OverclockMode.Regular;
 
     if (
       blocking &&

@@ -151,16 +151,16 @@ export function GraphProvider({
     new GraphEditor(nodeId, setNodes, setEdges, settingsRef.current)
   );
 
+  const overclockFactory =
+    level.id === "euler"
+      ? () => {
+          return { mode: OverclockMode.Regular };
+        }
+      : () => null;
+
   const entityComponentsRef = useRef(
     new EntityComponents(
-      [
-        [
-          EcsComponent.Overclock,
-          () => {
-            return { mode: OverclockMode.Regular };
-          },
-        ],
-      ],
+      [[EcsComponent.Overclock, overclockFactory]],
       initalState.ecs
     )
   );

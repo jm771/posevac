@@ -73,6 +73,10 @@ const modes = [
 export function OverclockSettingButton({ nodeId }: { nodeId: string }) {
   const ecs = useContext(EntityComponentsContext);
   const component = ecs.GetComponent(nodeId, EcsComponent.Overclock);
+  if (component == null) {
+    return null;
+  }
+
   // TODO somewhere better
 
   const [index, setIndex] = useState<number>(
@@ -104,6 +108,7 @@ export function CompoundNode({
   data: NodeDefinition;
 }) {
   const settings = useContext(NodeSettingsContext);
+  useContext(EntityComponentsContext).GetComponent(id, EcsComponent.Overclock);
 
   const nodesToFit = Math.max(data.nInputs, data.nOutputs);
   const heightTotalOffset = topTerminalOffset * 2 + 24; //12px in css

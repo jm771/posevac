@@ -194,7 +194,7 @@ export const WORLDS: WorldInfo[] = [
     key: "X",
     title: "Saftey limiter off",
     descrption:
-      "It's violently shaking with all it's compute power, but if you want the Turing award, you need to master this",
+      "Warning - highly experimental! It's violently shaking with all it's compute power, but if you want the Turing award, you need to master this",
   },
 ];
 

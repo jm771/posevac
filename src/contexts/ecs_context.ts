@@ -36,7 +36,7 @@ type ValForKey<K> = LookupByKind<K>["val"];
 //   ? V
 //   : never;
 type FactoryTuple = ComponentPairs extends { kind: infer K; val: infer V }
-  ? [K, () => V]
+  ? [K, () => V | null]
   : never;
 
 function makeKey(entityId: string, kind: EcsComponent) {
@@ -61,7 +61,7 @@ export class EntityComponents {
   GetComponent<K extends ComponentPairs["kind"]>(
     entityId: string,
     kind: K
-  ): ValForKey<K> {
+  ): ValForKey<K> | null {
     const key = makeKey(entityId, kind);
     let res: ValForKey<K> | undefined = this.map.get(key);
     if (res === undefined) {

@@ -122,11 +122,14 @@ export function importGraph(
     editor.settings.set(getOrThrow(idMap, setting.node_id), setting.setting);
   }
 
-  for (const ecsComp of serializedGraph.components) {
-    ecs.MakeComponent(
-      getOrThrow(idMap, ecsComp.entityId),
-      ecsComp.kind,
-      ecsComp.value
-    );
+  // TODO robustify
+  if (serializedGraph.components != undefined) {
+    for (const ecsComp of serializedGraph.components) {
+      ecs.MakeComponent(
+        getOrThrow(idMap, ecsComp.entityId),
+        ecsComp.kind,
+        ecsComp.value
+      );
+    }
   }
 }

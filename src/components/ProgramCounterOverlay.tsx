@@ -31,8 +31,6 @@ function ProgramCounterGroupComponent({
   const divRef = useRef<HTMLDivElement>(null);
   const { edgePathHandlers } = useContext(EdgePathContext);
 
-  // const edge = pc.currentEdge;
-
   useEffect(() => {
     if (!divRef.current) return;
 
@@ -63,14 +61,14 @@ function ProgramCounterGroupComponent({
           offsetDistance: "0%",
         }),
       }}
-      // initial={{
-      //   scale: 0,
-      //   rotate: -360,
-      // }}
-      // exit={{
-      //   scale: 0,
-      //   rotate: 360,
-      // }}
+      initial={{
+        scale: 0,
+        rotate: -360,
+      }}
+      exit={{
+        scale: 0,
+        rotate: 360,
+      }}
       animate={{
         scale: 1,
         rotate: 0,
@@ -87,7 +85,7 @@ function ProgramCounterGroupComponent({
         <div
           className="pc-box"
           key={pc.id}
-          style={Array.isArray(pc.contents) ? { background: "#FF1493" } : {}}
+          // style={Array.isArray(pc.contents) ? { background: "#FF1493" } : {}}
         >
           {JSON.stringify(pc.contents)}
         </div>
