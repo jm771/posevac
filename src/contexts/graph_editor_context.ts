@@ -9,6 +9,7 @@ import {
 } from "../node_definitions";
 import { Connection, TerminalType } from "../pos_flow";
 import { Assert, NotNull } from "../util";
+import { EntityComponents } from "./ecs_context";
 import { makeDefaultSettings, NodeSetting } from "./node_settings_context";
 
 function edgeMatches(e1: Flow.Edge, e2: Flow.Connection): boolean {
@@ -56,6 +57,7 @@ export class GraphEditor {
   private readonly nodeIdxRef: React.RefObject<number>;
   private readonly setNodes: Dispatch<SetStateAction<Node<NodeDefinition>[]>>;
   private readonly setEdges: Dispatch<SetStateAction<Flow.Edge<Connection>[]>>;
+  private readonly ecs: EntityComponents;
   readonly settings: Map<string, NodeSetting>;
 
   constructor(
@@ -137,6 +139,10 @@ export class GraphEditor {
 
   RemoveNode(node: Flow.Node<NodeDefinition>) {
     this.setNodes((nds) => nds.filter((n) => n.id != node.id));
+    this.setEdges((edgs) =>
+      edgs.filter((e) => e.source != node.id && e.target != node.id)
+    );
+
     this.settings.delete(node.id);
   }
 }

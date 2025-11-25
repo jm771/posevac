@@ -1,5 +1,11 @@
-import { Handle, Position } from "@xyflow/react";
+// @ts-ignore
+import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 import React, { useCallback, useContext, useRef, useState } from "react";
+import {
+  EcsComponent,
+  EntityComponentsContext,
+  OverclockMode,
+} from "../contexts/ecs_context";
 import {
   IONodeSetting,
   NodeSettingsContext,
@@ -18,6 +24,7 @@ function InputTerminals({ count }: { count: number }) {
   return (
     <>
       {inputHandles.map((i) => (
+        // @ts-ignore
         <Handle
           key={`input-${i}`}
           type="target"
@@ -41,6 +48,7 @@ function OutputTerminals({ count }: { count: number }) {
   return (
     <>
       {outputHandles.map((i) => (
+        // @ts-ignore
         <Handle
           key={`output-${i}`}
           type="source"
@@ -59,14 +67,45 @@ function OutputTerminals({ count }: { count: number }) {
   );
 }
 
-export function CompoundNode({
-  id,
-  data,
-}: {
-  id: string;
-  data: NodeDefinition;
-}) {
+const modes = [
+  OverclockMode.Regular,
+  OverclockMode.Cartesian,
+  OverclockMode.Zip,
+];
+
+export function OverclockSettingButton({ nodeId }: { nodeId: string }) {
+  const ecs = useContext(EntityComponentsContext);
+  const component = ecs.GetComponent(nodeId, EcsComponent.Overclock);
+  if (component == null) {
+    return null;
+  }
+
+  // TODO somewhere better
+
+  const [index, setIndex] = useState<number>(
+    modes.findIndex((x) => x === component.mode)
+  );
+
+  const onClick = useCallback(
+    () =>
+      setIndex((x) => {
+        const newIndex = (x + 1) % modes.length;
+        component.mode = modes[newIndex];
+        return newIndex;
+      }),
+    [setIndex, component]
+  );
+
+  return (
+    <button className={"constant-toggle-button repeat"} onClick={onClick}>
+      {modes[index]}
+    </button>
+  );
+}
+
+export function CompoundNode({ id, data }: NodeProps<Node<NodeDefinition>>) {
   const settings = useContext(NodeSettingsContext);
+  useContext(EntityComponentsContext).GetComponent(id, EcsComponent.Overclock);
 
   const nodesToFit = Math.max(data.nInputs, data.nOutputs);
   const heightTotalOffset = topTerminalOffset * 2 + 24; //12px in css
@@ -96,17 +135,21 @@ export function CompoundNode({
     >
       <InputTerminals count={data.nInputs} />
       {label}
+      {(data.style.style === NodeStyle.Compound ||
+        data.style.style === NodeStyle.Output) && (
+        <OverclockSettingButton nodeId={id} />
+      )}
       <OutputTerminals count={data.nOutputs} />
     </div>
   );
 }
 
-export function ConstantNode({ id }: { id: string }) {
+export function ConstantNode({ id }: NodeProps<Node<NodeDefinition>>) {
   const nodeSettings = useContext(NodeSettingsContext);
   const settings = nodeSettings.get(id);
 
   // #YOLO
-  if (!settings) return;
+  if (!settings) return <></>;
 
   Assert(settings.type === NodeSettingType.Constant);
 

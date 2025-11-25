@@ -1,5 +1,10 @@
 import { Node } from "@xyflow/react";
 import {
+  EcsComponent,
+  EntityComponents,
+  OverclockMode,
+} from "./contexts/ecs_context";
+import {
   CounterAdvanceEvent,
   EvaluationEvent,
   EvaluationListener,
@@ -15,7 +20,58 @@ import {
 } from "./nodes";
 import { PosFlo } from "./pos_flow";
 import { PCStore, ProgramCounter } from "./program_counter";
-import { Assert } from "./util";
+import { Assert, mapIterable, NotNull, range } from "./util";
+
+export interface Evaluator {
+  step(): void;
+  stride(): void;
+  destroy(): void;
+}
+
+function* getAllCombs(arr: unknown[][]): Generator<unknown[]> {
+  if (arr.length === 0) {
+    yield [];
+    return;
+  }
+  if (arr.length === 1) {
+    for (const el of arr[0]) {
+      yield [el];
+    }
+
+    return;
+  }
+
+  const last = NotNull(arr.pop());
+
+  for (const rest of getAllCombs(arr)) {
+    for (const el of last) {
+      yield rest.concat([el]);
+    }
+  }
+}
+
+function getMappedInputs(
+  inputValueses: unknown[][],
+  mode: OverclockMode
+): unknown[][] | null {
+  if (inputValueses.length === 0) {
+    return [[]];
+  }
+
+  if (mode === OverclockMode.Regular) {
+    Assert(inputValueses.every((arr) => arr.length === 1));
+    return [inputValueses.map((arr) => arr[0])];
+  } else if (mode === OverclockMode.Cartesian) {
+    return Array.from(getAllCombs(inputValueses));
+  } else {
+    //if (mode === OverclockMode.Zip) {
+    const firstLen = inputValueses[0].length;
+    if (!inputValueses.every((arr) => arr.length === firstLen)) {
+      return null;
+    }
+    return range(firstLen).map((idx) => inputValueses.map((arr) => arr[idx]));
+  }
+}
 
 enum Stage {
   AdvanceCounter,
@@ -30,18 +86,20 @@ type State =
     }
   | { stage: Stage.Evaluate; nodeIndex: number };
 
-export class Evaluator {
+export class EvaluatorImpl implements Evaluator {
   private programCounters: PCStore;
   private nodeStates: Map<string, unknown>;
   private evaluationState: State;
   private posFlo: PosFlo;
   private listener: EvaluationListener;
   private testValues: TestValuesContext;
+  private ecs: EntityComponents;
 
   constructor(
     posFlo: PosFlo,
     listener: EvaluationListener,
-    testValues: TestValuesContext
+    testValues: TestValuesContext,
+    ecs: EntityComponents
   ) {
     this.programCounters = new PCStore();
     this.evaluationState = { stage: Stage.Evaluate, nodeIndex: 0 };
@@ -49,6 +107,7 @@ export class Evaluator {
     this.posFlo = posFlo;
     this.testValues = testValues;
     this.nodeStates = new Map<string, unknown>();
+    this.ecs = ecs;
     posFlo.nodes.forEach((n: Node<NodeDefinition>) => {
       this.nodeStates.set(n.id, n.data.makeState());
     });
@@ -57,23 +116,30 @@ export class Evaluator {
     this.listener.onEvaluationEvent(EvaluationEvent.Start);
   }
 
-  getCountersForNode(node: ComputeNode): ProgramCounter[] | null {
+  getCountersForNode(node: ComputeNode): ProgramCounter[][] | null {
     const inputCounters = GetInputTerminals(node).map((term) =>
       this.programCounters.GetByTerminal(term)
     );
 
-    Assert(inputCounters.every((arr) => arr.length <= 1));
     if (inputCounters.some((arr) => arr.length === 0)) {
       return null;
     }
 
-    return inputCounters.map((arr) => arr[0]);
+    return inputCounters;
   }
 
+  // TODO remove this safety too?
   isAnyOutputBlocked(node: ComputeNode): boolean {
     return GetOutputTerminals(node)
       .map((term) => this.programCounters.GetByTerminal(term))
       .some((arr) => arr.length > 0);
+  }
+
+  getOcMode(nodeId: string): OverclockMode {
+    return (
+      this.ecs.GetComponent(nodeId, EcsComponent.Overclock)?.mode ??
+      OverclockMode.Regular
+    );
   }
 
   evaluateNode(node: Node<NodeDefinition>): void {
@@ -86,29 +152,45 @@ export class Evaluator {
       return;
     }
 
-    const inputValues = inputCounters.map((c) => c.contents);
+    const inputValueses = inputCounters.map((a) => a.map((c) => c.contents));
 
-    const result = node.data.evaluate(
-      this.nodeStates.get(node.id),
-      this.posFlo.nodeSettings.get(node.id)?.setting,
-      inputValues,
-      this.testValues
+    const ocMode = this.getOcMode(node.id);
+
+    const mappedInputValues = getMappedInputs(inputValueses, ocMode);
+
+    if (mappedInputValues === null) {
+      return;
+    }
+
+    const results = mapIterable(mappedInputValues, (inputValues) =>
+      node.data.evaluate(
+        this.nodeStates.get(node.id),
+        this.posFlo.nodeSettings.get(node.id)?.setting,
+        inputValues,
+        this.testValues
+      )
     );
 
     let newPcs: ProgramCounter[] = [];
 
-    if (result !== null) {
-      Assert(result.length === node.data.nOutputs);
+    for (const result of results) {
+      if (result !== null) {
+        Assert(result.length === node.data.nOutputs);
 
-      newPcs = result.flatMap((val: unknown, idx: number) =>
-        this.posFlo
-          .GetConnectionsForTerminal(GetOutputTerminal(node, idx))
-          .filter((conn) => conn.condition.matches(val))
-          .map((conn) => new ProgramCounter(conn.source, conn, val))
-      );
+        newPcs = newPcs.concat(
+          result.flatMap((val: unknown, idx: number) =>
+            this.posFlo
+              .GetConnectionsForTerminal(GetOutputTerminal(node, idx))
+              .filter((conn) => conn.condition.matches(val))
+              .map((conn) => new ProgramCounter(conn.source, conn, val))
+          )
+        );
+      }
     }
 
-    inputCounters.forEach((pc) => {
+    const flatCounters = inputCounters.flatMap((pc) => pc);
+
+    flatCounters.forEach((pc) => {
       this.programCounters.Remove(pc);
     });
 
@@ -118,7 +200,7 @@ export class Evaluator {
 
     const event: NodeEvaluateEvent = {
       nodeId: node.id,
-      inputCounters: inputCounters,
+      inputCounters: flatCounters,
       outputCounters: newPcs,
     };
 
@@ -130,7 +212,17 @@ export class Evaluator {
       return;
     }
 
-    if (this.programCounters.GetByTerminal(pc.currentEdge.dest).length !== 0) {
+    // Stack them up baby!!!
+    const destNodeId = pc.currentEdge.dest.nodeId;
+
+    const blocking =
+      this.getOcMode(destNodeId) == OverclockMode.Regular ||
+      this.getOcMode(pc.currentLocation.nodeId) === OverclockMode.Regular;
+
+    if (
+      blocking &&
+      this.programCounters.GetByTerminal(pc.currentEdge.dest).length !== 0
+    ) {
       return;
     }
 

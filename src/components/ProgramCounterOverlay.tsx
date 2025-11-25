@@ -8,15 +8,28 @@ import {
   EvaluationListener,
   NodeEvaluateEvent,
 } from "../evaluation_listeners";
-import { ConnectionToString, terminalEquals } from "../pos_flow";
+import {
+  Connection,
+  ConnectionToString,
+  terminalEquals,
+  TerminalId,
+  TerminalIdToString,
+  TerminalType,
+} from "../pos_flow";
 import { ProgramCounter } from "../program_counter";
-import { mapIterable } from "../util";
+import { DefaultMap, mapIterable } from "../util";
 
-function ProgramCounterComponent({ pc }: { pc: ProgramCounter }) {
+function ProgramCounterGroupComponent({
+  currentLocation,
+  edge,
+  pcs,
+}: {
+  currentLocation: TerminalId;
+  edge: Connection;
+  pcs: ProgramCounter[];
+}) {
   const divRef = useRef<HTMLDivElement>(null);
   const { edgePathHandlers } = useContext(EdgePathContext);
-
-  const edge = pc.currentEdge;
 
   useEffect(() => {
     if (!divRef.current) return;
@@ -38,11 +51,13 @@ function ProgramCounterComponent({ pc }: { pc: ProgramCounter }) {
 
   return (
     <motion.div
+      className="pc-container"
       ref={divRef}
       style={{
         scale: 1,
         position: "absolute",
-        ...(terminalEquals(pc.currentLocation, pc.currentEdge.source) && {
+        border: pcs.length >= 2 ? "3px solid #81c784" : undefined,
+        ...(terminalEquals(currentLocation, edge.source) && {
           offsetDistance: "0%",
         }),
       }}
@@ -54,11 +69,10 @@ function ProgramCounterComponent({ pc }: { pc: ProgramCounter }) {
         scale: 0,
         rotate: 360,
       }}
-      className="pc-box"
       animate={{
         scale: 1,
         rotate: 0,
-        ...(terminalEquals(pc.currentLocation, pc.currentEdge.dest) && {
+        ...(terminalEquals(currentLocation, edge.dest) && {
           offsetDistance: ["0%", "100%"],
         }),
       }}
@@ -67,7 +81,15 @@ function ProgramCounterComponent({ pc }: { pc: ProgramCounter }) {
         duration: 0.6,
       }}
     >
-      {JSON.stringify(pc.contents)}
+      {pcs.map((pc) => (
+        <div
+          className="pc-box"
+          key={pc.id}
+          // style={Array.isArray(pc.contents) ? { background: "#FF1493" } : {}}
+        >
+          {JSON.stringify(pc.contents)}
+        </div>
+      ))}
     </motion.div>
   );
 }
@@ -120,11 +142,32 @@ export function ProgramCounterOverlay({
     };
   }, [evaluationEventSource]);
 
+  const groupMap = new DefaultMap<string, ProgramCounter[]>(() => []);
+
+  programCounters.forEach((pc) => {
+    const groupingEdge =
+      pc.currentLocation.type === TerminalType.Output
+        ? ConnectionToString(pc.currentEdge)
+        : "";
+    groupMap
+      // .get(ConnectionToString(pc.currentEdge) + pc.currentLocation.nodeId)
+      .get(TerminalIdToString(pc.currentLocation) + groupingEdge)
+      .push(pc);
+  });
+
   return (
     <AnimatePresence>
-      {mapIterable(programCounters.values(), (pc: ProgramCounter) => (
-        <ProgramCounterComponent key={pc.id} pc={pc} />
-      ))}
+      {mapIterable(
+        groupMap.entries(),
+        ([key, pcs]: [string, ProgramCounter[]]) => (
+          <ProgramCounterGroupComponent
+            key={key}
+            pcs={pcs}
+            edge={pcs[0].currentEdge}
+            currentLocation={pcs[0].currentLocation}
+          />
+        )
+      )}
     </AnimatePresence>
   );
 }

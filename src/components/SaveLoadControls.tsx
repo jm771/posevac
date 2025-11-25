@@ -1,4 +1,8 @@
 import React, { useContext, useRef } from "react";
+import {
+  EntityComponents,
+  EntityComponentsContext,
+} from "../contexts/ecs_context";
 import { PosFloContext } from "../contexts/pos_flo_context";
 import { exportGraph, SerializedGraph } from "../graph_serialization";
 import { PosFlo } from "../pos_flow";
@@ -51,9 +55,9 @@ function MakeFileSelectedHandler(
   };
 }
 
-function downloadGraph(posFlo: PosFlo, levelId: string) {
+function downloadGraph(posFlo: PosFlo, levelId: string, ecs: EntityComponents) {
   try {
-    const serialized = exportGraph(posFlo, levelId);
+    const serialized = exportGraph(posFlo, levelId, ecs);
     const json = JSON.stringify(serialized, null, 2);
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -82,6 +86,7 @@ export function SaveLoadControls({
   setSaveState: (a: SerializedGraph) => void;
 }) {
   const posFlo = useContext(PosFloContext);
+  const ecs = useContext(EntityComponentsContext);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -92,7 +97,7 @@ export function SaveLoadControls({
         <button
           id="saveBtn"
           className="control-btn"
-          onClick={() => downloadGraph(posFlo, levelId)}
+          onClick={() => downloadGraph(posFlo, levelId, ecs)}
         >
           💾 Save
         </button>

@@ -8,6 +8,12 @@ import {
 } from "@xyflow/react";
 import React, { SetStateAction, useMemo, useRef } from "react";
 import { CallbackDict } from "../callback_dict";
+import {
+  EcsComponent,
+  EntityComponents,
+  EntityComponentsContext,
+  OverclockMode,
+} from "../contexts/ecs_context";
 import { EdgePathContext } from "../contexts/edge_path_context";
 import { FlowPropsContext } from "../contexts/flow_props_context";
 import {
@@ -24,6 +30,7 @@ import {
   NodeSettingType,
 } from "../contexts/node_settings_context";
 import { PosFloContext } from "../contexts/pos_flo_context";
+import { LevelContextThing } from "../editor_context";
 import { importGraph, SerializedGraph } from "../graph_serialization";
 import { Level, nInputs, nOutputs } from "../levels";
 import { InputOutputComponentType, NodeDefinition } from "../node_definitions";
@@ -60,6 +67,7 @@ class InitialState {
   nodes: Node<NodeDefinition>[] = [];
   edges: Edge<Connection>[] = [];
   settings = new Map<string, NodeSetting>();
+  ecs = new EntityComponents([], null);
 }
 
 function loadInitialState(saveState: SerializedGraph | null, level: Level) {
@@ -97,7 +105,7 @@ function loadInitialState(saveState: SerializedGraph | null, level: Level) {
   );
 
   if (saveState != null) {
-    importGraph(saveState, level.id, editor);
+    importGraph(saveState, level.id, editor, state.ecs);
   } else {
     MakeInputOutputNodes(level, editor);
   }
@@ -140,38 +148,45 @@ export function GraphProvider({
   const settingsRef = useRef(initalState.settings);
 
   // This one too probably
-  const graphEditor = useRef<GraphEditor>(
+  const graphEditorRef = useRef<GraphEditor>(
     new GraphEditor(nodeId, setNodes, setEdges, settingsRef.current)
-  ).current;
+  );
 
-  // const didInit = useRef(false);
+  const overclockFactory =
+    level.id === "euler"
+      ? () => {
+          return { mode: OverclockMode.Regular };
+        }
+      : () => null;
 
-  // useEffect(() => {
-  //   if (didInit.current) return;
-
-  //   if (!saveState) {
-  //     MakeInputOutputNodes(level, graphEditor);
-  //   } else {
-  //     importGraph(saveState, level.id, graphEditor);
-  //   }
-  //   didInit.current = true;
-  // }, [level, graphEditor, saveState]);
+  const entityComponentsRef = useRef(
+    new EntityComponents(
+      [[EcsComponent.Overclock, overclockFactory]],
+      initalState.ecs
+    )
+  );
 
   return (
     <ReactFlowProvider>
-      <NodeCallbackContext value={nodeCallbackRef.current}>
-        <EdgePathContext value={edgePathCallbackRef.current}>
-          <PosFloContext value={new PosFlo(nodes, edges, settingsRef.current)}>
-            <NodeSettingsContext value={settingsRef.current}>
-              <GraphEditorContext value={graphEditor}>
-                <FlowPropsContext value={flowProps}>
-                  {children}
-                </FlowPropsContext>
-              </GraphEditorContext>
-            </NodeSettingsContext>
-          </PosFloContext>
-        </EdgePathContext>
-      </NodeCallbackContext>
+      <LevelContextThing value={level}>
+        <EntityComponentsContext value={entityComponentsRef.current}>
+          <NodeCallbackContext value={nodeCallbackRef.current}>
+            <EdgePathContext value={edgePathCallbackRef.current}>
+              <PosFloContext
+                value={new PosFlo(nodes, edges, settingsRef.current)}
+              >
+                <NodeSettingsContext value={settingsRef.current}>
+                  <GraphEditorContext value={graphEditorRef.current}>
+                    <FlowPropsContext value={flowProps}>
+                      {children}
+                    </FlowPropsContext>
+                  </GraphEditorContext>
+                </NodeSettingsContext>
+              </PosFloContext>
+            </EdgePathContext>
+          </NodeCallbackContext>
+        </EntityComponentsContext>
+      </LevelContextThing>
     </ReactFlowProvider>
   );
 }

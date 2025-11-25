@@ -1,10 +1,14 @@
+import { EntityComponents } from "./contexts/ecs_context";
 import { LevelContext } from "./editor_context";
-import { Evaluator } from "./evaluation";
-import { NodeId } from "./nodes";
+import { EvaluatorImpl } from "./evaluation";
 import { PosFlo } from "./pos_flow";
 import { Tester } from "./tester";
 
-export function stepForward(levelContext: LevelContext, posFlo: PosFlo) {
+export function stepForward(
+  levelContext: LevelContext,
+  posFlo: PosFlo,
+  ecs: EntityComponents
+) {
   if (levelContext.tester === null) {
     levelContext.tester = new Tester(
       levelContext.level.testCases,
@@ -15,10 +19,11 @@ export function stepForward(levelContext: LevelContext, posFlo: PosFlo) {
   // TODO need to plumb real settings in
 
   if (levelContext.evaluator == null) {
-    levelContext.evaluator = new Evaluator(
+    levelContext.evaluator = new EvaluatorImpl(
       posFlo,
       levelContext.evaluationListenerHolder,
-      levelContext
+      levelContext,
+      ecs
     );
   }
 
