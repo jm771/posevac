@@ -137,6 +137,9 @@ export class GraphEditor {
 
   RemoveNode(node: Flow.Node<NodeDefinition>) {
     this.setNodes((nds) => nds.filter((n) => n.id != node.id));
+    this.setEdges((edgs) =>
+      edgs.filter((e) => e.source != node.id && e.target != node.id)
+    );
     this.settings.delete(node.id);
   }
 }
