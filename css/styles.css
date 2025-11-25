@@ -81,6 +81,10 @@ body {
     transform: translateY(-2px);
 }
 
+.component-template .react-flow__handle.connectionindicator {
+  pointer-events: none !important;
+}
+
 .component-template:active {
     cursor: grabbing;
 }

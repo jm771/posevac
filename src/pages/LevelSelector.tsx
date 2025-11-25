@@ -21,7 +21,6 @@ function LevelCard({ level }: { level: Level }) {
 
 export function LevelSelector() {
   const [selectedWorldIdx, setSelectedWorldIdx] = useState(0);
-  console.log(selectedWorldIdx, WORLDS);
   const posMod =
     ((selectedWorldIdx % WORLDS.length) + WORLDS.length) % WORLDS.length;
   const world = WORLDS[posMod];
