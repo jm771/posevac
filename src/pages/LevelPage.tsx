@@ -23,9 +23,11 @@ export function LevelPage() {
   }
 
   const level = useMemo(() => getLevelById(levelId), [levelId]);
+  const [levelContext, setLevelContext] = useState<LevelContext>(
+    new LevelContext(level)
+  );
   // const levelContextRef = useRef(new LevelContext());
   // This is maybe dubious?
-  const [levelContext] = useState<LevelContext>(new LevelContext(level));
 
   return (
     <GraphProvider level={level} key={editorKey} saveState={saveState}>
@@ -50,6 +52,7 @@ export function LevelPage() {
             setSaveState={(k: SerializedGraph) => {
               setSaveState(k);
               setEditorKey((x) => x + 1);
+              setLevelContext(new LevelContext(level));
             }}
           />
         </aside>

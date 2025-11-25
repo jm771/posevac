@@ -61,7 +61,7 @@ export function exportGraph(
 
   const componentVals: SerializedComponent[] = ecs
     .GetAllComponents()
-    .filter(([[id]]) => !id.includes("preview"))
+    .filter(([[id]]) => nodes.findIndex((n) => n.id === id) != -1)
     .map(([[entityId, kind], value]) => {
       return { entityId, kind, value };
     });
