@@ -4,7 +4,6 @@ import {
   EntityComponents,
   OverclockMode,
 } from "./contexts/ecs_context";
-import { Evaluator } from "./evaluation";
 import {
   CounterAdvanceEvent,
   EvaluationEvent,
@@ -22,6 +21,12 @@ import {
 import { PosFlo } from "./pos_flow";
 import { PCStore, ProgramCounter } from "./program_counter";
 import { Assert, mapIterable, NotNull, range } from "./util";
+
+export interface Evaluator {
+  step(): void;
+  stride(): void;
+  destroy(): void;
+}
 
 function* getAllCombs(arr: unknown[][]): Generator<unknown[]> {
   if (arr.length === 0) {
