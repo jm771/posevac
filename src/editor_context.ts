@@ -51,6 +51,4 @@ export class LevelContext implements TestValuesContext {
   }
 }
 
-export const LevelContextContext = createContext<LevelContext>(
-  null as unknown as LevelContext
-);
+export const LevelContextThing = createContext<Level>(null as unknown as Level);

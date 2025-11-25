@@ -1,3 +1,5 @@
+import { Assert } from "./util";
+
 export enum Matcher {
   Wild,
   Zero,
@@ -31,8 +33,10 @@ function matcherMatches(matcher: Matcher, value: unknown) {
     case Matcher.NotOne:
       return value !== 1;
     case Matcher.Len10:
+      Assert(value instanceof Array);
       return value.length === 10;
     case Matcher.NoDups:
+      Assert(value instanceof Array);
       return new Set(value).size === value.length;
   }
 }

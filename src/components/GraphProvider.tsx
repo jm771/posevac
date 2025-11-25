@@ -30,6 +30,7 @@ import {
   NodeSettingType,
 } from "../contexts/node_settings_context";
 import { PosFloContext } from "../contexts/pos_flo_context";
+import { LevelContextThing } from "../editor_context";
 import { importGraph, SerializedGraph } from "../graph_serialization";
 import { Level, nInputs, nOutputs } from "../levels";
 import { InputOutputComponentType, NodeDefinition } from "../node_definitions";
@@ -167,23 +168,25 @@ export function GraphProvider({
 
   return (
     <ReactFlowProvider>
-      <EntityComponentsContext value={entityComponentsRef.current}>
-        <NodeCallbackContext value={nodeCallbackRef.current}>
-          <EdgePathContext value={edgePathCallbackRef.current}>
-            <PosFloContext
-              value={new PosFlo(nodes, edges, settingsRef.current)}
-            >
-              <NodeSettingsContext value={settingsRef.current}>
-                <GraphEditorContext value={graphEditorRef.current}>
-                  <FlowPropsContext value={flowProps}>
-                    {children}
-                  </FlowPropsContext>
-                </GraphEditorContext>
-              </NodeSettingsContext>
-            </PosFloContext>
-          </EdgePathContext>
-        </NodeCallbackContext>
-      </EntityComponentsContext>
+      <LevelContextThing value={level}>
+        <EntityComponentsContext value={entityComponentsRef.current}>
+          <NodeCallbackContext value={nodeCallbackRef.current}>
+            <EdgePathContext value={edgePathCallbackRef.current}>
+              <PosFloContext
+                value={new PosFlo(nodes, edges, settingsRef.current)}
+              >
+                <NodeSettingsContext value={settingsRef.current}>
+                  <GraphEditorContext value={graphEditorRef.current}>
+                    <FlowPropsContext value={flowProps}>
+                      {children}
+                    </FlowPropsContext>
+                  </GraphEditorContext>
+                </NodeSettingsContext>
+              </PosFloContext>
+            </EdgePathContext>
+          </NodeCallbackContext>
+        </EntityComponentsContext>
+      </LevelContextThing>
     </ReactFlowProvider>
   );
 }

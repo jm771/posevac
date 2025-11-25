@@ -8,10 +8,13 @@ import React, {
 } from "react";
 import { Matcher, MATCHER_LABELS } from "../condition";
 import { EdgePathContext } from "../contexts/edge_path_context";
+import { LevelContextThing } from "../editor_context";
 import { Connection, ConnectionToString } from "../pos_flow";
 import { NotNull } from "../util";
 
 export function EdgeConditionComponent({ edge }: { edge: Edge<Connection> }) {
+  const nMatchers = useContext(LevelContextThing).id === "euler" ? 7 : 5;
+
   const [, setConditionVersion] = useState<number>(0);
   const incConditionVersion = useCallback(
     () => setConditionVersion((x) => x + 1),
@@ -25,17 +28,20 @@ export function EdgeConditionComponent({ edge }: { edge: Edge<Connection> }) {
     incConditionVersion();
   }, [edge, incConditionVersion]);
 
-  function handleCycleMatcher(index: number, e: React.MouseEvent) {
-    e.stopPropagation();
-    e.preventDefault();
-    e.nativeEvent.stopImmediatePropagation();
-    if (!edge) return;
-    const condition = NotNull(edge.data).condition;
-    const matchers = condition.matchers;
-    // Cycle: Wild -> Zero -> One -> Wild
-    matchers[index] = (matchers[index] + 1) % (Object.keys(Matcher).length / 2);
-    incConditionVersion();
-  }
+  const handleCycleMatcher = useCallback(
+    (index: number, e: React.MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      e.nativeEvent.stopImmediatePropagation();
+      if (!edge) return;
+      const condition = NotNull(edge.data).condition;
+      const matchers = condition.matchers;
+      // Cycle: Wild -> Zero -> One -> Wild
+      matchers[index] = (matchers[index] + 1) % nMatchers;
+      incConditionVersion();
+    },
+    [edge, incConditionVersion, nMatchers]
+  );
 
   function handleRemoveLastMatcher(e: React.MouseEvent) {
     e.stopPropagation();
