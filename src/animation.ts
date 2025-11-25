@@ -1,6 +1,6 @@
 import { EntityComponents } from "./contexts/ecs_context";
 import { LevelContext } from "./editor_context";
-import { OverclockedEvaluator } from "./overclocked_evaluation";
+import { Evaluator } from "./evaluation";
 import { PosFlo } from "./pos_flow";
 import { Tester } from "./tester";
 
@@ -19,7 +19,7 @@ export function stepForward(
   // TODO need to plumb real settings in
 
   if (levelContext.evaluator == null) {
-    levelContext.evaluator = new OverclockedEvaluator(
+    levelContext.evaluator = new Evaluator(
       posFlo,
       levelContext.evaluationListenerHolder,
       levelContext,
