@@ -33,6 +33,8 @@ export enum RegularComponentType {
   Pop = "pop",
   Empty = "empty",
   Sum = "sum",
+  Max = "max",
+  RightShift = "rsh",
 }
 
 export enum InputOutputComponentType {
@@ -178,6 +180,28 @@ const typeToDefinitionMap = new Map<ComponentType, NodeDefinition>(
       (arr: unknown[]) => {
         Assert(typeof arr[0] === "number" && typeof arr[1] === "number");
         return [arr[0] * arr[1]];
+      }
+    ),
+
+    MakeStandardNodeDefinition(
+      RegularComponentType.RightShift,
+      "rsh",
+      1,
+      1,
+      (arr: unknown[]) => {
+        Assert(typeof arr[0] === "number");
+        return [arr[0] >> 1];
+      }
+    ),
+
+    MakeStandardNodeDefinition(
+      RegularComponentType.Max,
+      "max",
+      2,
+      1,
+      (arr: unknown[]) => {
+        Assert(typeof arr[0] === "number" && typeof arr[1] === "number");
+        return [Math.max(arr[0],arr[1])];
       }
     ),
 
