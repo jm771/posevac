@@ -119,7 +119,12 @@ export function importGraph(
   }
 
   for (const setting of serializedGraph.nodeSettings) {
-    editor.settings.set(getOrThrow(idMap, setting.node_id), setting.setting);
+    // This is very hacky - should do something better
+    const newNodeId = idMap.get(setting.node_id);
+
+    if (newNodeId != undefined) {
+      editor.settings.set(newNodeId, setting.setting);
+    }
   }
 
   // TODO robustify
