@@ -174,6 +174,33 @@ const RSH: Level = {
   ],
 };
 
+const ISQRT: Level = {
+  id: "isqrt",
+  name: "Integer Square Root",
+  description:
+    "Calculate the integer part of the square root of the input numbers",
+  testCases: [
+    {
+      inputs: [[1, 2, 3, 4]],
+      expectedOutputs: [[1, 1, 1, 2]],
+    },
+    {
+      inputs: [[16, 32, 36]],
+      expectedOutputs: [[4,5,6]],
+    },
+  ],
+  allowedNodes: [
+    RegularComponentType.Split,
+    RegularComponentType.Combine,
+    RegularComponentType.Constant,
+    RegularComponentType.Multiply,
+    RegularComponentType.Plus,
+    RegularComponentType.Max,
+    RegularComponentType.RightShift,
+    RegularComponentType.Nop,
+  ],
+}
+
 const Reverse: Level = {
   id: "reverse",
   name: "Reverse",
@@ -249,10 +276,8 @@ export const WORLDS: WorldInfo[] = [
 ];
 
 export const WorldMap = new Map([
-  [
-    "1",
-    [ADDITION, CUM_SUM, FACTORIAL, Reverse, MULTIPLY, LESS_THAN_FOUR, MAX, RSH],
-  ],
+  ["1", [ADDITION, CUM_SUM, FACTORIAL, Reverse, MULTIPLY, LESS_THAN_FOUR, MAX,
+         RSH, ISQRT]],
   ["2", []],
   ["X", [EulerianCycles]],
 ]);
