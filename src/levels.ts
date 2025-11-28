@@ -153,7 +153,7 @@ const RSH: Level = {
   id: "rshift",
   name: "Right Shift",
   description:
-    "Shift the input numbers right by 1 bit",
+    "Shift the input numbers right by 1 bit. Equivilently - divide by two with round down",
   testCases: [
     {
       inputs: [[0, 1]],
@@ -172,7 +172,7 @@ const RSH: Level = {
     RegularComponentType.Plus,
     RegularComponentType.Nop,
   ],
-}
+};
 
 const Reverse: Level = {
   id: "reverse",
@@ -249,8 +249,10 @@ export const WORLDS: WorldInfo[] = [
 ];
 
 export const WorldMap = new Map([
-  ["1", [ADDITION, CUM_SUM, FACTORIAL, Reverse, MULTIPLY, LESS_THAN_FOUR, MAX,
-         RSH]],
+  [
+    "1",
+    [ADDITION, CUM_SUM, FACTORIAL, Reverse, MULTIPLY, LESS_THAN_FOUR, MAX, RSH],
+  ],
   ["2", []],
   ["X", [EulerianCycles]],
 ]);
