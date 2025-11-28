@@ -149,6 +149,31 @@ const MAX: Level = {
   ],
 };
 
+const RSH: Level = {
+  id: "rshift",
+  name: "Right Shift",
+  description:
+    "Shift the input numbers right by 1 bit",
+  testCases: [
+    {
+      inputs: [[0, 1]],
+      expectedOutputs: [[0, 0]],
+    },
+    {
+      inputs: [[2, 3]],
+      expectedOutputs: [[1, 1]],
+    },
+  ],
+  allowedNodes: [
+    RegularComponentType.Split,
+    RegularComponentType.Combine,
+    RegularComponentType.Constant,
+    RegularComponentType.Multiply,
+    RegularComponentType.Plus,
+    RegularComponentType.Nop,
+  ],
+}
+
 const Reverse: Level = {
   id: "reverse",
   name: "Reverse",
@@ -224,7 +249,8 @@ export const WORLDS: WorldInfo[] = [
 ];
 
 export const WorldMap = new Map([
-  ["1", [ADDITION, CUM_SUM, FACTORIAL, Reverse, MULTIPLY, LESS_THAN_FOUR, MAX]],
+  ["1", [ADDITION, CUM_SUM, FACTORIAL, Reverse, MULTIPLY, LESS_THAN_FOUR, MAX,
+         RSH]],
   ["2", []],
   ["X", [EulerianCycles]],
 ]);
