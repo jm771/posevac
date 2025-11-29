@@ -153,7 +153,7 @@ const RSH: Level = {
   id: "rshift",
   name: "Right Shift",
   description:
-    "Shift the input numbers right by 1 bit. Equivilently - divide by two with round down",
+    "Shift the input numbers right by 1 bit. Equivalently - divide by two with round down",
   testCases: [
     {
       inputs: [[0, 1]],
