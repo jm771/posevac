@@ -230,34 +230,6 @@ const MODULO: Level = {
   ],
 }
 
-const PRIME: Level = {
-  id: "prime",
-  name: "Prime",
-  description:
-    "Without hardcoding, return only the prime numbers",
-  testCases: [
-    {
-      inputs: [[1, 2, 3, 4]],
-      expectedOutputs: [[2,3]],
-    },
-    {
-      inputs: [[28,29,30,31]],
-      expectedOutputs: [[29,31]],
-    },
-  ],
-  allowedNodes: [
-    RegularComponentType.Split,
-    RegularComponentType.Combine,
-    RegularComponentType.Constant,
-    RegularComponentType.Multiply,
-    RegularComponentType.Plus,
-    RegularComponentType.Max,
-    RegularComponentType.RightShift,
-    RegularComponentType.ISqrt,
-    RegularComponentType.Modulo,
-  ],
-}
-
 const Reverse: Level = {
   id: "reverse",
   name: "Reverse",
@@ -334,7 +306,7 @@ export const WORLDS: WorldInfo[] = [
 
 export const WorldMap = new Map([
   ["1", [ADDITION, CUM_SUM, FACTORIAL, Reverse, MULTIPLY, LESS_THAN_FOUR, MAX,
-         RSH, ISQRT, MODULO, PRIME]],
+         RSH, ISQRT, MODULO]],
   ["2", []],
   ["X", [EulerianCycles]],
 ]);
