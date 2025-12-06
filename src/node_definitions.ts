@@ -35,6 +35,8 @@ export enum RegularComponentType {
   Sum = "sum",
   Max = "max",
   RightShift = "rsh",
+  ISqrt = "isqrt",
+  Modulo = "modulo",
 }
 
 export enum InputOutputComponentType {
@@ -202,6 +204,28 @@ const typeToDefinitionMap = new Map<ComponentType, NodeDefinition>(
       (arr: unknown[]) => {
         Assert(typeof arr[0] === "number" && typeof arr[1] === "number");
         return [Math.max(arr[0],arr[1])];
+      }
+    ),
+
+    MakeStandardNodeDefinition(
+      RegularComponentType.ISqrt,
+      "isqrt",
+      1,
+      1,
+      (arr: unknown[]) => {
+        Assert(typeof arr[0] === "number");
+        return [Math.floor(Math.sqrt(arr[0]))];
+      }
+    ),
+
+    MakeStandardNodeDefinition(
+      RegularComponentType.Modulo,
+      "modulo",
+      2,
+      1,
+      (arr: unknown[]) => {
+        Assert(typeof arr[0] === "number" && typeof arr[1] === "number");
+        return [arr[0] % arr[1]];
       }
     ),
 
