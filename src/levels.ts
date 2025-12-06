@@ -227,6 +227,7 @@ const MODULO: Level = {
     RegularComponentType.Max,
     RegularComponentType.RightShift,
     RegularComponentType.ISqrt,
+    RegularComponentType.Leq,
   ],
 }
 

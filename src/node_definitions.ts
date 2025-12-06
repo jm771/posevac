@@ -36,6 +36,7 @@ export enum RegularComponentType {
   Max = "max",
   RightShift = "rsh",
   ISqrt = "isqrt",
+  Leq = "leq",
   Modulo = "modulo",
 }
 
@@ -226,6 +227,17 @@ const typeToDefinitionMap = new Map<ComponentType, NodeDefinition>(
       (arr: unknown[]) => {
         Assert(typeof arr[0] === "number" && typeof arr[1] === "number");
         return [arr[0] % arr[1]];
+      }
+    ),
+
+    MakeStandardNodeDefinition(
+      RegularComponentType.Leq,
+      "<=",
+      2,
+      1,
+      (arr: unknown[]) => {
+        Assert(typeof arr[0] === "number" && typeof arr[1] === "number");
+        return [arr[0]<=arr[1] ? 1 : 0];
       }
     ),
 
