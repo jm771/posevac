@@ -201,6 +201,36 @@ const ISQRT: Level = {
   ],
 }
 
+const MODULO: Level = {
+  id: "modulo",
+  name: "Modulo",
+  description:
+    "Calculate k, where the inputs are n and m and n = j*m + k",
+  testCases: [
+    {
+      inputs: [[1, 2, 3, 4],
+               [2, 2, 2, 2]],
+      expectedOutputs: [[1, 0, 1, 0]],
+    },
+    {
+      inputs: [[16, 32, 36],
+               [ 3,  3,  3]],
+      expectedOutputs: [[1,2,0]],
+    },
+  ],
+  allowedNodes: [
+    RegularComponentType.Split,
+    RegularComponentType.Combine,
+    RegularComponentType.Constant,
+    RegularComponentType.Multiply,
+    RegularComponentType.Plus,
+    RegularComponentType.Max,
+    RegularComponentType.RightShift,
+    RegularComponentType.ISqrt,
+    RegularComponentType.Leq,
+  ],
+}
+
 const Reverse: Level = {
   id: "reverse",
   name: "Reverse",
@@ -277,7 +307,7 @@ export const WORLDS: WorldInfo[] = [
 
 export const WorldMap = new Map([
   ["1", [ADDITION, CUM_SUM, FACTORIAL, Reverse, MULTIPLY, LESS_THAN_FOUR, MAX,
-         RSH, ISQRT]],
+         RSH, ISQRT, MODULO]],
   ["2", []],
   ["X", [EulerianCycles]],
 ]);
