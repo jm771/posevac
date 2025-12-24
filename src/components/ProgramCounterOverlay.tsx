@@ -1,15 +1,98 @@
-import { AnimatePresence } from "framer-motion";
-import React, { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { EdgePathContext } from "../contexts/edge_path_context";
 import {
   CounterAdvanceEvent,
   EvaluationEvent,
   EvaluationEventSource,
   EvaluationListener,
   NodeEvaluateEvent,
-} from "../evaluation";
+} from "../evaluation_listeners";
+import {
+  Connection,
+  ConnectionToString,
+  terminalEquals,
+  TerminalId,
+  TerminalIdToString,
+  TerminalType,
+} from "../pos_flow";
 import { ProgramCounter } from "../program_counter";
-import { mapIterable } from "../util";
-import { ProgramCounterComponent } from "./ProgramCounterComponent";
+import { DefaultMap, mapIterable } from "../util";
+
+function ProgramCounterGroupComponent({
+  currentLocation,
+  edge,
+  pcs,
+}: {
+  currentLocation: TerminalId;
+  edge: Connection;
+  pcs: ProgramCounter[];
+}) {
+  const divRef = useRef<HTMLDivElement>(null);
+  const { edgePathHandlers } = useContext(EdgePathContext);
+
+  useEffect(() => {
+    if (!divRef.current) return;
+
+    const edgeStr = ConnectionToString(edge);
+
+    function callback(edgePath: string) {
+      if (!divRef.current) return;
+      divRef.current.style.offsetPath = `path('${edgePath}')`;
+    }
+
+    edgePathHandlers.subscribe(edgeStr, callback);
+    callback(edgePathHandlers.getLastData(edgeStr));
+
+    return () => {
+      edgePathHandlers.unsub(edgeStr, callback);
+    };
+  }, [edge, edgePathHandlers]);
+
+  return (
+    <motion.div
+      className="pc-container"
+      ref={divRef}
+      style={{
+        scale: 1,
+        position: "absolute",
+        border: pcs.length >= 2 ? "3px solid #81c784" : undefined,
+        ...(terminalEquals(currentLocation, edge.source) && {
+          offsetDistance: "0%",
+        }),
+      }}
+      initial={{
+        scale: 0,
+        rotate: -360,
+      }}
+      exit={{
+        scale: 0,
+        rotate: 360,
+      }}
+      animate={{
+        scale: 1,
+        rotate: 0,
+        ...(terminalEquals(currentLocation, edge.dest) && {
+          offsetDistance: ["0%", "100%"],
+        }),
+      }}
+      // angle={0}
+      transition={{
+        duration: 0.6,
+      }}
+    >
+      {pcs.map((pc) => (
+        <div
+          className="pc-box"
+          key={pc.id}
+          // style={Array.isArray(pc.contents) ? { background: "#FF1493" } : {}}
+        >
+          {JSON.stringify(pc.contents)}
+        </div>
+      ))}
+    </motion.div>
+  );
+}
 
 export function ProgramCounterOverlay({
   evaluationEventSource,
@@ -41,10 +124,10 @@ export function ProgramCounterOverlay({
         });
       },
       onEvaluationEvent: (e: EvaluationEvent) => {
-        if (e == EvaluationEvent.Start) {
+        if (e === EvaluationEvent.Start) {
           setProgramCounters(new Map<string, ProgramCounter>());
         }
-        if (e == EvaluationEvent.End) {
+        if (e === EvaluationEvent.End) {
           setProgramCounters(new Map<string, ProgramCounter>());
         }
       },
@@ -59,16 +142,32 @@ export function ProgramCounterOverlay({
     };
   }, [evaluationEventSource]);
 
+  const groupMap = new DefaultMap<string, ProgramCounter[]>(() => []);
+
+  programCounters.forEach((pc) => {
+    const groupingEdge =
+      pc.currentLocation.type === TerminalType.Output
+        ? ConnectionToString(pc.currentEdge)
+        : "";
+    groupMap
+      // .get(ConnectionToString(pc.currentEdge) + pc.currentLocation.nodeId)
+      .get(TerminalIdToString(pc.currentLocation) + groupingEdge)
+      .push(pc);
+  });
+
   return (
     <AnimatePresence>
-      {mapIterable(programCounters.values(), (pc: ProgramCounter) => (
-        <ProgramCounterComponent
-          key={pc.id}
-          position={pc.currentLocation.position()}
-          text={JSON.stringify(pc.contents)}
-          angle={0}
-        />
-      ))}
+      {mapIterable(
+        groupMap.entries(),
+        ([key, pcs]: [string, ProgramCounter[]]) => (
+          <ProgramCounterGroupComponent
+            key={key}
+            pcs={pcs}
+            edge={pcs[0].currentEdge}
+            currentLocation={pcs[0].currentLocation}
+          />
+        )
+      )}
     </AnimatePresence>
   );
 }

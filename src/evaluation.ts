@@ -1,34 +1,77 @@
-import { NodeSingular } from "cytoscape";
-import { CompNode } from "./nodes";
-import { ProgramCounter } from "./program_counter";
-import { DefaultMap } from "./util";
+import { Node } from "@xyflow/react";
+import {
+  EcsComponent,
+  EntityComponents,
+  OverclockMode,
+} from "./contexts/ecs_context";
+import {
+  CounterAdvanceEvent,
+  EvaluationEvent,
+  EvaluationListener,
+  NodeEvaluateEvent,
+} from "./evaluation_listeners";
+import { NodeDefinition } from "./node_definitions";
+import {
+  ComputeNode,
+  GetInputTerminals,
+  GetOutputTerminal,
+  GetOutputTerminals,
+  TestValuesContext,
+} from "./nodes";
+import { PosFlo } from "./pos_flow";
+import { PCStore, ProgramCounter } from "./program_counter";
+import { Assert, mapIterable, NotNull, range } from "./util";
 
-export type CounterAdvanceEvent = {
-  programCounterId: string;
-  startTerminal: NodeSingular;
-  endTerminal: NodeSingular;
-};
-
-export type NodeEvaluateEvent = {
-  node: NodeSingular;
-  inputCounters: ProgramCounter[];
-  outputCounters: ProgramCounter[];
-};
-
-export enum EvaluationEvent {
-  Start,
-  End,
+export interface Evaluator {
+  step(): void;
+  stride(): void;
+  destroy(): void;
 }
 
-export type CounterAdvanceListener = (e: CounterAdvanceEvent) => void;
-export type NodeEvaluateListener = (e: NodeEvaluateEvent) => void;
-export type EvaluationEventListener = (e: EvaluationEvent) => void;
+function* getAllCombs(arr: unknown[][]): Generator<unknown[]> {
+  if (arr.length === 0) {
+    yield [];
+    return;
+  }
+  if (arr.length === 1) {
+    for (const el of arr[0]) {
+      yield [el];
+    }
 
-export type EvaluationListener = {
-  onCounterAdvance: CounterAdvanceListener;
-  onNodeEvaluate: NodeEvaluateListener;
-  onEvaluationEvent: EvaluationEventListener;
-};
+    return;
+  }
+
+  const last = NotNull(arr.pop());
+
+  for (const rest of getAllCombs(arr)) {
+    for (const el of last) {
+      yield rest.concat([el]);
+    }
+  }
+}
+
+function getMappedInputs(
+  inputValueses: unknown[][],
+  mode: OverclockMode
+): unknown[][] | null {
+  if (inputValueses.length === 0) {
+    return [[]];
+  }
+
+  if (mode === OverclockMode.Regular) {
+    Assert(inputValueses.every((arr) => arr.length === 1));
+    return [inputValueses.map((arr) => arr[0])];
+  } else if (mode === OverclockMode.Cartesian) {
+    return Array.from(getAllCombs(inputValueses));
+  } else {
+    //if (mode === OverclockMode.Zip) {
+    const firstLen = inputValueses[0].length;
+    if (!inputValueses.every((arr) => arr.length === firstLen)) {
+      return null;
+    }
+    return range(firstLen).map((idx) => inputValueses.map((arr) => arr[idx]));
+  }
+}
 
 enum Stage {
   AdvanceCounter,
@@ -43,126 +86,183 @@ type State =
     }
   | { stage: Stage.Evaluate; nodeIndex: number };
 
-export interface EvaluationEventSource {
-  registerListener(l: EvaluationListener): number;
-  deregisterListener(id: number): void;
-}
-
-export class EvaluationListenerHolder
-  implements EvaluationEventSource, EvaluationListener
-{
-  onCounterAdvance(e: CounterAdvanceEvent) {
-    this.listeners.forEach((l) => l.onCounterAdvance(e));
-  }
-
-  onNodeEvaluate(e: NodeEvaluateEvent) {
-    this.listeners.forEach((l) => l.onNodeEvaluate(e));
-  }
-
-  onEvaluationEvent(e: EvaluationEvent) {
-    this.listeners.forEach((l) => l.onEvaluationEvent(e));
-  }
-
-  private listeners: Map<number, EvaluationListener> = new Map<
-    number,
-    EvaluationListener
-  >();
-  private currentListenerId: number = 0;
-
-  registerListener(l: EvaluationListener): number {
-    const id = this.currentListenerId++;
-    this.listeners.set(id, l);
-    return id;
-  }
-
-  deregisterListener(id: number) {
-    this.listeners.delete(id);
-  }
-}
-
-export class Evaluator {
-  private programCounters: Map<string, ProgramCounter>;
-  private terminalToProgramCounters: DefaultMap<
-    string,
-    Map<string, ProgramCounter>
-  >;
-  private nodeEvaluationState: Map<string, unknown>;
-  private state: State;
-  private nodes: Array<CompNode>;
+export class EvaluatorImpl implements Evaluator {
+  private programCounters: PCStore;
+  private nodeStates: Map<string, unknown>;
+  private evaluationState: State;
+  private posFlo: PosFlo;
   private listener: EvaluationListener;
+  private testValues: TestValuesContext;
+  private ecs: EntityComponents;
 
-  constructor(nodes: Array<CompNode>, listener: EvaluationListener) {
-    this.programCounters = new Map<string, ProgramCounter>();
-    this.state = { stage: Stage.Evaluate, nodeIndex: 0 };
-    this.nodeEvaluationState = new Map<string, unknown>();
+  constructor(
+    posFlo: PosFlo,
+    listener: EvaluationListener,
+    testValues: TestValuesContext,
+    ecs: EntityComponents
+  ) {
+    this.programCounters = new PCStore();
+    this.evaluationState = { stage: Stage.Evaluate, nodeIndex: 0 };
     this.listener = listener;
-    this.terminalToProgramCounters = new DefaultMap<
-      string,
-      Map<string, ProgramCounter>
-    >(() => new Map<string, ProgramCounter>());
-    nodes.forEach((n: CompNode) => {
-      this.nodeEvaluationState.set(n.getNodeId(), n.makeCleanState());
+    this.posFlo = posFlo;
+    this.testValues = testValues;
+    this.nodeStates = new Map<string, unknown>();
+    this.ecs = ecs;
+    posFlo.nodes.forEach((n: Node<NodeDefinition>) => {
+      this.nodeStates.set(n.id, n.data.makeState());
     });
-    this.nodes = nodes;
 
     // TODO - sensible place?
     this.listener.onEvaluationEvent(EvaluationEvent.Start);
   }
 
-  evaluateNode(node: CompNode): void {
-    const evaluation = node.evaluate(
-      this.nodeEvaluationState.get(node.getNodeId()),
-      this.terminalToProgramCounters
+  getCountersForNode(node: ComputeNode): ProgramCounter[][] | null {
+    const inputCounters = GetInputTerminals(node).map((term) =>
+      this.programCounters.GetByTerminal(term)
     );
 
-    evaluation.pcsDestroyed.forEach((pc) => {
-      this.programCounters.delete(pc.id);
+    if (inputCounters.some((arr) => arr.length === 0)) {
+      return null;
+    }
+
+    return inputCounters;
+  }
+
+  // TODO remove this safety too?
+  isAnyOutputBlocked(node: ComputeNode): boolean {
+    return GetOutputTerminals(node)
+      .map((term) => this.programCounters.GetByTerminal(term))
+      .some((arr) => arr.length > 0);
+  }
+
+  getOcMode(nodeId: string): OverclockMode {
+    return (
+      this.ecs.GetComponent(nodeId, EcsComponent.Overclock)?.mode ??
+      OverclockMode.Regular
+    );
+  }
+
+  evaluateNode(node: Node<NodeDefinition>): void {
+    if (this.isAnyOutputBlocked(node)) {
+      return;
+    }
+
+    const inputCounters = this.getCountersForNode(node);
+    if (inputCounters === null) {
+      return;
+    }
+
+    const inputValueses = inputCounters.map((a) => a.map((c) => c.contents));
+
+    const ocMode = this.getOcMode(node.id);
+
+    const mappedInputValues = getMappedInputs(inputValueses, ocMode);
+
+    if (mappedInputValues === null) {
+      return;
+    }
+
+    const results = mapIterable(mappedInputValues, (inputValues) =>
+      node.data.evaluate(
+        this.nodeStates.get(node.id),
+        this.posFlo.nodeSettings.get(node.id)?.setting,
+        inputValues,
+        this.testValues
+      )
+    );
+
+    let newPcs: ProgramCounter[] = [];
+
+    for (const result of results) {
+      if (result !== null) {
+        Assert(result.length === node.data.nOutputs);
+
+        newPcs = newPcs.concat(
+          result.flatMap((val: unknown, idx: number) =>
+            this.posFlo
+              .GetConnectionsForTerminal(GetOutputTerminal(node, idx))
+              .filter((conn) => conn.condition.matches(val))
+              .map((conn) => new ProgramCounter(conn.source, conn, val))
+          )
+        );
+      }
+    }
+
+    const flatCounters = inputCounters.flatMap((pc) => pc);
+
+    flatCounters.forEach((pc) => {
+      this.programCounters.Remove(pc);
     });
-    evaluation.pcsCreated.forEach((pc) => this.programCounters.set(pc.id, pc));
+
+    newPcs.forEach((pc) => {
+      this.programCounters.Add(pc);
+    });
 
     const event: NodeEvaluateEvent = {
-      node: node.node,
-      inputCounters: evaluation.pcsDestroyed,
-      outputCounters: evaluation.pcsCreated,
+      nodeId: node.id,
+      inputCounters: flatCounters,
+      outputCounters: newPcs,
     };
 
     this.listener.onNodeEvaluate(event);
   }
 
   advanceCounter(pc: ProgramCounter) {
-    const startTerminal = pc.currentLocation;
-    const nextTerminal = pc.tryAdvance(this.terminalToProgramCounters);
-
-    if (nextTerminal != null) {
-      const event: CounterAdvanceEvent = {
-        programCounterId: pc.id,
-        startTerminal: startTerminal,
-        endTerminal: nextTerminal,
-      };
-      this.listener.onCounterAdvance(event);
+    if (pc.currentEdge === null) {
+      return;
     }
+
+    // Stack them up baby!!!
+    const destNodeId = pc.currentEdge.dest.nodeId;
+
+    const blocking =
+      this.getOcMode(destNodeId) == OverclockMode.Regular ||
+      this.getOcMode(pc.currentLocation.nodeId) === OverclockMode.Regular;
+
+    if (
+      blocking &&
+      this.programCounters.GetByTerminal(pc.currentEdge.dest).length !== 0
+    ) {
+      return;
+    }
+
+    const event: CounterAdvanceEvent = {
+      programCounterId: pc.id,
+      startTerminal: pc.currentEdge.source,
+      endTerminal: pc.currentEdge.dest,
+    };
+
+    this.programCounters.AdvancePc(pc);
+    this.listener.onCounterAdvance(event);
   }
 
   step() {
-    switch (this.state.stage) {
+    switch (this.evaluationState.stage) {
       case Stage.AdvanceCounter: {
-        if (this.state.counterIndex >= this.state.counters.length) {
-          this.state = { stage: Stage.Evaluate, nodeIndex: 0 };
+        if (
+          this.evaluationState.counterIndex >=
+          this.evaluationState.counters.length
+        ) {
+          this.evaluationState = { stage: Stage.Evaluate, nodeIndex: 0 };
         } else {
-          this.advanceCounter(this.state.counters[this.state.counterIndex++]);
+          this.advanceCounter(
+            this.evaluationState.counters[this.evaluationState.counterIndex++]
+          );
         }
 
         break;
       }
       case Stage.Evaluate: {
-        if (this.state.nodeIndex >= this.nodes.length) {
-          this.state = {
+        if (this.evaluationState.nodeIndex >= this.posFlo.nodes.length) {
+          this.evaluationState = {
             stage: Stage.AdvanceCounter,
-            counters: Array.from(this.programCounters.values()),
+            counters: Array.from(this.programCounters.GetAll()),
             counterIndex: 0,
           };
         } else {
-          this.evaluateNode(this.nodes[this.state.nodeIndex++]);
+          this.evaluateNode(
+            this.posFlo.nodes[this.evaluationState.nodeIndex++]
+          );
         }
 
         break;
@@ -171,9 +271,9 @@ export class Evaluator {
   }
 
   stride() {
-    const startStage = this.state.stage;
+    const startStage = this.evaluationState.stage;
 
-    while (this.state.stage == startStage) {
+    while (this.evaluationState.stage === startStage) {
       this.step();
     }
   }

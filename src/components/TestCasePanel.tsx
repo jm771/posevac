@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { LevelContext } from "../editor_context";
-import { TesterListener } from "../tester";
+import { Level } from "../levels";
+import { TesterEventSource, TesterListener } from "../tester";
 
 enum InputStatus {
   Pending = "io-value-pending",
@@ -15,16 +15,18 @@ enum OutputStatus {
 }
 
 export function TestCasePanel({
-  levelContext,
+  level,
+  testerEventSource,
 }: {
-  levelContext: LevelContext;
+  level: Level;
+  testerEventSource: TesterEventSource;
 }) {
   const makeFreshInputStates = () =>
-    levelContext.editorContext.level.testCases.map((c) =>
+    level.testCases.map((c) =>
       c.inputs.map((arr) => arr.map(() => InputStatus.Pending))
     );
   const makeFreshOutputStates = () =>
-    levelContext.editorContext.level.testCases.map((c) =>
+    level.testCases.map((c) =>
       c.expectedOutputs.map((arr) => arr.map(() => OutputStatus.Pending))
     );
 
@@ -99,15 +101,14 @@ export function TestCasePanel({
       },
     };
 
-    const listenerId =
-      levelContext.testerListenerHolder.registerListener(listener);
+    const listenerId = testerEventSource.registerListener(listener);
 
     return () => {
-      levelContext.testerListenerHolder.deregisterListener(listenerId);
+      testerEventSource.deregisterListener(listenerId);
     };
-  }, [levelContext]);
+  }, [makeFreshInputStates, makeFreshOutputStates, testerEventSource]);
 
-  const totalTests = levelContext.editorContext.level.testCases.length;
+  const totalTests = level.testCases.length;
 
   const handlePrevTest = () => {
     setCurrentTestIndex((prev) => (prev > 0 ? prev - 1 : prev));
@@ -117,8 +118,7 @@ export function TestCasePanel({
     setCurrentTestIndex((prev) => (prev < totalTests - 1 ? prev + 1 : prev));
   };
 
-  const currTestCase =
-    levelContext.editorContext.level.testCases[currentTestIndex];
+  const currTestCase = level.testCases[currentTestIndex];
 
   return (
     <div className="test-case-panel">

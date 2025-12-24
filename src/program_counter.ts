@@ -1,41 +1,55 @@
-import { EdgeSingular, NodeSingular } from "cytoscape";
-import { DefaultMap } from "./util";
+import { Connection, terminalEquals, TerminalId } from "./pos_flow";
+import { Assert, NotNull } from "./util";
+
+export type ProgramCounterId = string;
 
 export class ProgramCounter {
   contents: unknown;
-  currentLocation: NodeSingular;
-  currentEdge: EdgeSingular | null;
+  currentLocation: TerminalId;
+  currentEdge: Connection;
   id: string;
 
-  constructor(
-    location: NodeSingular,
-    edge: EdgeSingular | null,
-    contents: unknown
-  ) {
+  constructor(location: TerminalId, edge: Connection, contents: unknown) {
     this.contents = contents;
     this.currentLocation = location;
     this.currentEdge = edge;
 
     this.id = `pc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
+}
 
-  tryAdvance(
-    terminalToProgramCounters: DefaultMap<string, Map<string, ProgramCounter>>
-  ): NodeSingular | null {
-    if (this.currentEdge != null) {
-      const dest = this.currentEdge.target();
-      const destPcs = terminalToProgramCounters.get(dest.id());
-      if (destPcs.size === 0) {
-        destPcs.set(this.id, this);
-        terminalToProgramCounters
-          .get(this.currentLocation.id())
-          .delete(this.id);
-        this.currentEdge = null;
-        this.currentLocation = dest;
-        return dest;
-      }
-    }
+export class PCStore {
+  private programCounters: ProgramCounter[] = [];
 
-    return null;
+  constructor() {}
+
+  Add(pc: ProgramCounter) {
+    this.programCounters.push(pc);
+  }
+
+  Remove(pc: ProgramCounter) {
+    const idx = this.programCounters.findIndex((pc1) => pc1.id === pc.id);
+    Assert(idx !== -1);
+    this.programCounters.splice(idx, 1);
+  }
+
+  GetById(id: ProgramCounterId): ProgramCounter {
+    return NotNull(this.programCounters.find((pc) => pc.id === id));
+  }
+
+  GetByTerminal(id: TerminalId): ProgramCounter[] {
+    return NotNull(
+      this.programCounters.filter((pc) =>
+        terminalEquals(pc.currentLocation, id)
+      )
+    );
+  }
+
+  AdvancePc(pc: ProgramCounter) {
+    pc.currentLocation = NotNull(pc.currentEdge).dest;
+  }
+
+  GetAll(): ProgramCounter[] {
+    return this.programCounters;
   }
 }

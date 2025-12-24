@@ -22,6 +22,16 @@ export function NotNull<T>(val: T | null | undefined): T {
   return val!;
 }
 
+export function range(stop: number) {
+  // I'll do this less dumb in the future
+  const ret = [];
+  for (let i = 0; i < stop; i++) {
+    ret.push(i);
+  }
+
+  return ret;
+}
+
 export function mapIterable<T, U>(
   iterable: Iterable<T>,
   func: (val: T) => U
