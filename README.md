@@ -3,7 +3,7 @@
 ## POSsibility EVAlulating Computer (working title)
 
 The University CompSci department's funding is being slashed - you've been put under a lot of pressure to produce incredible research. It's a stressful time, and worst of all - this weekend you've got to clear our your late eccentric genius father's shed.
-In there you find your father's project from the 70s, the POSEVAC. Filled with [vacuum tubes](https://en.wikipedia.org/wiki/Vacuum_tube) and [vacuum tubes](https://en.wikipedia.org/wiki/Pneumatic_tube) the thing looks deranged. But you remember your father talking about it. "A supercomputer that could evalute all possibilities at once". I mean something like that - that wouldn't just solve the university's funding issues - that'd win you a Turing Award! If only you could work out how to use the damn thing!
+In there you find your father's project from the 70s, the POSEVAC. Filled with [vacuum tubes](https://en.wikipedia.org/wiki/Vacuum_tube) and [pneumatic tubes](https://en.wikipedia.org/wiki/Pneumatic_tube) the thing looks deranged. But you remember your father talking about it. "A supercomputer that could evalute all possibilities at once". I mean something like that - that wouldn't just solve the university's funding issues - that'd win you a Turing Award! If only you could work out how to use the damn thing!
 
 ## Building POSFLOs
 
