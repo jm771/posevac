@@ -186,7 +186,7 @@ const ISQRT: Level = {
     },
     {
       inputs: [[16, 32, 36]],
-      expectedOutputs: [[4,5,6]],
+      expectedOutputs: [[4, 5, 6]],
     },
   ],
   allowedNodes: [
@@ -199,7 +199,7 @@ const ISQRT: Level = {
     RegularComponentType.RightShift,
     RegularComponentType.Nop,
   ],
-}
+};
 
 const Reverse: Level = {
   id: "reverse",
@@ -264,8 +264,8 @@ export const WORLDS: WorldInfo[] = [
   },
   {
     key: "2",
-    title: "Lists and Strings",
-    descrption: "Ok - it's working - time to start processing some real data!",
+    title: "Ramping up",
+    descrption: "Some slightly more tricky levels",
   },
   {
     key: "X",
@@ -276,9 +276,8 @@ export const WORLDS: WorldInfo[] = [
 ];
 
 export const WorldMap = new Map([
-  ["1", [ADDITION, CUM_SUM, FACTORIAL, Reverse, MULTIPLY, LESS_THAN_FOUR, MAX,
-         RSH, ISQRT]],
-  ["2", []],
+  ["1", [ADDITION, CUM_SUM, FACTORIAL, MULTIPLY, LESS_THAN_FOUR, MAX]],
+  ["2", [Reverse, RSH, ISQRT]],
   ["X", [EulerianCycles]],
 ]);
 
@@ -308,13 +307,13 @@ function ValidateTestCases(testCases: TestCase[]) {
   Assert(testCases.length > 0, "No test cases");
   Assert(
     testCases.every((tc) => tc.inputs.length === testCases[0].inputs.length),
-    "Not all test cases have same number of inputs"
+    "Not all test cases have same number of inputs",
   );
   Assert(
     testCases.every(
-      (tc) => tc.expectedOutputs.length === testCases[0].expectedOutputs.length
+      (tc) => tc.expectedOutputs.length === testCases[0].expectedOutputs.length,
     ),
-    "Not all test cases have same number of outputs"
+    "Not all test cases have same number of outputs",
   );
 }
 

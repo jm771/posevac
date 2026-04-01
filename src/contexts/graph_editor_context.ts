@@ -9,7 +9,6 @@ import {
 } from "../node_definitions";
 import { Connection, TerminalType } from "../pos_flow";
 import { Assert, NotNull } from "../util";
-import { EntityComponents } from "./ecs_context";
 import { makeDefaultSettings, NodeSetting } from "./node_settings_context";
 
 function edgeMatches(e1: Flow.Edge, e2: Flow.Connection): boolean {
@@ -32,10 +31,10 @@ function makeFlowCon(con: Connection): Flow.Connection {
 
 export function convertConnection(connection: Flow.Connection): Connection {
   const sourceHandleIdx = parseInt(
-    NotNull(connection.sourceHandle).replace("output-", "")
+    NotNull(connection.sourceHandle).replace("output-", ""),
   );
   const targetHandleIdx = parseInt(
-    NotNull(connection.targetHandle?.replace("input-", ""))
+    NotNull(connection.targetHandle?.replace("input-", "")),
   );
 
   return {
@@ -57,14 +56,13 @@ export class GraphEditor {
   private readonly nodeIdxRef: React.RefObject<number>;
   private readonly setNodes: Dispatch<SetStateAction<Node<NodeDefinition>[]>>;
   private readonly setEdges: Dispatch<SetStateAction<Flow.Edge<Connection>[]>>;
-  private readonly ecs: EntityComponents;
   readonly settings: Map<string, NodeSetting>;
 
   constructor(
     nodeIdxRef: React.RefObject<number>,
     setNodes: Dispatch<SetStateAction<Node<NodeDefinition>[]>>,
     setEdges: Dispatch<SetStateAction<Flow.Edge<Connection>[]>>,
-    settings: Map<string, NodeSetting>
+    settings: Map<string, NodeSetting>,
   ) {
     this.nodeIdxRef = nodeIdxRef;
     this.setNodes = setNodes;
@@ -118,7 +116,7 @@ export class GraphEditor {
 
   AddNode(
     componentType: ComponentType,
-    position: XYPosition
+    position: XYPosition,
   ): Node<NodeDefinition> {
     const defn = GetNodeDefinition(componentType);
     const id = `node-${this.nodeIdxRef.current++}`;
@@ -140,7 +138,7 @@ export class GraphEditor {
   RemoveNode(node: Flow.Node<NodeDefinition>) {
     this.setNodes((nds) => nds.filter((n) => n.id != node.id));
     this.setEdges((edgs) =>
-      edgs.filter((e) => e.source != node.id && e.target != node.id)
+      edgs.filter((e) => e.source != node.id && e.target != node.id),
     );
 
     this.settings.delete(node.id);
@@ -148,5 +146,5 @@ export class GraphEditor {
 }
 
 export const GraphEditorContext = createContext<GraphEditor>(
-  null as unknown as GraphEditor
+  null as unknown as GraphEditor,
 );
